@@ -88,15 +88,14 @@ class Voice(Term):
 
 
 class GrammarCategorySet(models.Model):
-    animacy = models.ForeignKey(null=True)
-    aspect = models.ForeignKey(null=True)
-    case = models.ForeignKey(null=True)
-    comparison = models.ForeignKey(null=True)
-    gender = models.ForeignKey(null=True)
-    mood = models.ForeignKey(null=True)
-    number = models.ForeignKey(null=True)
-    person = models.ForeignKey(null=True)
-    polarity = models.ForeignKey(null=True)
-    tense = models.ForeignKey(null=True)
-    voice = models.ForeignKey(null=True)
-
+    animacy = models.ForeignKey(Animacy, null=True)
+    aspect = models.ForeignKey(Aspect, null=True)
+    case = models.ForeignKey(Case, null=True)
+    comparison = models.ForeignKey(Comparison, null=True)
+    gender = models.ForeignKey(Gender, null=True)
+    mood = models.ForeignKey(Mood, null=True)
+    number = models.ForeignKey(Number, null=True)
+    person = models.ForeignKey(Person, null=True)
+    polarity = models.ForeignKey(Polarity, null=True)
+    tense = models.ForeignKey(Tense, null=True)
+    voice = models.ForeignKey(Voice, null=True)
