@@ -15,11 +15,21 @@ class Change(models.Model):
         abstract = True
 
 
+class Source(models.Model):
+    name = models.CharField(max_length=256)
+
+
+class DictChange(Change):
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True)
+    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False, null=True)
+    source = models.ForeignKey(Source)
+
+
 class MiscChange(Change):
-    table_name = models.CharField()
-    field_name = models.CharField()
-    old_value = models.CharField()
-    new_value = models.CharField()
+    table_name = models.CharField(max_length=256)
+    field_name = models.CharField(max_length=256)
+    old_value = models.CharField(max_length=512)
+    new_value = models.CharField(max_length=512)
 
 
 # Dictionary term models
@@ -28,8 +38,8 @@ class MiscChange(Change):
 class Term(models.Model):
     """Abstract base class for all terms in dictionary."""
 
-    term_full = models.CharField()
-    term_abbr = models.CharField()
+    term_full = models.CharField(max_length=256)
+    term_abbr = models.CharField(max_length=64)
 
     class Meta:
         abstract = True
@@ -39,7 +49,7 @@ class SyntacticCategory(Term):
     pass
 
 
-class UsageConstraints(Term):
+class UsageConstraint(Term):
     pass
 
 
@@ -99,3 +109,96 @@ class GrammarCategorySet(models.Model):
     polarity = models.ForeignKey(Polarity, null=True)
     tense = models.ForeignKey(Tense, null=True)
     voice = models.ForeignKey(Voice, null=True)
+
+
+class Language(Term):
+    syntactic_categories = models.ManyToManyField(SyntacticCategory)
+    grammar_category_sets = models.ManyToManyField(GrammarCategorySet)
+
+
+class Dialect(Term):
+    language = models.ForeignKey(Language)
+    parent_dialect = models.ForeignKey('self', null=True)
+
+
+class WritingSystem(Term):
+    language = models.ForeignKey(Language)
+    description = models.TextField()
+
+
+class LanguageEntity(models.Model):
+    language = models.ForeignKey(Language)
+
+    class Meta:
+        abstract = True
+
+
+class LexemeBase(LanguageEntity):
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+
+    class Meta:
+        abstract = True
+
+
+class Lexeme(LexemeBase):
+    pass
+
+
+class LexemeDeleted(LexemeBase):
+    lexeme = models.ForeignKey(Lexeme)
+
+
+class WordFormBase(LanguageEntity):
+    lexeme = models.ForeignKey(Lexeme)
+    dialects = models.ManyToManyField(Dialect)
+    grammar_category_set = models.ForeignKey(GrammarCategorySet)
+    spelling = models.CharField(max_length=512)
+    writing_system = models.ForeignKey(WritingSystem)
+    dict_change_commit = models.ForeignKey(DictChange, editable=False)
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+
+class WordForm(WordFormBase):
+    pass
+
+
+class WordFormPrevious(WordFormBase):
+    word_form = models.ForeignKey(WordForm)
+    dict_change_replace = models.ForeignKey(DictChange, related_name='replace_word_form _set')
+
+
+class WordFormDeleted(WordFormBase):
+    word_form = models.ForeignKey(WordForm)
+    dict_change_delete = models.ForeignKey(DictChange, related_name='delete_word_form _set')
+    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set')
+
+
+class TranslationBase(models.Model):
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='translationbase_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='translationbase_snd_set')
+    usage_constraint = models.ForeignKey(UsageConstraint)
+    comment = models.TextField(null=True)
+    dict_change_commit = models.ForeignKey(DictChange)
+    is_deleted = models.BooleanField(default=False)
+
+
+class Translation(TranslationBase):
+    pass
+
+
+class TranslationDeleted(TranslationBase):
+    translation = models.ForeignKey(Translation)
+    dict_change_delete = models.ForeignKey(DictChange, related_name='delete_translation_set')
+    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_translation_set')
+
+
+class TranslatedTerm(LanguageEntity):
+    table = models.CharField(max_length=256)
+    term_id = models.IntegerField()
+    term_full_translation = models.CharField(max_length=256)
+    term_abbr_translation = models.CharField(max_length=64)
+
+
