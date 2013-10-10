@@ -16,6 +16,7 @@ class Change(models.Model):
 
 
 class Source(models.Model):
+    """Class representing sources of language information"""
     name = models.CharField(max_length=256)
 
 
