@@ -17,16 +17,25 @@ class Change(models.Model):
 
 class Source(models.Model):
     """Class representing sources of language information"""
+
+
     name = models.CharField(max_length=256)
 
 
 class DictChange(Change):
+    """This class extends Change class with fields representing change review and information source for
+     WordForms and Translations"""
+
+
     user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True)
     timestamp_review = models.DateTimeField(auto_now_add=True, editable=False, null=True)
     source = models.ForeignKey(Source)
 
 
 class MiscChange(Change):
+    """This class extends Change class with fields representing generic change"""
+
+
     table_name = models.CharField(max_length=256)
     field_name = models.CharField(max_length=256)
     old_value = models.CharField(max_length=512)
@@ -47,58 +56,100 @@ class Term(models.Model):
 
 
 class SyntacticCategory(Term):
+    """Class represents syntactic category (used in lexemes) list"""
+
+
     pass
 
 
 class UsageConstraint(Term):
+    """Class represents usage constraints (used in translations) list"""
+
+
     pass
 
 
 class Animacy(Term):
+    """Class represents values list for Animacy grammatical category"""
+
+
     pass
 
 
 class Aspect(Term):
+    """Class represents values list for Aspect grammatical category"""
+
+
     pass
 
 
 class Case(Term):
+    """Class represents values list for Case grammatical category"""
+
+
     pass
 
 
 class Comparison(Term):
+    """Class represents values list for Comparison grammatical category"""
+
+
     pass
 
 
 class Gender(Term):
+    """Class represents values list for Gender grammatical category"""
+
+
     pass
 
 
 class Mood(Term):
+    """Class represents values list for Mood grammatical category"""
+
+
     pass
 
 
 class Number(Term):
+    """Class represents values list for Number grammatical category"""
+
+
     pass
 
 
 class Person(Term):
+    """Class represents values list for Person grammatical category"""
+
+
     pass
 
 
 class Polarity(Term):
+    """Class represents values list for Polarity grammatical category"""
+
+
     pass
 
 
 class Tense(Term):
+    """Class represents values list for Tense grammatical category"""
+
+
     pass
 
 
 class Voice(Term):
+    """Class represents values list for Voice grammatical category"""
+
+
     pass
 
 
 class GrammarCategorySet(models.Model):
+    """Class represents possible composite sets of grammar categories in a given language"""
+
+
     animacy = models.ForeignKey(Animacy, null=True)
     aspect = models.ForeignKey(Aspect, null=True)
     case = models.ForeignKey(Case, null=True)
@@ -113,21 +164,33 @@ class GrammarCategorySet(models.Model):
 
 
 class Language(Term):
+    """Class represents languages present in the system"""
+
+
     syntactic_categories = models.ManyToManyField(SyntacticCategory)
     grammar_category_sets = models.ManyToManyField(GrammarCategorySet)
 
 
 class Dialect(Term):
+    """Class represents dialect present in the system"""
+
+
     language = models.ForeignKey(Language)
     parent_dialect = models.ForeignKey('self', null=True)
 
 
 class WritingSystem(Term):
-    language = models.ForeignKey(Language)
+    """Class represents a writing systems used to spell a word form"""
+
+
+    language = models.ForeignKey(Language)  #Null means "language independent"
     description = models.TextField()
 
 
 class LanguageEntity(models.Model):
+    """Abstract base class used to tie an entity to a language"""
+
+
     language = models.ForeignKey(Language)
 
     class Meta:
@@ -135,6 +198,9 @@ class LanguageEntity(models.Model):
 
 
 class LexemeBase(LanguageEntity):
+    """Base class for current lexemes"""
+
+
     syntactic_category = models.ForeignKey(SyntacticCategory)
 
     class Meta:
