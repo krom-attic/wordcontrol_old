@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib import auth
 
+# Verified against Architecture Design as of 2013.12.30
+
 # Global abstract classes
 
 
@@ -9,20 +11,18 @@ class Change(models.Model):
 
     user_changer = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_changer")
     timestamp_change = models.DateTimeField(auto_now_add=True, editable=False)
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
 
     class Meta:
         abstract = True
-
-
 
 
 class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      WordForms and Translations"""
 
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True)
-    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False, null=True)
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False)
+    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False)
     source = models.ForeignKey(Source)
 
 
@@ -31,8 +31,8 @@ class MiscChange(Change):
 
     table_name = models.CharField(max_length=256)
     field_name = models.CharField(max_length=256)
-    old_value = models.CharField(max_length=512)
-    new_value = models.CharField(max_length=512)
+    old_value = models.CharField(max_length=512, blank=True)
+    new_value = models.CharField(max_length=512, blank=True)
 
 
 # Dictionary term models
@@ -42,7 +42,7 @@ class Term(models.Model):
     """Abstract base class for all terms in dictionary."""
 
     term_full = models.CharField(max_length=256)
-    term_abbr = models.CharField(max_length=64)
+    term_abbr = models.CharField(max_length=64, blank=True)
 
     class Meta:
         abstract = True
@@ -126,54 +126,74 @@ class Voice(Term):
     pass
 
 
-class GrammarCategorySet(models.Model):
+class GrammCategorySet(models.Model):
     """Class represents possible composite sets of grammar categories in a given language"""
 
-    animacy = models.ForeignKey(Animacy, null=True)
-    aspect = models.ForeignKey(Aspect, null=True)
-    case = models.ForeignKey(Case, null=True)
-    comparison = models.ForeignKey(Comparison, null=True)
-    gender = models.ForeignKey(Gender, null=True)
-    mood = models.ForeignKey(Mood, null=True)
-    number = models.ForeignKey(Number, null=True)
-    person = models.ForeignKey(Person, null=True)
-    polarity = models.ForeignKey(Polarity, null=True)
-    tense = models.ForeignKey(Tense, null=True)
-    voice = models.ForeignKey(Voice, null=True)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    animacy = models.ForeignKey(Animacy, null=True, blank=True)
+    aspect = models.ForeignKey(Aspect, null=True, blank=True)
+    case = models.ForeignKey(Case, null=True, blank=True)
+    comparison = models.ForeignKey(Comparison, null=True, blank=True)
+    gender = models.ForeignKey(Gender, null=True, blank=True)
+    mood = models.ForeignKey(Mood, null=True, blank=True)
+    number = models.ForeignKey(Number, null=True, blank=True)
+    person = models.ForeignKey(Person, null=True, blank=True)
+    polarity = models.ForeignKey(Polarity, null=True, blank=True)
+    tense = models.ForeignKey(Tense, null=True, blank=True)
+    voice = models.ForeignKey(Voice, null=True, blank=True)
 
 
 class Language(Term):
     """Class represents languages present in the system"""
 
     syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
-    gramm_category_set_multi = models.ManyToManyField(GrammarCategorySet)
+    gramm_category_set_multi = models.ManyToManyField(GrammCategorySet)
 
 
 class Dialect(Term):
     """Class represents dialect present in the system"""
 
-    language = models.ForeignKey(Language)  #Null means "language independent"
-    parent_dialect = models.ForeignKey('self', null=True)
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+    parent_dialect = models.ForeignKey('self', null=True, blank=True)
 
 
 class WritingSystem(Term):
     """Class represents a writing systems used to spell a word form"""
 
-    language = models.ForeignKey(Language)  #Null means "language independent"
-    description = models.TextField()
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+    ws_type = models.IntegerField()
+    description = models.TextField(blank=True)
 
 
 class Source(Term):
     """Class representing sources of language information"""
 
-    language = models.ForeignKey(Language)  #Null means "language independent"
-    description = models.TextField()
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+    description = models.TextField(blank=True)
+
+
+# Language dependent abstract classes
 
 
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
 
     language = models.ForeignKey(Language)
+
+    class Meta:
+        abstract = True
+
+
+class WordFormBase(LanguageEntity):
+    """Base class for wordforms"""
+
+    lexeme = models.ForeignKey(Lexeme)
+    gramm_category_set = models.ForeignKey(GrammCategorySet)
+    spelling = models.CharField(max_length=512)
+    writing_system = models.ForeignKey(WritingSystem)
+    dict_change_commit = models.ForeignKey(DictChange, editable=False)
+    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
@@ -188,25 +208,47 @@ class LexemeBase(LanguageEntity):
         abstract = True
 
 
+class TranslationBase(models.Model):
+    """Base class for translations"""
+
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='translationbase_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='translationbase_snd_set')
+    usage_constraint = models.ForeignKey(UsageConstraint, null=True, blank=True)
+    comment = models.TextField(blank=True)
+    dict_change_commit = models.ForeignKey(DictChange)
+    is_deleted = models.BooleanField(default=False)
+
+
+# Dictionary classes
+
+
+class TranslatedTerm(LanguageEntity):
+    """Class representing term translation for the given language"""
+
+    table = models.CharField(max_length=256)
+    term_id = models.IntegerField()
+    term_full_translation = models.CharField(max_length=256)
+    term_abbr_translation = models.CharField(max_length=64, blank=True)
+
+
 class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
     pass
 
 
-class WordFormBase(LanguageEntity):
-    """Base class for wordforms"""
+class Translation(TranslationBase):
+    """Class representing current translations"""
 
-    lexeme = models.ForeignKey(Lexeme)
-    gramm_category_set = models.ForeignKey(GrammarCategorySet)
-    spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
-    dict_change_commit = models.ForeignKey(DictChange, editable=False)
-    dialect_multi = models.ManyToManyField(Dialect)
-    is_deleted = models.BooleanField(default=False)
+    pass
 
-    class Meta:
-        abstract = True
+
+class TranslationDeleted(TranslationBase):
+    """Class representing translation deletions"""
+
+    translation = models.ForeignKey(Translation)
+    dict_change_delete = models.ForeignKey(DictChange, related_name='delete_translation_set')
+    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_translation_set', null=True, blank=True)
 
 
 class WordForm(WordFormBase):
@@ -227,40 +269,5 @@ class WordFormDeleted(WordFormBase):
 
     word_form = models.ForeignKey(WordForm)
     dict_change_delete = models.ForeignKey(DictChange, related_name='delete_word_form _set')
-    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set')
-
-
-class TranslationBase(models.Model):
-    """Base class for translations"""
-
-    lexeme_1 = models.ForeignKey(Lexeme, related_name='translationbase_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, related_name='translationbase_snd_set')
-    usage_constraint = models.ForeignKey(UsageConstraint)
-    comment = models.TextField(null=True)
-    dict_change_commit = models.ForeignKey(DictChange)
-    is_deleted = models.BooleanField(default=False)
-
-
-class Translation(TranslationBase):
-    """Class representing current translations"""
-
-    pass
-
-
-class TranslationDeleted(TranslationBase):
-    """Class representing translation deletions"""
-
-    translation = models.ForeignKey(Translation)
-    dict_change_delete = models.ForeignKey(DictChange, related_name='delete_translation_set')
-    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_translation_set')
-
-
-class TranslatedTerm(LanguageEntity):
-    """Class representing term translation for the given language"""
-
-    table = models.CharField(max_length=256)
-    term_id = models.IntegerField()
-    term_full_translation = models.CharField(max_length=256)
-    term_abbr_translation = models.CharField(max_length=64)
-
+    dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set', null=True, blank=True)
 
