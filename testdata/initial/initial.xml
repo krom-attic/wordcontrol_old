@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<django-objects version="1.0">
+    <object pk="1" model="wordengine.syntacticcategory">
+        <field name="term_full" type="CharField">Verb</field>
+        <field name="term_abbr" type="CharField">v</field>
+    </object>
+    <object pk="2" model="wordengine.syntacticcategory">
+        <field name="term_full" type="CharField">Noun</field>
+        <field name="term_abbr" type="CharField">n</field>
+    </object>
+    <object pk="3" model="wordengine.syntacticcategory">
+        <field name="term_full" type="CharField">Adjective</field>
+        <field name="term_abbr" type="CharField">adj</field>
+    </object>
+    <object pk="1" model="wordengine.aspect">
+        <field name="term_full" type="CharField">Perfective</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.aspect">
+        <field name="term_full" type="CharField">Imperfective Indeterminate</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="3" model="wordengine.aspect">
+        <field name="term_full" type="CharField">Imperfective Determinate</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.case">
+        <field name="term_full" type="CharField">Nominative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.case">
+        <field name="term_full" type="CharField">Genetive</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="3" model="wordengine.case">
+        <field name="term_full" type="CharField">Accusative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="4" model="wordengine.case">
+        <field name="term_full" type="CharField">Dative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="5" model="wordengine.case">
+        <field name="term_full" type="CharField">Partitive</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="6" model="wordengine.case">
+        <field name="term_full" type="CharField">Ablative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="7" model="wordengine.case">
+        <field name="term_full" type="CharField">Allative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="8" model="wordengine.case">
+        <field name="term_full" type="CharField">Adessive</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="9" model="wordengine.case">
+        <field name="term_full" type="CharField">Illative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="10" model="wordengine.case">
+        <field name="term_full" type="CharField">Inessive</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="11" model="wordengine.case">
+        <field name="term_full" type="CharField">Terminative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="12" model="wordengine.case">
+        <field name="term_full" type="CharField">Locative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="13" model="wordengine.case">
+        <field name="term_full" type="CharField">Elative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="14" model="wordengine.case">
+        <field name="term_full" type="CharField">Translative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.comparison">
+        <field name="term_full" type="CharField">Comparative</field>
+        <field name="term_abbr" type="CharField">cmp</field>
+    </object>
+    <object pk="2" model="wordengine.comparison">
+        <field name="term_full" type="CharField">Superlative</field>
+        <field name="term_abbr" type="CharField">sup</field>
+    </object>
+    <object pk="1" model="wordengine.gender">
+        <field name="term_full" type="CharField">Masculine</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.gender">
+        <field name="term_full" type="CharField">Feminine</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="3" model="wordengine.gender">
+        <field name="term_full" type="CharField">Neuter</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.mood">
+        <field name="term_full" type="CharField">Conditional</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.mood">
+        <field name="term_full" type="CharField">Imperative</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.number">
+        <field name="term_full" type="CharField">Singular</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.number">
+        <field name="term_full" type="CharField">Plural</field>
+        <field name="term_abbr" type="CharField">pl</field>
+    </object>
+    <object pk="1" model="wordengine.person">
+        <field name="term_full" type="CharField">First person</field>
+        <field name="term_abbr" type="CharField">1st</field>
+    </object>
+    <object pk="2" model="wordengine.person">
+        <field name="term_full" type="CharField">Second person</field>
+        <field name="term_abbr" type="CharField">2nd</field>
+    </object>
+    <object pk="3" model="wordengine.person">
+        <field name="term_full" type="CharField">Third person</field>
+        <field name="term_abbr" type="CharField">3rd</field>
+    </object>
+    <object pk="1" model="wordengine.tense">
+        <field name="term_full" type="CharField">Present Simple</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.tense">
+        <field name="term_full" type="CharField">Past Simple</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="3" model="wordengine.tense">
+        <field name="term_full" type="CharField">Present Perfect</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="4" model="wordengine.tense">
+        <field name="term_full" type="CharField">Past Perfect</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="5" model="wordengine.tense">
+        <field name="term_full" type="CharField">Future Simple</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="6" model="wordengine.tense">
+        <field name="term_full" type="CharField">Future Perfect</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.voice">
+        <field name="term_full" type="CharField">Active</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="2" model="wordengine.voice">
+        <field name="term_full" type="CharField">Passive</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">1</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case"><None></None></field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person">1</field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense">1</field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="2" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">1</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case"><None></None></field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person">2</field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense">1</field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="3" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">1</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case"><None></None></field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person">1</field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense">2</field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="4" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">2</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case">1</field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person"><None></None></field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense"><None></None></field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="5" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">2</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case">2</field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person"><None></None></field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense"><None></None></field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="6" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">2</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case">5</field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person"><None></None></field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense"><None></None></field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="7" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">2</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case">9</field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person"><None></None></field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense"><None></None></field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="8" model="wordengine.grammcategoryset">
+        <field name="syntactic_category" rel="ManyToOneRel" to="wordengine.syntacticcategory">2</field>
+        <field name="animacy" rel="ManyToOneRel" to="wordengine.animacy"><None></None></field>
+        <field name="aspect" rel="ManyToOneRel" to="wordengine.aspect"><None></None></field>
+        <field name="case" rel="ManyToOneRel" to="wordengine.case">3</field>
+        <field name="comparison" rel="ManyToOneRel" to="wordengine.comparison"><None></None></field>
+        <field name="gender" rel="ManyToOneRel" to="wordengine.gender"><None></None></field>
+        <field name="mood" rel="ManyToOneRel" to="wordengine.mood"><None></None></field>
+        <field name="number" rel="ManyToOneRel" to="wordengine.number"><None></None></field>
+        <field name="person" rel="ManyToOneRel" to="wordengine.person"><None></None></field>
+        <field name="polarity" rel="ManyToOneRel" to="wordengine.polarity"><None></None></field>
+        <field name="tense" rel="ManyToOneRel" to="wordengine.tense"><None></None></field>
+        <field name="voice" rel="ManyToOneRel" to="wordengine.voice"><None></None></field>
+    </object>
+    <object pk="1" model="wordengine.language">
+        <field name="term_full" type="CharField">English</field>
+        <field name="term_abbr" type="CharField">eng</field>
+        <field name="syntactic_category_multi" rel="ManyToManyRel" to="wordengine.syntacticcategory"><object pk="1"></object><object pk="2"></object><object pk="3">
+		</object></field>
+        <field name="gramm_category_set_multi" rel="ManyToManyRel" to="wordengine.grammcategoryset"><object pk="1"></object><object pk="2"></object><object pk="3"></object><object pk="4"></object><object pk="8"></object></field>
+    </object>
+    <object pk="2" model="wordengine.language">
+        <field name="term_full" type="CharField">Russian</field>
+        <field name="term_abbr" type="CharField"></field>
+        <field name="syntactic_category_multi" rel="ManyToManyRel" to="wordengine.syntacticcategory"><object pk="1"></object><object pk="2"></object><object pk="3"></object></field>
+        <field name="gramm_category_set_multi" rel="ManyToManyRel" to="wordengine.grammcategoryset"><object pk="1"></object><object pk="2"></object><object pk="3"></object><object pk="4"></object><object pk="5"></object><object pk="8"></object></field>
+    </object>
+    <object pk="1" model="wordengine.dialect">
+        <field name="term_full" type="CharField">Standard</field>
+        <field name="term_abbr" type="CharField"></field>
+        <field name="language" rel="ManyToOneRel" to="wordengine.language">1</field>
+        <field name="parent_dialect" rel="ManyToOneRel" to="wordengine.dialect"><None></None></field>
+    </object>
+    <object pk="2" model="wordengine.dialect">
+        <field name="term_full" type="CharField">Standard</field>
+        <field name="term_abbr" type="CharField"></field>
+        <field name="language" rel="ManyToOneRel" to="wordengine.language">2</field>
+        <field name="parent_dialect" rel="ManyToOneRel" to="wordengine.dialect"><None></None></field>
+    </object>
+    <object pk="1" model="wordengine.writingsystemtype">
+        <field name="term_full" type="CharField">Phonetic Strict</field>
+        <field name="term_abbr" type="CharField"></field>
+    </object>
+    <object pk="1" model="wordengine.writingsystem">
+        <field name="term_full" type="CharField">International Phonetic Alphabet</field>
+        <field name="term_abbr" type="CharField">IPA</field>
+        <field name="language" rel="ManyToOneRel" to="wordengine.language"><None></None></field>
+        <field name="writing_system_type" rel="ManyToOneRel" to="wordengine.writingsystemtype">1</field>
+        <field name="description" type="TextField"></field>
+    </object>
+</django-objects>
