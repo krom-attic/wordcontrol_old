@@ -3,8 +3,6 @@ from django.contrib import auth
 
 # Verified against Architecture Design as of 2013.12.30
 
-# Global abstract classes
-
 
 class Change(models.Model):
     """Abstract base class representing submitted change."""
@@ -15,27 +13,6 @@ class Change(models.Model):
 
     class Meta:
         abstract = True
-
-
-class DictChange(Change):
-    """This class extends Change class with fields representing change review and information source for
-     WordForms and Translations"""
-
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False)
-    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False)
-    source = models.ForeignKey(Source)
-
-
-class MiscChange(Change):
-    """This class extends Change class with fields representing generic change"""
-
-    table_name = models.CharField(max_length=256)
-    field_name = models.CharField(max_length=256)
-    old_value = models.CharField(max_length=512, blank=True)
-    new_value = models.CharField(max_length=512, blank=True)
-
-
-# Dictionary term models
 
 
 class Term(models.Model):
@@ -52,6 +29,7 @@ class SyntacticCategory(Term):
     """Class represents syntactic category (used in lexemes) list"""
 
     pass
+
 
 
 class UsageConstraint(Term):
@@ -150,6 +128,31 @@ class Language(Term):
     gramm_category_set_multi = models.ManyToManyField(GrammCategorySet)
 
 
+class Source(Term):
+    """Class representing sources of language information"""
+
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+    description = models.TextField(blank=True)
+
+
+class DictChange(Change):
+    """This class extends Change class with fields representing change review and information source for
+     WordForms and Translations"""
+
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False)
+    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False)
+    source = models.ForeignKey(Source)
+
+
+class MiscChange(Change):
+    """This class extends Change class with fields representing generic change"""
+
+    table_name = models.CharField(max_length=256)
+    field_name = models.CharField(max_length=256)
+    old_value = models.CharField(max_length=512, blank=True)
+    new_value = models.CharField(max_length=512, blank=True)
+
+
 class Dialect(Term):
     """Class represents dialect present in the system"""
 
@@ -165,16 +168,6 @@ class WritingSystem(Term):
     description = models.TextField(blank=True)
 
 
-class Source(Term):
-    """Class representing sources of language information"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-    description = models.TextField(blank=True)
-
-
-# Language dependent abstract classes
-
-
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
 
@@ -182,6 +175,21 @@ class LanguageEntity(models.Model):
 
     class Meta:
         abstract = True
+
+
+class LexemeBase(LanguageEntity):
+    """Base class for lexemes"""
+
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+
+    class Meta:
+        abstract = True
+
+
+class Lexeme(LexemeBase):
+    """Class representing current lexemes"""
+
+    pass
 
 
 class WordFormBase(LanguageEntity):
@@ -194,15 +202,6 @@ class WordFormBase(LanguageEntity):
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
-
-    class Meta:
-        abstract = True
-
-
-class LexemeBase(LanguageEntity):
-    """Base class for lexemes"""
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
 
     class Meta:
         abstract = True
@@ -229,12 +228,6 @@ class TranslatedTerm(LanguageEntity):
     term_id = models.IntegerField()
     term_full_translation = models.CharField(max_length=256)
     term_abbr_translation = models.CharField(max_length=64, blank=True)
-
-
-class Lexeme(LexemeBase):
-    """Class representing current lexemes"""
-
-    pass
 
 
 class Translation(TranslationBase):
