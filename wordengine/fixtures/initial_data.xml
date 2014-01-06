@@ -308,4 +308,10 @@
         <field name="writing_system_type" rel="ManyToOneRel" to="wordengine.writingsystemtype">1</field>
         <field name="description" type="TextField"></field>
     </object>
+    <object pk="1" model="wordengine.source">
+        <field name="term_full" type="CharField">Unknown</field>
+        <field name="term_abbr" type="CharField"></field>
+        <field name="language" rel="ManyToOneRel" to="wordengine.language"><None></None></field>
+        <field name="description" type="TextField"></field>
+    </object>
 </django-objects>
