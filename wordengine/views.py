@@ -30,7 +30,7 @@ class AddWordFormView(TemplateView):
 
     @login_required
     def dispatch(self, *args, **kwargs):
-        return super(AddWordFormView, self).dispatch(*args, **kwargs)from django.shortcuts import render
+        return super(AddWordFormView, self).dispatch(*args, **kwargs)
 
 def index(request):
     return render(request, 'wordengine/index.html')
