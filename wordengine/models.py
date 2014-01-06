@@ -213,7 +213,7 @@ class Lexeme(LexemeBase):
 class WordFormBase(LanguageEntity):
     """Base class for wordforms"""
 
-    lexeme = models.ForeignKey(Lexeme)
+    lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
