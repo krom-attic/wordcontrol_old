@@ -21,6 +21,9 @@ class Term(models.Model):
     term_full = models.CharField(max_length=256)
     term_abbr = models.CharField(max_length=64, blank=True)
 
+    def __str__(self):
+        return self.term_full
+
     class Meta:
         abstract = True
 
@@ -120,6 +123,12 @@ class GrammCategorySet(models.Model):
     tense = models.ForeignKey(Tense, null=True, blank=True)
     voice = models.ForeignKey(Voice, null=True, blank=True)
 
+    def __str__(self):
+            return ' '.join(str(s) for s in [self.syntactic_category, self.person, self.tense, self.case, self.aspect,
+                                             self.voice, self.comparison, self.polarity, self.mood, self.animacy,
+                                             self.gender, self.number]
+                            if s)
+
 
 class Language(Term):
     """Class represents languages present in the system"""
@@ -159,12 +168,21 @@ class Dialect(Term):
     language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
     parent_dialect = models.ForeignKey('self', null=True, blank=True)
 
+    def __str__(self):
+        return ' '.join([self.term_full, str(self.language)])
+
+
+class WritingSystemType(Term):
+    """Class for constant writing system types list"""
+
+    pass
+
 
 class WritingSystem(Term):
     """Class represents a writing systems used to spell a word form"""
 
     language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-    ws_type = models.IntegerField()
+    writing_system_type = models.ForeignKey(WritingSystemType)
     description = models.TextField(blank=True)
 
 
