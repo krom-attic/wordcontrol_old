@@ -185,6 +185,9 @@ class WritingSystem(Term):
     writing_system_type = models.ForeignKey(WritingSystemType)
     description = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.term_full
+
 
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
@@ -207,7 +210,8 @@ class LexemeBase(LanguageEntity):
 class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
-    pass
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.language, self.syntactic_category])
 
 
 class WordFormBase(models.Model):
@@ -220,6 +224,9 @@ class WordFormBase(models.Model):
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
+
+    def __str__(self):
+        return ' | '.join([self.spelling, str(self.writing_system.term_abbr), str(self.gramm_category_set)])
 
     class Meta:
         abstract = True
