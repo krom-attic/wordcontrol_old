@@ -148,8 +148,8 @@ class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      WordForms and Translations"""
 
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False)
-    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False)
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True)
+    timestamp_review = models.DateTimeField(editable=False, null=True)
     source = models.ForeignKey(Source)
 
 

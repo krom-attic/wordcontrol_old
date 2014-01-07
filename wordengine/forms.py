@@ -17,3 +17,7 @@ class LexemeForm(forms.ModelForm):
 class WordFormForm(forms.ModelForm):
     class Meta:
         widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
+
+
+class SourceSelectForm(forms.Form):
+    source = forms.ModelChoiceField(queryset=models.Source.objects.all())
