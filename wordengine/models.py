@@ -210,7 +210,7 @@ class Lexeme(LexemeBase):
     pass
 
 
-class WordFormBase(LanguageEntity):
+class WordFormBase(models.Model):
     """Base class for wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
