@@ -224,6 +224,9 @@ class WordFormBase(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return '{0} ({1})'.format(str(self.spelling), str(self.writing_system.term_abbr))
+
 
 class TranslationBase(models.Model):
     """Base class for translations"""
