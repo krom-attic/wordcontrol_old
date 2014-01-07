@@ -226,7 +226,7 @@ class WordFormBase(models.Model):
     is_deleted = models.BooleanField(default=False, editable=False)
 
     def __str__(self):
-        return ' | '.join([self.spelling, str(self.writing_system.term_abbr), str(self.gramm_category_set)])
+        return '{0} ({1}) | {2}'.format(self.spelling, str(self.gramm_category_set), str(self.writing_system.term_abbr))
 
     class Meta:
         abstract = True
