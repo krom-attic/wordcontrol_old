@@ -1,11 +1,11 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}Добавление слова{% endblock %}
 {% block pagebody %}
-    <form action="/add/word/" method="post">{% csrf_token %}
-    {{ lexeme_form.as_p }}
-    {{ word_form.as_p }}
-    <input type="submit" value="Submit" />
-    <input type="submit_continue_edit" value="Submit" />
-    <input type="submit_add_new" value="Submit" />
+    <form action="" method="post">{% csrf_token %}
+        {{ lexeme_form.as_p }}
+        {{ word_form.as_p }}
+        <input type="submit" value="Submit" />
+        <input type="submit" value="Submit and add another" name="_add_new" />
+        <input type="submit" value="Submit and continue editing" name="_continue_edit" />
     </form>
 {% endblock %}
