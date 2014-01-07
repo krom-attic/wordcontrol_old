@@ -219,7 +219,7 @@ class WordFormBase(LanguageEntity):
     writing_system = models.ForeignKey(WritingSystem)
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, editable=False)
 
     class Meta:
         abstract = True
