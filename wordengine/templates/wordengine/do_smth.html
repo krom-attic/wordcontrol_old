@@ -1,0 +1,9 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Do something{% endblock %}
+{% block pagebody %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ smth_form.as_p }}
+        <input type="submit" value="Delete object" name="_delete" />
+    </form>
+{% endblock %}

@@ -21,3 +21,7 @@ class WordFormForm(forms.ModelForm):
 
 class SourceSelectForm(forms.Form):
     source = forms.ModelChoiceField(queryset=models.Source.objects.all())
+
+
+class DoSmthWithIdForm(forms.Form):
+    given_id = forms.IntegerField()

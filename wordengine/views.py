@@ -7,6 +7,20 @@ from wordengine import forms
 from wordengine import models
 
 
+class DeleteWordFormView(TemplateView):
+    some_object_class = forms.DoSmthWithIdForm
+    template_name = 'wordengine/do_smth.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'smth_form': self.some_object_class()})
+
+    def post(self, request, *args, **kwargs):
+        given_id = request.POST['given_id']
+        models.WordForm(given_id).is_deleted = True
+        models.WordForm(given_id).save
+        return redirect(reverse('wordengine:do_something'))
+
+
 class AddWordFormView(TemplateView):
     word_form_class = forms.NewWordFormForm
     lexeme_form_class = forms.LexemeForm
