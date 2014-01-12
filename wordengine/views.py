@@ -7,7 +7,7 @@ from wordengine import forms
 from wordengine import models
 
 
-class DeleteWordFormView(TemplateView):
+class DoSmthWordFormView(TemplateView):
     some_object_class = forms.DoSmthWithIdForm
     template_name = 'wordengine/do_smth.html'
 
@@ -15,10 +15,14 @@ class DeleteWordFormView(TemplateView):
         return render(request, self.template_name, {'smth_form': self.some_object_class()})
 
     def post(self, request, *args, **kwargs):
-        given_id = request.POST['given_id']
-        models.WordForm(given_id).is_deleted = True
-        models.WordForm(given_id).save
-        return redirect(reverse('wordengine:do_something'))
+        word_form = get_object_or_404(getattr(models, request.POST['object_type']), pk=request.POST['given_id'])
+        if '_delete' in request.POST:
+            word_form.is_deleted = True
+            word_form.save()
+        elif '_restore' in request.POST:
+            word_form.is_deleted = False
+            word_form.save()
+        return redirect(reverse('wordengine:action_result'))
 
 
 class AddWordFormView(TemplateView):
@@ -63,3 +67,6 @@ class AddWordFormView(TemplateView):
 
 def index(request):
     return render(request, 'wordengine/index.html')
+
+def ActionResultView(request):
+    return render(request, 'wordengine/action_result.html')
