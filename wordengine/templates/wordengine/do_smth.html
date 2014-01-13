@@ -4,7 +4,7 @@
     <form action="" method="post">
         {% csrf_token %}
         {{ smth_form.as_p }}
-        <input type="submit" value="Delete object" name="_delete" />
-        <input type="submit" value="Restore object" name="_restore" />
+        <input type="submit" value="Delete wordform" name="_delete_wordform" />
+        <input type="submit" value="Restore wordform" name="_restore_wordform" />
     </form>
 {% endblock %}

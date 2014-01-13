@@ -25,4 +25,3 @@ class SourceSelectForm(forms.Form):
 
 class DoSmthWithIdForm(forms.Form):
     given_id = forms.IntegerField()
-    object_type = forms.ChoiceField([('WordForm', 'WordForm')])

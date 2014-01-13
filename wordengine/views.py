@@ -15,11 +15,12 @@ class DoSmthWordFormView(TemplateView):
         return render(request, self.template_name, {'smth_form': self.some_object_class()})
 
     def post(self, request, *args, **kwargs):
-        word_form = get_object_or_404(getattr(models, request.POST['object_type']), pk=request.POST['given_id'])
-        if '_delete' in request.POST:
+        if '_delete_wordform' in request.POST:
+            word_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
             word_form.is_deleted = True
             word_form.save()
-        elif '_restore' in request.POST:
+        elif '_restore_wordform' in request.POST:
+            word_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
             word_form.is_deleted = False
             word_form.save()
         return redirect(reverse('wordengine:action_result'))
