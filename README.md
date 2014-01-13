@@ -1,4 +1,4 @@
-wordcontrol
+WordControl
 ===========
 
 Word Control is an application for a collaboration on documenting endangered languages, especially its lexicon and phonology.
