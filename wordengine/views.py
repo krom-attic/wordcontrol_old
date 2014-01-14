@@ -17,6 +17,10 @@ class DoSmthWordFormView(TemplateView):
     def post(self, request, *args, **kwargs):
         if '_delete_wordform' in request.POST:
             word_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
+            # if the corresponding lexeme doesn't have another wordforms:
+                # if it has a translation, block wordform deletion
+                # if it doesn't, delete the lexeme and the wordform, record the deletion
+            # if the lexeme has another wordforms, delete a wordform, record the deletion
             word_form.is_deleted = True
             word_form.save()
         elif '_restore_wordform' in request.POST:
