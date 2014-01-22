@@ -10,17 +10,6 @@
                 <input type="submit" value="Search" name="" />
             </form>
 
-        {% if is_searched %}
-        <h2>Search results</h2>
-            {% if word_result %}
-                <ul>
-                {% for word in word_result %}
-                    <li>{{ word }}</li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>Search returned no results.</p>
-            {% endif %}
-        {% endif %}
+{% include "wordengine/search_result.html" %}
 
 {% endblock %}

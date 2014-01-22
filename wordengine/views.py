@@ -6,10 +6,24 @@ from django.core.urlresolvers import reverse
 from wordengine import forms, models
 
 
+# Common procedures here
+
+def find_lexeme_wordforms(request):
+    if 'given_string' in request.POST:
+        word_result = models.WordForm.objects.filter(spelling__startswith=request.POST['given_string'])
+        if ('syntactic_category' in request.POST) and (request.POST['syntactic_category']) != '':
+            word_result = word_result.filter(lexeme__syntactic_category=request.POST['syntactic_category'])
+    # 2Do An error check must be here
+    return word_result
+
+
+# Actual views here
+
 def index(request):
     return render(request, 'wordengine/index.html')
 
-def ActionResultView(request):
+
+def action_result_view(request):
     return render(request, 'wordengine/action_result.html')
 
 
@@ -37,13 +51,15 @@ class DoSmthWordFormView(TemplateView):
 
 
 class AddWordFormView(TemplateView):
+    word_search_form_class = forms.SearchWordFormForm
     word_form_class = forms.NewWordFormForm
     lexeme_form_class = forms.LexemeForm
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/add_word.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'word_form': self.word_form_class(),
+        return render(request, self.template_name, {'word_search_form':self.word_search_form_class(),
+                                                    'word_form': self.word_form_class(),
                                                     'lexeme_form': self.lexeme_form_class(),
                                                     'source_form': self.source_form_class()})
 
@@ -61,13 +77,15 @@ class AddWordFormView(TemplateView):
             if word_form.is_valid():
                 word_form.save()
                 is_saved = True
-        if not is_saved:
+        if (not is_saved) and (not '_just_search' in request.POST):
             return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
                                                         'source_form': source_form})
 
+        #2Do Make possible to select a lexeme from search results
+
         if '_continue_edit' in request.POST:
             return redirect(reverse('wordengine:index'))
-        elif '_add_new' in request.POST:
+        elif ('_add_new' in request.POST) or ('_just_search' in request.POST):
             return redirect(reverse('wordengine:add_wordform'))
         else:
             return redirect(reverse('wordengine:index'))
@@ -85,15 +103,16 @@ class ShowWordFormListView(TemplateView):
         return render(request, self.template_name, {'word_search': self.word_search_class()})
 
     def post(self, request, *args, **kwargs):
-        is_searched = True
-        if 'given_string' in request.POST:
-            word_result = models.WordForm.objects.filter(spelling__startswith=request.POST['given_string'])
+        is_search = True
+        word_result = find_lexeme_wordforms(request)
         return render(request, self.template_name, {'word_search': self.word_search_class(),
-                                                    'word_result': word_result, 'is_searched': is_searched})
+                                                    'word_result': word_result, 'is_search': is_search})
 
 
 class ShowLexemeDetailsView(TemplateView):
     template_name = 'wordengine/lexeme_details.html'
 
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+    def get(self, request, lexeme_id, *args, **kwargs):
+        given_lexeme = models.Lexeme.objects.get(pk=lexeme_id)
+        lexeme_words = given_lexeme.wordform_set.all()
+        return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})

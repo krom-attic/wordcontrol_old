@@ -1,0 +1,12 @@
+{% if is_search %}
+<h2>Search results</h2>
+    {% if word_result %}
+        <ul>
+        {% for word in word_result %}
+            <li><a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Search returned no results.</p>
+    {% endif %}
+{% endif %}

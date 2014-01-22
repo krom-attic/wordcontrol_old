@@ -3,6 +3,14 @@
 {% block pagebody %}
     <form action="" method="post">
         {% csrf_token %}
+        {{ word_search_form.as_p }}
+    <input type="submit" value="Search" name="_just_search" />
+    </form>
+
+    <hr />
+
+    <form action="" method="post">
+        {% csrf_token %}
         {{ lexeme_form.as_p }}
         {{ source_form.as_p }}
         {{ word_form.as_p }}
