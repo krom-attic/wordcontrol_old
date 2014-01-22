@@ -4,6 +4,11 @@
     <title>WordControl — {% block pagetitle %}Page-specific part of title here{% endblock %}</title>
 </head>
 <body>
+<div><strong>Поиск перевода:</strong> Вставить ссылку</div>
+<div><strong>Работа со словарной базой:</strong> <a href="{% url 'wordengine:add_wordform' %}">Добавить слово</a> |
+    <a href="{% url 'wordengine:show_wordlist' %}">Показать список слов</a> |
+    <a href="{% url 'wordengine:show_lexemedetails' %}">Показать карточку лексемы</a></div>
+<div><strong>Настройка системы:</strong> Вставить ссылку</div>
 <div>{% block pagebody %}Page body here{% endblock %}</div>
 </body>
 </html>

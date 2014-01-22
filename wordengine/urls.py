@@ -6,4 +6,6 @@ urlpatterns = patterns('',
                        url(r'^$', views.index, name='index'),
                        url(r'^dosmth$', views.DoSmthWordFormView.as_view(), name='do_something'),
                        url(r'^result$', views.ActionResultView, name='action_result'),
+                       url(r'^view/lexeme$', views.ShowLexemeDetailsView.as_view(), name='show_lexemedetails'),
+                       url(r'^view/words$', views.ShowWordFormListView.as_view(), name='show_wordlist'),
 )

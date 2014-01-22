@@ -3,8 +3,14 @@ from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
-from wordengine import forms
-from wordengine import models
+from wordengine import forms, models
+
+
+def index(request):
+    return render(request, 'wordengine/index.html')
+
+def ActionResultView(request):
+    return render(request, 'wordengine/action_result.html')
 
 
 class DoSmthWordFormView(TemplateView):
@@ -70,8 +76,24 @@ class AddWordFormView(TemplateView):
     def dispatch(self, *args, **kwargs):
         return super(AddWordFormView, self).dispatch(*args, **kwargs)
 
-def index(request):
-    return render(request, 'wordengine/index.html')
 
-def ActionResultView(request):
-    return render(request, 'wordengine/action_result.html')
+class ShowWordFormListView(TemplateView):
+    word_search_class = forms.SearchWordFormForm
+    template_name = 'wordengine/wordform_list.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'word_search': self.word_search_class()})
+
+    def post(self, request, *args, **kwargs):
+        is_searched = True
+        if 'given_string' in request.POST:
+            word_result = models.WordForm.objects.filter(spelling__startswith=request.POST['given_string'])
+        return render(request, self.template_name, {'word_search': self.word_search_class(),
+                                                    'word_result': word_result, 'is_searched': is_searched})
+
+
+class ShowLexemeDetailsView(TemplateView):
+    template_name = 'wordengine/lexeme_details.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)

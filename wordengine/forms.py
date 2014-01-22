@@ -25,3 +25,7 @@ class SourceSelectForm(forms.Form):
 
 class DoSmthWithIdForm(forms.Form):
     given_id = forms.IntegerField()
+
+
+class SearchWordFormForm(forms.Form):
+    given_string = forms.CharField()

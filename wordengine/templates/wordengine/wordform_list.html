@@ -1,0 +1,26 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Wordform search{% endblock %}
+{% block pagebody %}
+
+    <h1>Word search</h1>
+        <h2>Search query</h2>
+            <form action="" method="post">
+                {% csrf_token %}
+                {{ word_search.as_p }}
+                <input type="submit" value="Search" name="" />
+            </form>
+
+        {% if is_searched %}
+        <h2>Search results</h2>
+            {% if word_result %}
+                <ul>
+                {% for word in word_result %}
+                    <li>{{ word }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>Search returned no results.</p>
+            {% endif %}
+        {% endif %}
+
+{% endblock %}
