@@ -227,7 +227,7 @@ class WordFormBase(models.Model):
 
     def __str__(self):
         return '{0} ({1}) | {2}'.format(self.spelling, str(self.gramm_category_set), str(self.writing_system.term_abbr))
-    #2Do Сделать вывод диалектов в описание
+    #TODO Include dialects into description
 
     class Meta:
         abstract = True

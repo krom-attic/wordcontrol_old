@@ -4,8 +4,7 @@
 
     <h1>Word search</h1>
         <h2>Search query</h2>
-            <form action="" method="post">
-                {% csrf_token %}
+            <form action="" method="get">
                 {{ word_search.as_p }}
                 <input type="submit" value="Search" name="" />
             </form>

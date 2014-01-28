@@ -8,12 +8,11 @@ from wordengine import forms, models
 
 # Common procedures here
 
-def find_lexeme_wordforms(request):
-    if 'given_string' in request.POST:
-        word_result = models.WordForm.objects.filter(spelling__startswith=request.POST['given_string'])
-        if ('syntactic_category' in request.POST) and (request.POST['syntactic_category']) != '':
-            word_result = word_result.filter(lexeme__syntactic_category=request.POST['syntactic_category'])
-    # 2Do An error check must be here
+def find_lexeme_wordforms(word_search):
+    word_result = models.WordForm.objects.filter(spelling__startswith=word_search.cleaned_data['search_for'])
+    if word_search.cleaned_data['syntactic_category'] is not None:
+        word_result = word_result.filter(lexeme__syntactic_category=word_search.cleaned_data['syntactic_category'])
+    # TODO Invalid search handling
     return word_result
 
 
@@ -81,7 +80,7 @@ class AddWordFormView(TemplateView):
             return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
                                                         'source_form': source_form})
 
-        #2Do Make possible to select a lexeme from search results
+        #TODO Make possible to select a lexeme from search results
 
         if '_continue_edit' in request.POST:
             return redirect(reverse('wordengine:index'))
@@ -100,13 +99,14 @@ class ShowWordFormListView(TemplateView):
     template_name = 'wordengine/wordform_list.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'word_search': self.word_search_class()})
-
-    def post(self, request, *args, **kwargs):
-        is_search = True
-        word_result = find_lexeme_wordforms(request)
-        return render(request, self.template_name, {'word_search': self.word_search_class(),
-                                                    'word_result': word_result, 'is_search': is_search})
+        if request.GET:
+            word_search = self.word_search_class(request.GET)
+            word_result = find_lexeme_wordforms(word_search)
+            return render(request, self.template_name, {'word_search': word_search,
+                                                        'word_result': word_result, 'is_search': True})
+        else:
+            word_search = self.word_search_class()
+            return render(request, self.template_name, {'word_search': word_search, 'is_search': False})
 
 
 class ShowLexemeDetailsView(TemplateView):
