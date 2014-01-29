@@ -9,10 +9,10 @@ from wordengine import forms, models
 # Common procedures here
 
 def find_lexeme_wordforms(word_search):
+    word_search.is_valid()
     word_result = models.WordForm.objects.filter(spelling__startswith=word_search.cleaned_data['search_for'])
-    if word_search.cleaned_data['syntactic_category'] is not None:
+    if word_search.cleaned_data['syntactic_category']:
         word_result = word_result.filter(lexeme__syntactic_category=word_search.cleaned_data['syntactic_category'])
-    # TODO Invalid search handling
     return word_result
 
 
@@ -113,6 +113,6 @@ class ShowLexemeDetailsView(TemplateView):
     template_name = 'wordengine/lexeme_details.html'
 
     def get(self, request, lexeme_id, *args, **kwargs):
-        given_lexeme = models.Lexeme.objects.get(pk=lexeme_id)
+        given_lexeme = get_object_or_404(models.Lexeme, pk=lexeme_id)
         lexeme_words = given_lexeme.wordform_set.all()
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
