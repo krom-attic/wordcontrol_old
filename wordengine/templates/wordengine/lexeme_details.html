@@ -1,0 +1,10 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Lexeme details{% endblock %}
+{% block pagebody %}
+    <p>{{ given_lexeme }}</p>
+    <ul>
+    {% for word in lexeme_words %}
+        <li>{{ word }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

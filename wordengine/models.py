@@ -148,8 +148,8 @@ class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      WordForms and Translations"""
 
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False)
-    timestamp_review = models.DateTimeField(auto_now_add=True, editable=False)
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
+    timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
     source = models.ForeignKey(Source)
 
 
@@ -185,6 +185,9 @@ class WritingSystem(Term):
     writing_system_type = models.ForeignKey(WritingSystemType)
     description = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.term_full
+
 
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
@@ -207,10 +210,11 @@ class LexemeBase(LanguageEntity):
 class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
-    pass
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.language, self.syntactic_category])
 
 
-class WordFormBase(LanguageEntity):
+class WordFormBase(models.Model):
     """Base class for wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
@@ -219,7 +223,11 @@ class WordFormBase(LanguageEntity):
     writing_system = models.ForeignKey(WritingSystem)
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, editable=False)
+
+    def __str__(self):
+        return '{0} ({1}) | {2}'.format(self.spelling, str(self.gramm_category_set), str(self.writing_system.term_abbr))
+    #TODO Include dialects into description
 
     class Meta:
         abstract = True

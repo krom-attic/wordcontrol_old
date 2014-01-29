@@ -1,0 +1,14 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Wordform search{% endblock %}
+{% block pagebody %}
+
+    <h1>Word search</h1>
+        <h2>Search query</h2>
+            <form action="" method="get">
+                {{ word_search.as_p }}
+                <input type="submit" value="Search" name="" />
+            </form>
+
+{% include "wordengine/search_result.html" %}
+
+{% endblock %}

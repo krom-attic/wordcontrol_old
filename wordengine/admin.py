@@ -25,5 +25,5 @@ admin.site.register(wordengine.models.Lexeme)
 admin.site.register(wordengine.models.WordForm)
 admin.site.register(wordengine.models.Translation)
 admin.site.register(wordengine.models.TranslatedTerm)
-
+admin.site.register(wordengine.models.Source)
 
