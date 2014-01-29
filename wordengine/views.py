@@ -9,10 +9,11 @@ from wordengine import forms, models
 # Common procedures here
 
 def find_lexeme_wordforms(word_search):
-    word_search.is_valid()
-    word_result = models.WordForm.objects.filter(spelling__startswith=word_search.cleaned_data['search_for'])
-    if word_search.cleaned_data['syntactic_category']:
-        word_result = word_result.filter(lexeme__syntactic_category=word_search.cleaned_data['syntactic_category'])
+    if word_search.is_valid():
+        word_result = models.WordForm.objects.filter(spelling__startswith=word_search.cleaned_data['search_for'])
+        if word_search.cleaned_data['syntactic_category']:
+            word_result = word_result.filter(lexeme__syntactic_category=word_search.cleaned_data['syntactic_category'])
+    #TODO Invalid search handling
     return word_result
 
 
@@ -55,7 +56,7 @@ class AddWordFormView(TemplateView):
     """New word addition view"""
 
     word_search_form_class = forms.SearchWordFormForm
-    word_form_class = forms.NewWordFormForm
+    word_form_class = forms.WordFormForm
     lexeme_form_class = forms.LexemeForm
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/add_word.html'
@@ -99,6 +100,8 @@ class AddWordFormView(TemplateView):
 
 
 class ShowWordFormListView(TemplateView):
+    """Show a list of wordfomrs view"""
+
     word_search_class = forms.SearchWordFormForm
     template_name = 'wordengine/wordform_list.html'
 
@@ -114,6 +117,8 @@ class ShowWordFormListView(TemplateView):
 
 
 class ShowLexemeDetailsView(TemplateView):
+    """Show details of lexeme view. Lexeme is indicated by spelling of a word"""
+
     template_name = 'wordengine/lexeme_details.html'
 
     def get(self, request, lexeme_id, *args, **kwargs):

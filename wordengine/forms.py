@@ -2,7 +2,8 @@ from django import forms
 from wordengine import models
 
 
-class NewWordFormForm(forms.ModelForm):
+class WordFormForm(forms.ModelForm):
+
     class Meta:
         model = models.WordForm
         widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
@@ -10,16 +11,15 @@ class NewWordFormForm(forms.ModelForm):
 
 
 class LexemeForm(forms.ModelForm):
+    """Form representing fields of a lexeme class"""
+
     class Meta:
         model = models.Lexeme
 
 
-class WordFormForm(forms.ModelForm):
-    class Meta:
-        widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
-
-
 class SourceSelectForm(forms.Form):
+    """Form representing fields of a lexeme class"""
+
     source = forms.ModelChoiceField(queryset=models.Source.objects.all())
 
 
