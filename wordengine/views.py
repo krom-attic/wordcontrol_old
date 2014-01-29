@@ -27,6 +27,8 @@ def action_result_view(request):
 
 
 class DoSmthWordFormView(TemplateView):
+    """Sandbox view"""
+
     some_object_class = forms.DoSmthWithIdForm
     template_name = 'wordengine/do_smth.html'
 
@@ -50,6 +52,8 @@ class DoSmthWordFormView(TemplateView):
 
 
 class AddWordFormView(TemplateView):
+    """New word addition view"""
+
     word_search_form_class = forms.SearchWordFormForm
     word_form_class = forms.NewWordFormForm
     lexeme_form_class = forms.LexemeForm
