@@ -289,4 +289,3 @@ class WordFormDeleted(WordFormBase):
     word_form = models.ForeignKey(WordForm)
     dict_change_delete = models.ForeignKey(DictChange, related_name='delete_word_form _set')
     dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set', null=True, blank=True)
-
