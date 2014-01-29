@@ -125,3 +125,7 @@ class ShowLexemeDetailsView(TemplateView):
         given_lexeme = get_object_or_404(models.Lexeme, pk=lexeme_id)
         lexeme_words = given_lexeme.wordform_set.all()
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
+
+
+def delete_wordform():
+    pass
