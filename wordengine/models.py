@@ -283,7 +283,7 @@ class WordFormPrevious(WordFormBase):
     dict_change_replace = models.ForeignKey(DictChange, related_name='replace_word_form _set')
 
 
-class WordFormDeleted(WordFormBase):
+class WordFormDeleted(models.Model):
     """Class representing wordform deletions"""
 
     word_form = models.ForeignKey(WordForm)

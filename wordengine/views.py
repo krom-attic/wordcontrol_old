@@ -124,12 +124,16 @@ class ShowLexemeDetailsView(TemplateView):
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
 
+@login_required
 @transaction.atomic
 def delete_wordform(request, wordform_id):
     given_wordform = get_object_or_404(models.WordForm, pk=wordform_id)
     #TODO handle 404 for wordform
     taken_lexeme = given_wordform.lexeme
     #TODO handle non-existant lexeme
+    source = models.Source(pk=1)
+    #TODO Is it ok to take the first source?
+
     if taken_lexeme.wordform_set.count() == 1:
         action_result = "The lexeme has only one wordform"
         if taken_lexeme.translationbase_fst_set.count() + taken_lexeme.translationbase_snd_set.count() > 0:
@@ -137,7 +141,13 @@ def delete_wordform(request, wordform_id):
             #TODO raise an error
         else:
             action_result += " and has NO translations"
-            #TODO delete the wordform and the lexeme
+            given_wordform.is_deleted = True
+            given_wordform.save()
+            change = models.DictChange(source=source, user_changer=request.user)
+            change.save()
+            deletion_record = models.WordFormDeleted(word_form=given_wordform, dict_change_delete=change)
+            deletion_record.save()
+            #TODO delete the lexeme
     else:
         action_result = "The lexeme has more than one wordform"
         #TODO delete the wordform
