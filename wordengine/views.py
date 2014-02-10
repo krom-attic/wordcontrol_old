@@ -3,6 +3,7 @@ from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from wordengine import forms, models
 
 
@@ -21,10 +22,6 @@ def find_lexeme_wordforms(word_search):
 
 def index(request):
     return render(request, 'wordengine/index.html')
-
-
-def action_result_view(request):
-    return render(request, 'wordengine/action_result.html')
 
 
 class DoSmthWordFormView(TemplateView):
@@ -127,5 +124,23 @@ class ShowLexemeDetailsView(TemplateView):
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
 
-def delete_wordform():
-    pass
+@transaction.atomic
+def delete_wordform(request, wordform_id):
+    given_wordform = get_object_or_404(models.WordForm, pk=wordform_id)
+    #TODO handle 404 for wordform
+    taken_lexeme = given_wordform.lexeme
+    #TODO handle non-existant lexeme
+    if taken_lexeme.wordform_set.count() == 1:
+        action_result = "The lexeme has only one wordform"
+        if taken_lexeme.translationbase_fst_set.count() + taken_lexeme.translationbase_snd_set.count() > 0:
+            action_result += " and has translations"
+            #TODO raise an error
+        else:
+            action_result += " and has NO translations"
+            #TODO delete the wordform and the lexeme
+    else:
+        action_result = "The lexeme has more than one wordform"
+        #TODO delete the wordform
+
+    return render(request, 'wordengine/index.html', {'action_result': action_result})
+

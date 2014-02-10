@@ -2,12 +2,18 @@
 <html>
 <head>
     <title>WordControl — {% block pagetitle %}Page-specific part of title here{% endblock %}</title>
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'wordengine/css/wordengine.css' %}" />
 </head>
+
 <body>
-<div><strong>Поиск перевода:</strong> Вставить ссылку</div>
-<div><strong>Работа со словарной базой:</strong> <a href="{% url 'wordengine:add_wordform' %}">Добавить слово</a> |
-    <a href="{% url 'wordengine:show_wordlist' %}">Показать список слов</a></div>
-<div><strong>Настройка системы:</strong> Вставить ссылку</div>
+<div><strong>Translation search:</strong> Вставить ссылку</div>
+<div><strong>Word base works:</strong> <a href="{% url 'wordengine:add_wordform' %}">Add word</a> |
+    <a href="{% url 'wordengine:show_wordlist' %}">Show word list</a></div>
+<div><strong>System settings:</strong> Вставить ссылку</div>
+
+{% if action_result %}<div class="action_result">Action result: {{ action_result }}</div>{% endif %}
+
 <div>{% block pagebody %}Page body here{% endblock %}</div>
 </body>
 </html>
