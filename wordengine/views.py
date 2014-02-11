@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.contrib import messages
 from wordengine import forms, models
 
 
@@ -11,9 +12,9 @@ from wordengine import forms, models
 
 def find_lexeme_wordforms(word_search):
     if word_search.is_valid():
-        word_result = models.WordForm.objects.filter(spelling__startswith=word_search.cleaned_data['search_for'])
+        word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['search_for'])
         if word_search.cleaned_data['syntactic_category']:
-            word_result = word_result.filter(lexeme__syntactic_category=word_search.cleaned_data['syntactic_category'])
+            word_result = word_result.filter(lexeme__syntactic_category__exact=word_search.cleaned_data['syntactic_category'])
     #TODO Invalid search handling
     return word_result
 
@@ -134,23 +135,20 @@ def delete_wordform(request, wordform_id):
     source = models.Source(pk=1)
     #TODO Is it ok to take the first source?
 
-    if taken_lexeme.wordform_set.count() == 1:
-        action_result = "The lexeme has only one wordform"
-        if taken_lexeme.translationbase_fst_set.count() + taken_lexeme.translationbase_snd_set.count() > 0:
-            action_result += " and has translations"
-            #TODO raise an error
-        else:
-            action_result += " and has NO translations"
-            given_wordform.is_deleted = True
-            given_wordform.save()
-            change = models.DictChange(source=source, user_changer=request.user)
-            change.save()
-            deletion_record = models.WordFormDeleted(word_form=given_wordform, dict_change_delete=change)
-            deletion_record.save()
-            #TODO delete the lexeme
+    if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
+                                                     taken_lexeme.translationbase_snd_set.count() > 0):
+        messages.add_message(request, messages.ERROR, "The word has translations and thus can't be deleted")
     else:
-        action_result = "The lexeme has more than one wordform"
-        #TODO delete the wordform
-
-    return render(request, 'wordengine/index.html', {'action_result': action_result})
+        change = models.DictChange(source=source, user_changer=request.user)
+        change.save()
+        given_wordform.is_deleted = True
+        deletion_record = models.WordFormDeleted(word_form=given_wordform, dict_change_delete=change)
+        given_wordform.save()
+        deletion_record.save()
+        #TODO Check if deletion is correct?
+        messages.add_message(request, messages.SUCCESS, "The word has been deleted")
+    if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
+        return redirect(reverse('wordengine:show_wordlist'))
+    else:
+        return redirect(reverse('wordengine:show_lexemedetails', kwargs={'lexeme_id': taken_lexeme.id}))
 

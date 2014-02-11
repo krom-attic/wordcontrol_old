@@ -12,7 +12,9 @@
     <a href="{% url 'wordengine:show_wordlist' %}">Show word list</a></div>
 <div><strong>System settings:</strong> Вставить ссылку</div>
 
-{% if action_result %}<div class="action_result">Action result: {{ action_result }}</div>{% endif %}
+{% for message in messages %}
+    <div{% if message.tags %} class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
+{% endfor %}
 
 <div>{% block pagebody %}Page body here{% endblock %}</div>
 </body>

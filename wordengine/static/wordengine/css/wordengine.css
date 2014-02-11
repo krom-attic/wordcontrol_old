@@ -1,3 +1,11 @@
-div.action_result {
-border: 4px double black;
+div.error {
+border: 4px double red;
+}
+
+div.success {
+border: 4px double green;
+}
+
+li.deleted {
+text-decoration: line-through;
 }

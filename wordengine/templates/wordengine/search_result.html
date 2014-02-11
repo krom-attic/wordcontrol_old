@@ -3,7 +3,7 @@
     {% if word_result %}
         <ul>
         {% for word in word_result %}
-            <li><a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a></li>
+            <li{% if word.is_deleted %} class="deleted"{% endif %}><a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a></li>
         {% endfor %}
         </ul>
     {% else %}
