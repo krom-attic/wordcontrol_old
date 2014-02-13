@@ -13,7 +13,6 @@ from wordengine import forms, models
 def find_lexeme_wordforms(word_search):
     if word_search.is_valid():
         word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
-        #TODO Replace the below with filtering array
         if word_search.cleaned_data['language']:
             word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
         elif word_search.cleaned_data['syntactic_category']:
@@ -63,10 +62,10 @@ class AddWordFormView(TemplateView):
     template_name = 'wordengine/word_add.html'
 
     def get(self, request, *args, **kwargs):
-        if self.lexeme_params:
-            lexeme_draft = self.lexeme_form_class(request.GET)
-            if lexeme_draft.is_valid():
-                pass
+#        if lexeme_params:
+#            lexeme_draft = self.lexeme_form_class(request.GET)
+#            if lexeme_draft.is_valid():
+#                pass
 
         return render(request, self.template_name, {'word_search_form':self.word_search_form_class(),
                                                     'word_form': self.word_form_class(),
