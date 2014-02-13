@@ -12,8 +12,11 @@ from wordengine import forms, models
 
 def find_lexeme_wordforms(word_search):
     if word_search.is_valid():
-        word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['search_for'])
-        if word_search.cleaned_data['syntactic_category']:
+        word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
+        #TODO Replace the below with filtering array
+        if word_search.cleaned_data['language']:
+            word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
+        elif word_search.cleaned_data['syntactic_category']:
             word_result = word_result.filter(lexeme__syntactic_category__exact=word_search.cleaned_data['syntactic_category'])
     #TODO Invalid search handling
     return word_result
@@ -57,7 +60,7 @@ class AddWordFormView(TemplateView):
     word_form_class = forms.WordFormForm
     lexeme_form_class = forms.LexemeForm
     source_form_class = forms.SourceSelectForm
-    template_name = 'wordengine/add_word.html'
+    template_name = 'wordengine/word_add.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {'word_search_form':self.word_search_form_class(),
@@ -79,11 +82,9 @@ class AddWordFormView(TemplateView):
             if word_form.is_valid():
                 word_form.save()
                 is_saved = True
-        if (not is_saved) and (not '_just_search' in request.POST):
+        if not is_saved:
             return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
                                                         'source_form': source_form})
-
-        #TODO Make possible to select a lexeme from search results
 
         if '_continue_edit' in request.POST:
             return redirect(reverse('wordengine:index'))
@@ -97,11 +98,12 @@ class AddWordFormView(TemplateView):
         return super(AddWordFormView, self).dispatch(*args, **kwargs)
 
 
-class ShowWordFormListView(TemplateView):
+class ShowLexemeListView(TemplateView):
     """Show a list of wordfomrs view"""
-
+    #TODO Make possible to select a lexeme from search results
+    #TODO Code forwarding to a new lexeme addition
     word_search_class = forms.SearchWordFormForm
-    template_name = 'wordengine/wordform_list.html'
+    template_name = 'wordengine/lexeme_list.html'
 
     def get(self, request, *args, **kwargs):
         if request.GET:

@@ -28,5 +28,6 @@ class DoSmthWithIdForm(forms.Form):
 
 
 class SearchWordFormForm(forms.Form):
-    search_for = forms.CharField(required=False)
+    spelling = forms.CharField(required=False)
+    language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)
