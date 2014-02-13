@@ -63,6 +63,11 @@ class AddWordFormView(TemplateView):
     template_name = 'wordengine/word_add.html'
 
     def get(self, request, *args, **kwargs):
+        if self.lexeme_params:
+            lexeme_draft = self.lexeme_form_class(request.GET)
+            if lexeme_draft.is_valid():
+                pass
+
         return render(request, self.template_name, {'word_search_form':self.word_search_form_class(),
                                                     'word_form': self.word_form_class(),
                                                     'lexeme_form': self.lexeme_form_class(),
@@ -100,20 +105,23 @@ class AddWordFormView(TemplateView):
 
 class ShowLexemeListView(TemplateView):
     """Show a list of wordfomrs view"""
-    #TODO Make possible to select a lexeme from search results
-    #TODO Code forwarding to a new lexeme addition
-    word_search_class = forms.SearchWordFormForm
+    word_search_form_class = forms.SearchWordFormForm
     template_name = 'wordengine/lexeme_list.html'
 
     def get(self, request, *args, **kwargs):
-        if request.GET:
-            word_search = self.word_search_class(request.GET)
+        if '_just_search' in request.GET:
+            word_search = self.word_search_form_class(request.GET)
             word_result = find_lexeme_wordforms(word_search)
             return render(request, self.template_name, {'word_search': word_search,
                                                         'word_result': word_result, 'is_search': True})
+
+        elif not request.GET:
+            return render(request, self.template_name, {'word_search': self.word_search_form_class(),
+                                                        'is_search': False})
+
         else:
-            word_search = self.word_search_class()
-            return render(request, self.template_name, {'word_search': word_search, 'is_search': False})
+            word_search = self.word_search_form_class(request.GET)
+            return redirect(reverse('wordengine:add_wordform'), kwargs={'lexeme_params': word_search})
 
 
 class ShowLexemeDetailsView(TemplateView):
@@ -152,5 +160,5 @@ def delete_wordform(request, wordform_id):
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
         return redirect(reverse('wordengine:show_wordlist'))
     else:
-        return redirect(reverse('wordengine:show_lexemedetails', kwargs={'lexeme_id': taken_lexeme.id}))
+        return redirect(reverse('wordengine:show_lexemedetails', args=[taken_lexeme.id]))
 

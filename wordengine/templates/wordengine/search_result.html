@@ -1,11 +1,14 @@
 {% if is_search %}
+<hr />
+
 <h2>Search results</h2>
     {% if word_result %}
-        <ul>
         {% for word in word_result %}
-            <li{% if word.is_deleted %} class="deleted"{% endif %}><a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a></li>
+            <p{% if word.is_deleted %} class="deleted"{% endif %}>
+                <input type="submit" value="Add word" name="{{ word.lexeme_id }}" />
+                <a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a>
+            </p>
         {% endfor %}
-        </ul>
     {% else %}
         <p>Search returned no results.</p>
     {% endif %}

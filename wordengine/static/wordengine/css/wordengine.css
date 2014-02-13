@@ -6,6 +6,6 @@ div.success {
 border: 4px double green;
 }
 
-li.deleted {
+.deleted {
 text-decoration: line-through;
 }
