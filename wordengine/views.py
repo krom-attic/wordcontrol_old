@@ -47,25 +47,12 @@ class DoSmthWordFormView(TemplateView):
 class AddWordFormViewBase(TemplateView):
     """New word addition base view"""
 
+    lexeme_form_class = forms.LexemeForm
     word_form_class = forms.WordFormForm
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/word_add.html'
 
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(AddWordFormViewBase, self).dispatch(*args, **kwargs)
-
-
-class AddWordFormView(AddWordFormViewBase):
-    """New word addition view (for existing lexeme)"""
-
-    def get(self, request, *args, **kwargs):
-        given_lexeme = models.Lexeme.objects.get(pk=kwargs.get('lexeme_id'))
-        return render(request, self.template_name, {'given_lexeme': given_lexeme,
-                                                    'word_form': self.word_form_class(),
-                                                    'source_form': self.source_form_class()})
-
-    def post(self, request, *args, **kwargs): #TODO This should be rewritten
+    def post(self, request, *args, **kwargs):
         is_saved = False
         lexeme_form = self.lexeme_form_class(request.POST)
         source_form = self.source_form_class(request.POST)
@@ -90,46 +77,37 @@ class AddWordFormView(AddWordFormViewBase):
         else:
             return redirect('wordengine:index')
 
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(AddWordFormViewBase, self).dispatch(*args, **kwargs)
+
+
+class AddWordFormView(AddWordFormViewBase):
+    """New word addition view (for existing lexeme)"""
+
+    def get(self, request, *args, **kwargs):
+        given_lexeme = models.Lexeme.objects.get(pk=kwargs.get('lexeme_id'))
+        return render(request, self.template_name, {'given_lexeme': given_lexeme,
+                                                    'word_form': self.word_form_class(),
+                                                    'source_form': self.source_form_class()})
+
 
 class AddWordLexemeFormView(AddWordFormViewBase):
     """New word addition view"""
-
-    lexeme_form_class = forms.LexemeForm
 
     def get(self, request, *args, **kwargs):
         lexeme_form = self.lexeme_form_class(initial={'language': kwargs.get('language'),
                                                       'syntactic_category': kwargs.get('syntactic_category')})
         word_form = self.word_form_class(initial={'spelling': kwargs.get('spelling')})
-        #TODO Prefilter language- and syn_cat-dependent fields
+        #TODO Gramm cat prefilter by synt cat
+        #TODO Correct this after gramm cat becomes language dependent
+
+        #TODO Source, WS and dialect prefilter by language
+
+
         return render(request, self.template_name, {'word_form': word_form,
                                                     'lexeme_form': lexeme_form,
                                                     'source_form': self.source_form_class()})
-
-
-    def post(self, request, *args, **kwargs): #TODO This should be rewritten
-        is_saved = False
-        lexeme_form = self.lexeme_form_class(request.POST)
-        source_form = self.source_form_class(request.POST)
-        if lexeme_form.is_valid() and source_form.is_valid():
-            lexeme = lexeme_form.save()
-            source = source_form.cleaned_data['source']
-            change = models.DictChange(source=source, user_changer=request.user)
-            change.save()
-            word_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
-            word_form = self.word_form_class(request.POST, instance=word_form_initial)
-            if word_form.is_valid():
-                word_form.save()
-                is_saved = True
-        if not is_saved:
-            return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
-                                                        'source_form': source_form})
-
-        if '_continue_edit' in request.POST:
-            return redirect('wordengine:index')
-        elif ('_add_new' in request.POST) or ('_just_search' in request.POST): #TODO This should be rewritten
-            return redirect('wordengine:add_wordform')
-        else:
-            return redirect('wordengine:index')
 
 
 class ShowLexemeListView(TemplateView):

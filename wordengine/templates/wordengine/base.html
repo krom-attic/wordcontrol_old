@@ -7,11 +7,11 @@
 </head>
 
 <body>
-<div><strong>Translation search:</strong> Вставить ссылку</div>
-<div><strong>Word base works:</strong> <a href="{% url 'wordengine:add_wordform_lexeme' %}">Add word</a> |
-    <a href="{% url 'wordengine:show_wordlist' %}">Show word list</a></div>
-<div><strong>Settings:</strong> <a href="{% url 'admin:index' %}">Administer</a></div>
-<hr />
+    <div><strong>Translation search:</strong> Вставить ссылку</div>
+    <div><strong>Word base works:</strong> <a href="{% url 'wordengine:show_wordlist' %}">Manage words</a> |
+        <a href="{% url 'wordengine:add_wordform_lexeme' %}">Add word (directly)</a> </div>
+    <div><strong>Settings:</strong> <a href="{% url 'admin:index' %}">Administer</a></div>
+    <hr />
 
 {% for message in messages %}
     <div{% if message.tags %} class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
