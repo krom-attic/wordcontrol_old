@@ -5,7 +5,7 @@
     {% if word_result %}
         {% for word in word_result %}
             <p{% if word.is_deleted %} class="deleted"{% endif %}>
-                <input type="submit" value="Add word" name="{{ word.lexeme_id }}" />
+                <button name="chosen_lexeme" value="{{ word.lexeme_id }}" type="submit">Add word</button>
                 <a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a>
             </p>
         {% endfor %}

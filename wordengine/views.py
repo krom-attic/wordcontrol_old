@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
+from django.utils.decorators import method_decorator
 from django.db import transaction
 from django.contrib import messages
 from wordengine import forms, models
@@ -37,42 +37,35 @@ class DoSmthWordFormView(TemplateView):
         return render(request, self.template_name, {'smth_form': self.some_object_class()})
 
     def post(self, request, *args, **kwargs):
-        if '_delete_wordform' in request.POST:
-            word_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
-            # if the corresponding lexeme doesn't have another wordforms:
-                # if it has a translation, block wordform deletion
-                # if it doesn't, delete the lexeme and the wordform, record the deletion
-            # if the lexeme has another wordforms, delete a wordform, record the deletion
-            word_form.is_deleted = True
-            word_form.save()
-        elif '_restore_wordform' in request.POST:
+        if '_restore_wordform' in request.POST:
             word_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
             word_form.is_deleted = False
             word_form.save()
-        return redirect(reverse('wordengine:action_result'))
+        return redirect('wordengine:action_result')
 
 
-class AddWordFormView(TemplateView):
-    """New word addition view"""
+class AddWordFormViewBase(TemplateView):
+    """New word addition base view"""
 
-    word_search_form_class = forms.SearchWordFormForm
     word_form_class = forms.WordFormForm
-    lexeme_form_class = forms.LexemeForm
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/word_add.html'
 
-    def get(self, request, *args, **kwargs):
-#        if lexeme_params:
-#            lexeme_draft = self.lexeme_form_class(request.GET)
-#            if lexeme_draft.is_valid():
-#                pass
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(AddWordFormViewBase, self).dispatch(*args, **kwargs)
 
-        return render(request, self.template_name, {'word_search_form':self.word_search_form_class(),
+
+class AddWordFormView(AddWordFormViewBase):
+    """New word addition view (for existing lexeme)"""
+
+    def get(self, request, *args, **kwargs):
+        given_lexeme = models.Lexeme.objects.get(pk=kwargs.get('lexeme_id'))
+        return render(request, self.template_name, {'given_lexeme': given_lexeme,
                                                     'word_form': self.word_form_class(),
-                                                    'lexeme_form': self.lexeme_form_class(),
                                                     'source_form': self.source_form_class()})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs): #TODO This should be rewritten
         is_saved = False
         lexeme_form = self.lexeme_form_class(request.POST)
         source_form = self.source_form_class(request.POST)
@@ -91,15 +84,52 @@ class AddWordFormView(TemplateView):
                                                         'source_form': source_form})
 
         if '_continue_edit' in request.POST:
-            return redirect(reverse('wordengine:index'))
+            return redirect('wordengine:index')
         elif ('_add_new' in request.POST) or ('_just_search' in request.POST):
-            return redirect(reverse('wordengine:add_wordform'))
+            return redirect('wordengine:add_wordform')
         else:
-            return redirect(reverse('wordengine:index'))
+            return redirect('wordengine:index')
 
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(AddWordFormView, self).dispatch(*args, **kwargs)
+
+class AddWordLexemeFormView(AddWordFormViewBase):
+    """New word addition view"""
+
+    lexeme_form_class = forms.LexemeForm
+
+    def get(self, request, *args, **kwargs):
+        lexeme_form = self.lexeme_form_class(initial={'language': kwargs.get('language'),
+                                                      'syntactic_category': kwargs.get('syntactic_category')})
+        word_form = self.word_form_class(initial={'spelling': kwargs.get('spelling')})
+        #TODO Prefilter language- and syn_cat-dependent fields
+        return render(request, self.template_name, {'word_form': word_form,
+                                                    'lexeme_form': lexeme_form,
+                                                    'source_form': self.source_form_class()})
+
+
+    def post(self, request, *args, **kwargs): #TODO This should be rewritten
+        is_saved = False
+        lexeme_form = self.lexeme_form_class(request.POST)
+        source_form = self.source_form_class(request.POST)
+        if lexeme_form.is_valid() and source_form.is_valid():
+            lexeme = lexeme_form.save()
+            source = source_form.cleaned_data['source']
+            change = models.DictChange(source=source, user_changer=request.user)
+            change.save()
+            word_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
+            word_form = self.word_form_class(request.POST, instance=word_form_initial)
+            if word_form.is_valid():
+                word_form.save()
+                is_saved = True
+        if not is_saved:
+            return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
+                                                        'source_form': source_form})
+
+        if '_continue_edit' in request.POST:
+            return redirect('wordengine:index')
+        elif ('_add_new' in request.POST) or ('_just_search' in request.POST): #TODO This should be rewritten
+            return redirect('wordengine:add_wordform')
+        else:
+            return redirect('wordengine:index')
 
 
 class ShowLexemeListView(TemplateView):
@@ -108,19 +138,25 @@ class ShowLexemeListView(TemplateView):
     template_name = 'wordengine/lexeme_list.html'
 
     def get(self, request, *args, **kwargs):
-        if '_just_search' in request.GET:
-            word_search = self.word_search_form_class(request.GET)
-            word_result = find_lexeme_wordforms(word_search)
-            return render(request, self.template_name, {'word_search': word_search,
-                                                        'word_result': word_result, 'is_search': True})
-
-        elif not request.GET:
+        if not request.GET:
             return render(request, self.template_name, {'word_search': self.word_search_form_class(),
                                                         'is_search': False})
-
         else:
             word_search = self.word_search_form_class(request.GET)
-            return redirect(reverse('wordengine:add_wordform'), kwargs={'lexeme_params': word_search})
+            if '_just_search' in request.GET:
+                word_result = find_lexeme_wordforms(word_search)
+                return render(request, self.template_name, {'word_search': word_search,
+                                                            'word_result': word_result, 'is_search': True})
+            elif '_new_lexeme' in request.GET:
+                language = request.GET['language']
+                syntactic_category = request.GET['syntactic_category']
+                spelling = request.GET['spelling']
+                return redirect(reverse('wordengine:add_wordform_lexeme',
+                                        kwargs={'language': language, 'syntactic_category': syntactic_category,
+                                                'spelling': spelling}))
+            else:
+                lexeme = request.GET['chosen_lexeme']
+                return redirect('wordengine:add_wordform', lexeme)
 
 
 class ShowLexemeDetailsView(TemplateView):
@@ -128,8 +164,8 @@ class ShowLexemeDetailsView(TemplateView):
 
     template_name = 'wordengine/lexeme_details.html'
 
-    def get(self, request, lexeme_id, *args, **kwargs):
-        given_lexeme = get_object_or_404(models.Lexeme, pk=lexeme_id)
+    def get(self, request, *args, **kwargs):
+        given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs.get('lexeme_id'))
         lexeme_words = given_lexeme.wordform_set.all()
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
@@ -141,7 +177,7 @@ def delete_wordform(request, wordform_id):
     #TODO handle 404 for wordform
     taken_lexeme = given_wordform.lexeme
     #TODO handle non-existant lexeme
-    source = models.Source(pk=1)
+    source = models.Source.objects.get(pk=1)
     #TODO Is it ok to take the first source?
 
     if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
@@ -157,7 +193,7 @@ def delete_wordform(request, wordform_id):
         #TODO Check if deletion is correct?
         messages.add_message(request, messages.SUCCESS, "The word has been deleted")
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
-        return redirect(reverse('wordengine:show_wordlist'))
+        return redirect('wordengine:show_wordlist')
     else:
-        return redirect(reverse('wordengine:show_lexemedetails', args=[taken_lexeme.id]))
+        return redirect('wordengine:show_lexemedetails', args=[taken_lexeme.id])
 

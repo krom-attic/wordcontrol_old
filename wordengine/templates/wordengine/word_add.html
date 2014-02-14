@@ -4,7 +4,11 @@
 
 <form action="" method="post">
     {% csrf_token %}
-    {{ lexeme_form.as_p }}
+    {% if lexeme_form %}
+        {{ lexeme_form.as_p }}
+    {% else %}
+        {{ given_lexeme }}
+    {% endif %}
     {{ source_form.as_p }}
     {{ word_form.as_p }}
     <input type="submit" value="Submit" />
