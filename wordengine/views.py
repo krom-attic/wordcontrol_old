@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.db import transaction
+from django.db.models import Q
 from django.contrib import messages
 from wordengine import forms, models
 
@@ -99,15 +100,21 @@ class AddWordLexemeFormView(AddWordFormViewBase):
         lexeme_form = self.lexeme_form_class(initial={'language': kwargs.get('language'),
                                                       'syntactic_category': kwargs.get('syntactic_category')})
         word_form = self.word_form_class(initial={'spelling': kwargs.get('spelling')})
-        #TODO Gramm cat prefilter by synt cat
+        source_form = self.source_form_class()
+        if kwargs.get('language'):
+            lang_filter = Q(language=kwargs.get('language')) | Q(language=None)
+            source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
+            word_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
+            word_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+        if kwargs.get('syntactic_category'):
+            synt_cat_filter = Q(syntactic_category=kwargs.get('syntactic_category')) | Q(syntactic_category=None)
+            word_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
         #TODO Correct this after gramm cat becomes language dependent
-
-        #TODO Source, WS and dialect prefilter by language
-
+        #TODO Changing language or synt cat should trigger page reload (to update filtered fields)
 
         return render(request, self.template_name, {'word_form': word_form,
                                                     'lexeme_form': lexeme_form,
-                                                    'source_form': self.source_form_class()})
+                                                    'source_form': source_form})
 
 
 class ShowLexemeListView(TemplateView):
