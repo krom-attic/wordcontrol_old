@@ -17,7 +17,8 @@ def find_lexeme_wordforms(word_search):
         if word_search.cleaned_data['language']:
             word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
         elif word_search.cleaned_data['syntactic_category']:
-            word_result = word_result.filter(lexeme__syntactic_category__exact=word_search.cleaned_data['syntactic_category'])
+            word_result = word_result.filter(lexeme__syntactic_category__exact=
+                                             word_search.cleaned_data['syntactic_category'])
     #TODO Invalid search handling
     return word_result
 
@@ -88,9 +89,21 @@ class AddWordFormView(AddWordFormViewBase):
 
     def get(self, request, *args, **kwargs):
         given_lexeme = models.Lexeme.objects.get(pk=kwargs.get('lexeme_id'))
+        word_form = self.word_form_class()
+        source_form = self.source_form_class()
+
+        lang_filter = Q(language=given_lexeme.language) | Q(language=None)
+        source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
+        word_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
+        word_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+
+        synt_cat_filter = Q(syntactic_category=given_lexeme.syntactic_category) | Q(syntactic_category=None)
+        word_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
+        #TODO Correct this after gramm cat becomes language dependent
+
         return render(request, self.template_name, {'given_lexeme': given_lexeme,
-                                                    'word_form': self.word_form_class(),
-                                                    'source_form': self.source_form_class()})
+                                                    'word_form': word_form,
+                                                    'source_form': source_form})
 
 
 class AddWordLexemeFormView(AddWordFormViewBase):
@@ -101,16 +114,17 @@ class AddWordLexemeFormView(AddWordFormViewBase):
                                                       'syntactic_category': kwargs.get('syntactic_category')})
         word_form = self.word_form_class(initial={'spelling': kwargs.get('spelling')})
         source_form = self.source_form_class()
+
         if kwargs.get('language'):
             lang_filter = Q(language=kwargs.get('language')) | Q(language=None)
             source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
             word_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
             word_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+
         if kwargs.get('syntactic_category'):
             synt_cat_filter = Q(syntactic_category=kwargs.get('syntactic_category')) | Q(syntactic_category=None)
             word_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
         #TODO Correct this after gramm cat becomes language dependent
-        #TODO Changing language or synt cat should trigger page reload (to update filtered fields)
 
         return render(request, self.template_name, {'word_form': word_form,
                                                     'lexeme_form': lexeme_form,
@@ -131,14 +145,14 @@ class ShowLexemeListView(TemplateView):
             if '_just_search' in request.GET:
                 word_result = find_lexeme_wordforms(word_search)
                 return render(request, self.template_name, {'word_search': word_search,
-                                                            'word_result': word_result, 'is_search': True})
+                                                            'word_result': word_result, 'is_search': True}) #TODO WTF???
             elif '_new_lexeme' in request.GET:
                 language = request.GET['language']
                 syntactic_category = request.GET['syntactic_category']
                 spelling = request.GET['spelling']
                 return redirect(reverse('wordengine:add_wordform_lexeme',
                                         kwargs={'language': language, 'syntactic_category': syntactic_category,
-                                                'spelling': spelling}))
+                                                'spelling': spelling})) #TODO WTF???
             else:
                 lexeme = request.GET['chosen_lexeme']
                 return redirect('wordengine:add_wordform', lexeme)
