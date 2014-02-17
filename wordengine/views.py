@@ -54,42 +54,45 @@ class AddWordFormView(TemplateView):
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/word_add.html'
 
-    def __prefilter(self, f_forms, filters):
-        if filters.get('lang'):
-            lang_filter = Q(language=filters.get('lang')) | Q(language=None)
-            f_forms.get('source').fields['source'].queryset = models.Source.objects.filter(lang_filter)
-            f_forms.get('word').fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
-            f_forms.get('word').fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+    def __init__(self, **kwargs):
+        self.word_form = self.word_form_class()
+        self.source_form = self.source_form_class()
+        super(AddWordFormView, self).__init__(**kwargs)
 
-        if filters.get('synt_cat'):
-            synt_cat_filter = Q(syntactic_category=filters.get('synt_cat')) | Q(syntactic_category=None)
-            f_forms.get('word').fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
+    def __prefilter(self, filters):
+        if filters['lang']:
+            lang_filter = Q(language=filters['lang']) | Q(language=None)
+            self.source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
+            self.word_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
+            self.word_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+
+        if filters['synt_cat']:
+            synt_cat_filter = Q(syntactic_category=filters['synt_cat']) | Q(syntactic_category=None)
+            self.word_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
             #TODO Correct this after gramm cat becomes language dependent
 
     def get(self, request, *args, **kwargs):
-
-        source_form = self.source_form_class()
-
-        if 'lexeme_id' in kwargs:
-            given_lexeme = models.Lexeme.objects.get(pk=kwargs.get('lexeme_id'))
-            word_form = self.word_form_class()
-            self.__prefilter({'source': source_form, 'word': word_form},
+        self.source_form = self.source_form_class()
+        try:
+            given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
+            self.word_form = self.word_form_class()
+            self.__prefilter({'source': self.source_form, 'word': self.word_form},
                              {'lang': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
             return render(request, self.template_name, {'given_lexeme': given_lexeme,
-                                                        'word_form': word_form,
-                                                        'source_form': source_form})
-        else:
-            lexeme_form = self.lexeme_form_class(initial={'language': kwargs.get('language'),
-                                                          'syntactic_category': kwargs.get('syntactic_category')})
-            word_form = self.word_form_class(initial={'spelling': kwargs.get('spelling')})
-            self.__prefilter({'source': source_form, 'word': word_form},
-                             {'lang': kwargs.get('language'), 'synt_cat': kwargs.get('syntactic_category')})
-            return render(request, self.template_name, {'word_form': word_form,
+                                                        'word_form': self.word_form,
+                                                        'source_form': self.source_form})
+        except KeyError:
+            lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
+                                                          'syntactic_category': kwargs['syntactic_category']})
+            self.word_form = self.word_form_class(initial={'spelling': kwargs['spelling']})
+            self.__prefilter({'source': self.source_form, 'word': self.word_form},
+                             {'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
+            return render(request, self.template_name, {'word_form': self.word_form,
                                                         'lexeme_form': lexeme_form,
-                                                        'source_form': source_form})
+                                                        'source_form': self.source_form})
 
     def post(self, request, *args, **kwargs):
-        word_form = self.word_form_class()
+        self.word_form = self.word_form_class()
         is_saved = False
         lexeme_validated = 0
         if 'lexeme' in request.POST:
@@ -99,31 +102,31 @@ class AddWordFormView(TemplateView):
             lexeme_form = self.lexeme_form_class(request.POST)
             if lexeme_form.is_valid():
                 lexeme_validated = 2
-        source_form = self.source_form_class(request.POST)
+        self.source_form = self.source_form_class(request.POST)
 
-        if lexeme_validated > 0 and source_form.is_valid():
+        if lexeme_validated > 0 and self.source_form.is_valid():
             if lexeme_validated == 2:
                 lexeme = lexeme_form.save()
-            source = source_form.cleaned_data['source']
+            source = self.source_form.cleaned_data['source']
             change = models.DictChange(source=source, user_changer=request.user)
             change.save()
             word_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
-            word_form = self.word_form_class(request.POST, instance=word_form_initial)
-            if word_form.is_valid():
-                word_form.save()
+            self.word_form = self.word_form_class(request.POST, instance=word_form_initial)
+            if self.word_form.is_valid():
+                self.word_form.save()
                 is_saved = True
 
         if (not is_saved) or ('_continue_edit' in request.POST):
             if lexeme_validated == 1:
-                self.__prefilter({'source': source_form, 'word': word_form},
+                self.__prefilter({'source': self.source_form, 'word': self.word_form},
                                  {'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
-                return render(request, self.template_name, {'word_form': word_form, 'given_lexeme': lexeme,
-                                                            'source_form': source_form})
+                return render(request, self.template_name, {'word_form': self.word_form, 'given_lexeme': lexeme,
+                                                            'source_form': self.source_form})
             else:
-                self.__prefilter({'source': source_form, 'word': word_form},
+                self.__prefilter({'source': self.source_form, 'word': self.word_form},
                                  {'lang': request.POST['language'], 'synt_cat': request.POST['syntactic_category']})
-                return render(request, self.template_name, {'word_form': word_form, 'lexeme_form': lexeme_form,
-                                                            'source_form': source_form})
+                return render(request, self.template_name, {'word_form': self.word_form, 'lexeme_form': lexeme_form,
+                                                            'source_form': self.source_form})
 
         if '_add_new' in request.POST:
             return redirect('wordengine:add_wordform_lexeme')
@@ -170,7 +173,7 @@ class ShowLexemeDetailsView(TemplateView):
     template_name = 'wordengine/lexeme_details.html'
 
     def get(self, request, *args, **kwargs):
-        given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs.get('lexeme_id'))
+        given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
         lexeme_words = given_lexeme.wordform_set.all()
         return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
@@ -200,5 +203,5 @@ def delete_wordform(request, wordform_id):
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
         return redirect('wordengine:show_wordlist')
     else:
-        return redirect('wordengine:show_lexemedetails', args=[taken_lexeme.id])
+        return redirect('wordengine:show_lexemedetails', taken_lexeme.id)
 
