@@ -3,13 +3,14 @@ WordControl
 
 Word Control is an application for a collaboration on documenting endangered languages, especially its lexicon and phonology.
 
-Development process
--------------------
+Development process (v. 2)
+--------------------------
 Any work to be done must be planned against some milestone. This planning is made by @kromkrom.
 
-Work items are:
+Work items are tasks:
 * Enhancements
 * Bugs
+* Other tasks
 
 Work items are created based on:
 * Use cases (UC)
@@ -17,8 +18,8 @@ Work items are created based on:
 * Change requests (CRs)
 
 Any new CR's effect is evaluated, then:
-* If it affects business logic, it cause an enhancement and is attached to a new or to an existing UC
-* If it affects solution, it cause an enhancement and is attached to a new or to an existing F
+* If it affects business logic, it causes a new enhancement and is attached to a new or to an existing UC
+* If it affects solution, it causes a new enhancement and is attached to a new or to an existing F
 * If it affects code, but none of the above, it is a bug
 
 A CR should be converted to a work item directly if there is no one-to-many (or more complex) relation between the CR and the work items.
