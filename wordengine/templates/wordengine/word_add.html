@@ -4,28 +4,21 @@
 
 <form action="" method="post">
     {% csrf_token %}
+
     {% if lexeme_form %}
         {{ lexeme_form.as_p }}
-        {% if lexeme_form.language.value %}
-            <script language="JavaScript">
-                document.getElementById('id_language').disabled = true;
-            </script>
-        {% endif %}
-        {% if lexeme_form.syntactic_category.value %}
-            <script language="JavaScript">
-                document.getElementById('id_syntactic_category').disabled = true;
-            </script>
-        {% endif %}
-
+    # TODO make fields post the form
     {% elif given_lexeme %}
         {{ given_lexeme }}
-
+        <input type="hidden" name="lexeme" id="id_lexeme" value="{{ given_lexeme.id }}" />
     {% endif %}
 
     {{ source_form.as_p }}
     {{ word_form.as_p }}
+
     <input type="submit" value="Submit" />
-    <input type="submit" value="Submit and add another" name="_add_new" />
+    <input type="submit" value="Submit and add a new word" name="_add_new" />
+    <input type="submit" value="Submit and add a new wordform" name="_add_wordform" />
     <input type="submit" value="Submit and continue editing" name="_continue_edit" />
 </form>
 
