@@ -9,7 +9,7 @@ from django.contrib import messages
 from wordengine import forms, models
 
 
-# Common procedures here
+# Common functions here
 
 def find_lexeme_wordforms(word_search):
     if word_search.is_valid():
@@ -76,8 +76,7 @@ class AddWordFormView(TemplateView):
         try:
             given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
             self.word_form = self.word_form_class()
-            self.__prefilter({'source': self.source_form, 'word': self.word_form},
-                             {'lang': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
+            self.__prefilter({'lang': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
             return render(request, self.template_name, {'given_lexeme': given_lexeme,
                                                         'word_form': self.word_form,
                                                         'source_form': self.source_form})
@@ -85,8 +84,7 @@ class AddWordFormView(TemplateView):
             lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
                                                           'syntactic_category': kwargs['syntactic_category']})
             self.word_form = self.word_form_class(initial={'spelling': kwargs['spelling']})
-            self.__prefilter({'source': self.source_form, 'word': self.word_form},
-                             {'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
+            self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
             return render(request, self.template_name, {'word_form': self.word_form,
                                                         'lexeme_form': lexeme_form,
                                                         'source_form': self.source_form})
@@ -118,13 +116,11 @@ class AddWordFormView(TemplateView):
 
         if (not is_saved) or ('_continue_edit' in request.POST):
             if lexeme_validated == 1:
-                self.__prefilter({'source': self.source_form, 'word': self.word_form},
-                                 {'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
+                self.__prefilter({'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
                 return render(request, self.template_name, {'word_form': self.word_form, 'given_lexeme': lexeme,
                                                             'source_form': self.source_form})
             else:
-                self.__prefilter({'source': self.source_form, 'word': self.word_form},
-                                 {'lang': request.POST['language'], 'synt_cat': request.POST['syntactic_category']})
+                self.__prefilter({'lang': request.POST['language'], 'synt_cat': request.POST['syntactic_category']})
                 return render(request, self.template_name, {'word_form': self.word_form, 'lexeme_form': lexeme_form,
                                                             'source_form': self.source_form})
 
