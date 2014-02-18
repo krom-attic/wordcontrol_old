@@ -171,7 +171,15 @@ class ShowLexemeDetailsView(TemplateView):
     def get(self, request, *args, **kwargs):
         given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
         lexeme_words = given_lexeme.wordform_set.all()
-        return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
+        if not request.GET:
+            return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
+        else:
+            try:
+                lexeme_id = request.GET['_add_word']
+                return redirect('wordengine:add_wordform', lexeme_id)
+            except KeyError:
+                lexeme_id = request.GET['_add_translation']
+                return redirect('wordengine:add_translation', lexeme_id)
 
 
 @login_required

@@ -7,4 +7,8 @@
         <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }} ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
     {% endfor %}
     </ul>
+    <form action="" method="get">
+        <button name="_add_word" value="{{ given_lexeme.id }}" type="submit">Add word</button>
+        <button name="_add_translation" value="{{ given_lexeme.id }}" type="submit">Add translation</button>
+    </form>
 {% endblock %}
