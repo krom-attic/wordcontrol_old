@@ -129,7 +129,7 @@ class AddWordFormView(TemplateView):
         elif '_add_wordform' in request.POST:
             return redirect('wordengine:add_wordform', lexeme.id)
         else:
-            return redirect('wordengine:index')
+            return redirect('wordengine:show_lexemedetails', lexeme.id)
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -158,8 +158,10 @@ class ShowLexemeListView(TemplateView):
                 return redirect(reverse('wordengine:add_wordform_lexeme',
                                         kwargs={'language': language, 'syntactic_category': syntactic_category,
                                                 'spelling': spelling}))  # Kwargs are not passed w/o reverse???
+            elif '_add_translation' in request.GET:
+                pass
             else:
-                lexeme_id = request.GET['chosen_lexeme']
+                lexeme_id = request.GET['_add_wordform']
                 return redirect('wordengine:add_wordform', lexeme_id)
 
 
@@ -209,3 +211,21 @@ def delete_wordform(request, wordform_id):
     else:
         return redirect('wordengine:show_lexemedetails', taken_lexeme.id)
 
+
+class AddTranslationView(TemplateView):
+    """ Class view for translation addition
+    """
+
+    translation_class = forms.Traslation
+
+    def get(self, request, *args, **kwargs):
+        try:
+            first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
+            #TODO Display the lexeme
+        except KeyError:
+            pass
+
+    def post(self, request, *args, **kwargs):
+        translation = self.translation_class()
+        is_saved = False
+        pass
