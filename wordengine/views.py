@@ -19,8 +19,9 @@ def find_lexeme_wordforms(word_search):
         elif word_search.cleaned_data['syntactic_category']:
             word_result = word_result.filter(lexeme__syntactic_category__exact=
                                              word_search.cleaned_data['syntactic_category'])
+    lexeme_result = models.Lexeme.objects.filter(id__in=word_result.values_list('lexeme', flat=True))
     #TODO Invalid search handling
-    return word_result
+    return word_result, lexeme_result
 
 
 # Actual views here
@@ -152,8 +153,10 @@ class ShowLexemeListView(TemplateView):
         else:
             word_search = self.word_search_form_class(request.GET)
             if '_lexeme_search' in request.GET:
-                word_result = find_lexeme_wordforms(word_search)
-                return render(request, self.template_name, {'word_search': word_search,
+                word_result, lexeme_result = find_lexeme_wordforms(word_search)
+                all_lexeme_words = models.WordForm.objects.filter(lexeme__in=lexeme_result)
+                #TODO Here should go composition of lexeme cards, taking into account found and deleted wordforms
+                return render(request, self.template_name, {'word_search': word_search, 'lexeme_result': lexeme_result,
                                                             'word_result': word_result, 'is_search': True})
             elif '_translation_search' in request.GET:
                 pass
@@ -224,7 +227,7 @@ class AddTranslationView(TemplateView):
     """ Class view for translation addition
     """
 
-    translation_class = forms.Traslation
+    #translation_class = forms.TraslationForm
 
     def get(self, request, *args, **kwargs):
         try:

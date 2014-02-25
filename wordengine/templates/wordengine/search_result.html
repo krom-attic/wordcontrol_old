@@ -2,12 +2,13 @@
 <hr />
 
 <h2>Search results</h2>
-    {% if word_result %}
-        {% for word in word_result %}
-            <p{% if word.is_deleted %} class="deleted"{% endif %}>
+    {% if lexeme_result %}
+        {% for lexeme in lexeme_result %}
+            <p>
                 <button name="_add_wordform" value="{{ word.lexeme_id }}" type="submit">Add word</button>
                 <button name="_add_translation" value="{{ word.lexeme.id }}" type="submit">Add translation</button>
                 <a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a>
+                {% if word.is_deleted %} class="deleted"{% endif %}
             </p>
         {% endfor %}
     {% else %}
