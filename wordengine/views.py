@@ -30,7 +30,8 @@ def index(request):
 
 
 class DoSmthWordFormView(TemplateView):
-    """Sandbox view"""
+    """Sandbox view
+    """
 
     some_object_class = forms.DoSmthWithIdForm
     template_name = 'wordengine/do_smth.html'
@@ -47,7 +48,8 @@ class DoSmthWordFormView(TemplateView):
 
 
 class AddWordFormView(TemplateView):
-    """New word addition view"""
+    """New word addition view
+    """
 
     lexeme_form_class = forms.LexemeForm
     word_form_class = forms.WordFormForm
@@ -137,7 +139,9 @@ class AddWordFormView(TemplateView):
 
 
 class ShowLexemeListView(TemplateView):
-    """Show a list of wordfomrs view"""
+    """Show a list of wordfomrs view
+    """
+
     word_search_form_class = forms.SearchWordFormForm
     template_name = 'wordengine/lexeme_list.html'
 
@@ -147,12 +151,15 @@ class ShowLexemeListView(TemplateView):
                                                         'is_search': False})
         else:
             word_search = self.word_search_form_class(request.GET)
-            if '_just_search' in request.GET:
+            if '_lexeme_search' in request.GET:
                 word_result = find_lexeme_wordforms(word_search)
                 return render(request, self.template_name, {'word_search': word_search,
                                                             'word_result': word_result, 'is_search': True})
+            elif '_translation_search' in request.GET:
+                pass
+
             elif '_new_lexeme' in request.GET:
-                language = request.GET['language']
+                language = request.GET['language'] #TODO Replace these with word_search parsing
                 syntactic_category = request.GET['syntactic_category']
                 spelling = request.GET['spelling']
                 return redirect(reverse('wordengine:add_wordform_lexeme',
@@ -166,7 +173,8 @@ class ShowLexemeListView(TemplateView):
 
 
 class ShowLexemeDetailsView(TemplateView):
-    """Show details of lexeme view. Lexeme is indicated by spelling of a word"""
+    """Show details of lexeme view. Lexeme is indicated by spelling of a word
+    """
 
     template_name = 'wordengine/lexeme_details.html'
 
