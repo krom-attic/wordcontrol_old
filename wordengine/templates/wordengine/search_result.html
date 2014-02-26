@@ -3,12 +3,15 @@
 
 <h2>Search results</h2>
     {% if lexeme_result %}
-        {% for lexeme in lexeme_result %}
+        {% for lexeme, words in lexeme_result.items %}
             <p>
-                <button name="_add_wordform" value="{{ word.lexeme_id }}" type="submit">Add word</button>
-                <button name="_add_translation" value="{{ word.lexeme.id }}" type="submit">Add translation</button>
-                <a href="{% url 'wordengine:show_lexemedetails' word.lexeme_id %}">{{ word }}</a>
-                {% if word.is_deleted %} class="deleted"{% endif %}
+                <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
+                <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
+                <a href="{% url 'wordengine:show_lexemedetails' lexeme.id %}">{{ lexeme }}</a> (found:
+                {% for found_word in words %}
+                    {{ found_word.spelling }}
+                {% endfor %}
+                )
             </p>
         {% endfor %}
     {% else %}

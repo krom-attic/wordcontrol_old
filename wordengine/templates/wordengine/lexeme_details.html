@@ -4,7 +4,8 @@
     <p>{{ given_lexeme }}</p>
     <ul>
     {% for word in lexeme_words %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }} ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
+        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }}
+        ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
     {% endfor %}
     </ul>
     <form action="" method="get">

@@ -31,3 +31,11 @@ class SearchWordFormForm(forms.Form):
     spelling = forms.CharField(required=False)
     language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)
+
+
+class AddTranslationForm(forms.ModelForm):
+    """Form representing translation
+    """
+
+    class Meta:
+        model = models.Translation

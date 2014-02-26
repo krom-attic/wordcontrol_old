@@ -7,21 +7,28 @@ from django.db import transaction
 from django.db.models import Q
 from django.contrib import messages
 from wordengine import forms, models
+from collections import defaultdict
 
 
 # Common functions here
 
-def find_lexeme_wordforms(word_search):
+def find_lexeme_wordforms(word_search, exact):
     if word_search.is_valid():
-        word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
+        if exact:
+            word_result = models.WordForm.objects.filter(spelling=word_search.cleaned_data['spelling'])
+        else:
+            word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
         if word_search.cleaned_data['language']:
             word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
         elif word_search.cleaned_data['syntactic_category']:
             word_result = word_result.filter(lexeme__syntactic_category__exact=
                                              word_search.cleaned_data['syntactic_category'])
-    lexeme_result = models.Lexeme.objects.filter(id__in=word_result.values_list('lexeme', flat=True))
+    temp_lexeme_result = defaultdict(list)
+    for word in word_result:
+        temp_lexeme_result[word.lexeme].append(word)
+    lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but seems doesn't)
     #TODO Invalid search handling
-    return word_result, lexeme_result
+    return lexeme_result
 
 
 # Actual views here
@@ -131,6 +138,8 @@ class AddWordFormView(TemplateView):
             return redirect('wordengine:add_wordform_lexeme')
         elif '_add_wordform' in request.POST:
             return redirect('wordengine:add_wordform', lexeme.id)
+        elif '_add_translation' in request.POST:
+            return redirect('wordengine:add_translation', lexeme.id)
         else:
             return redirect('wordengine:show_lexemedetails', lexeme.id)
 
@@ -151,25 +160,26 @@ class ShowLexemeListView(TemplateView):
             return render(request, self.template_name, {'word_search': self.word_search_form_class(),
                                                         'is_search': False})
         else:
-            word_search = self.word_search_form_class(request.GET)
+            word_search_form = self.word_search_form_class(request.GET)
+
             if '_lexeme_search' in request.GET:
-                word_result, lexeme_result = find_lexeme_wordforms(word_search)
-                all_lexeme_words = models.WordForm.objects.filter(lexeme__in=lexeme_result)
-                #TODO Here should go composition of lexeme cards, taking into account found and deleted wordforms
-                return render(request, self.template_name, {'word_search': word_search, 'lexeme_result': lexeme_result,
-                                                            'word_result': word_result, 'is_search': True})
+                lexeme_result = find_lexeme_wordforms(word_search_form, False)
+                return render(request, self.template_name, {'word_search': word_search_form,
+                                                            'lexeme_result': lexeme_result, 'is_search': True})
             elif '_translation_search' in request.GET:
-                pass
+                lexeme_result = find_lexeme_wordforms(word_search_form, True)
+                return redirect('wordengine:show_translationlist', lexeme_result.keys())  # TODO Just a stub
 
             elif '_new_lexeme' in request.GET:
-                language = request.GET['language'] #TODO Replace these with word_search parsing
+                language = request.GET['language']
                 syntactic_category = request.GET['syntactic_category']
                 spelling = request.GET['spelling']
-                return redirect(reverse('wordengine:add_wordform_lexeme',
-                                        kwargs={'language': language, 'syntactic_category': syntactic_category,
-                                                'spelling': spelling}))  # Kwargs are not passed w/o reverse???
+                return redirect('wordengine:add_wordform_lexeme', language=language,
+                                syntactic_category=syntactic_category,  spelling=spelling)
             elif '_add_translation' in request.GET:
-                pass
+                lexeme_id = request.GET['_add_translation']
+                return redirect('wordengine:add_translation', lexeme_id)
+
             else:
                 lexeme_id = request.GET['_add_wordform']
                 return redirect('wordengine:add_wordform', lexeme_id)
@@ -227,14 +237,26 @@ class AddTranslationView(TemplateView):
     """ Class view for translation addition
     """
 
-    #translation_class = forms.TraslationForm
+    template_name = 'wordengine/translation_add.html'
+
+    translation_class = forms.AddTranslationForm
+    word_search_form_class = forms.SearchWordFormForm
+    word_search_form = word_search_form_class()  # Probably should be moved off here
 
     def get(self, request, *args, **kwargs):
-        try:
-            first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
-            #TODO Display the lexeme
-        except KeyError:
+        if '_lexeme_search' in request.GET:
             pass
+
+        if '_new_lexeme' in request.GET:
+            pass
+
+        else:
+            try:
+                first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])  # TODO Handle "no first lexeme" error
+                return render(request, self.template_name, {'first_lexeme': first_lexeme,
+                                                            'word_search': self.word_search_form})
+            except KeyError:
+                pass
 
     def post(self, request, *args, **kwargs):
         translation = self.translation_class()

@@ -211,7 +211,7 @@ class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
     def __str__(self):
-        return ' | '.join(str(s) for s in [self.language, self.syntactic_category])
+        return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
 
 
 class WordFormBase(models.Model):
@@ -237,12 +237,12 @@ class WordFormBase(models.Model):
 class TranslationBase(models.Model):
     """Base class for translations"""
 
-    lexeme_1 = models.ForeignKey(Lexeme, related_name='translationbase_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, related_name='translationbase_snd_set')
+    lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_snd_set')
     usage_constraint = models.ForeignKey(UsageConstraint, null=True, blank=True)
     comment = models.TextField(blank=True)
-    dict_change_commit = models.ForeignKey(DictChange)
-    is_deleted = models.BooleanField(default=False)
+    dict_change_commit = models.ForeignKey(DictChange, editable=False)
+    is_deleted = models.BooleanField(default=False, editable=False)
 
 
 # Dictionary classes
