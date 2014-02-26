@@ -290,3 +290,24 @@ class WordFormDeleted(models.Model):
     word_form = models.ForeignKey(WordForm)
     dict_change_delete = models.ForeignKey(DictChange, related_name='delete_word_form_set')
     dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set', null=True, blank=True)
+
+
+class WordWordMemo(models.Model):
+    """Class for word/word memos"""
+
+    word_1 = models.CharField(max_length=512)
+    language_1 = models.ForeignKey(Language, related_name='language_fst_set')
+    word_2 = models.CharField(max_length=512)
+    language_2 = models.ForeignKey(Language, related_name='language_snd_set')
+    user = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_author")
+    comment = models.TextField(blank=True)
+
+
+class WordLexemeMemo(models.Model):
+    """Class for word/lexeme memos"""
+
+    word_1 = models.CharField(max_length=512)
+    language_1 = models.ForeignKey(Language)
+    lexeme = models.ForeignKey(Lexeme)
+    user = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_author")
+    comment = models.TextField(blank=True)

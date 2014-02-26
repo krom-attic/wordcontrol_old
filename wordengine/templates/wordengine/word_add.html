@@ -7,20 +7,20 @@
 
     {% if lexeme_form %}
         {{ lexeme_form.as_p }}
-    # TODO make fields post the form
     {% elif given_lexeme %}
         {{ given_lexeme }}
-        <input type="hidden" name="lexeme" id="id_lexeme" value="{{ given_lexeme.id }}" />
+        <input type="hidden" name="lexeme" value="{{ given_lexeme.id }}" />
     {% endif %}
 
     {{ source_form.as_p }}
     {{ word_form.as_p }}
 
     <input type="submit" value="Submit" />
-    <input type="submit" value="Submit and add a new word" name="_add_new" />
-    <input type="submit" value="Submit and add a new wordform" name="_add_wordform" />
-    <input type="submit" value="Submit and add a translation" name="_add_translation" />
-    <input type="submit" value="Submit and continue editing" name="_continue_edit" />
+    {% if not translation_add %}
+        <input type="submit" value="Submit and add a new word" name="_add_new" />
+        <input type="submit" value="Submit and add a new wordform" name="_add_wordform" />
+        <input type="submit" value="Submit and add a translation" name="_add_translation" />
+    {% endif %}
 </form>
 
 {% endblock %}

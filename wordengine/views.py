@@ -124,7 +124,7 @@ class AddWordFormView(TemplateView):
                 self.word_form.save()
                 is_saved = True
 
-        if (not is_saved) or ('_continue_edit' in request.POST):
+        if (not is_saved) or ('_continue_edit' in request.POST):  # _continue_edit isn't used right now
             if lexeme_validated == 1:
                 self.__prefilter({'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
                 return render(request, self.template_name, {'word_form': self.word_form, 'given_lexeme': lexeme,
@@ -157,15 +157,14 @@ class ShowLexemeListView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         if not request.GET:
-            return render(request, self.template_name, {'word_search': self.word_search_form_class(),
-                                                        'is_search': False})
+            return render(request, self.template_name, {'word_search': self.word_search_form_class()})
         else:
             word_search_form = self.word_search_form_class(request.GET)
 
             if '_lexeme_search' in request.GET:
                 lexeme_result = find_lexeme_wordforms(word_search_form, False)
-                return render(request, self.template_name, {'word_search': word_search_form,
-                                                            'lexeme_result': lexeme_result, 'is_search': True})
+                return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                            'lexeme_result': lexeme_result, 'searchtype': 'regular'})
             elif '_translation_search' in request.GET:
                 lexeme_result = find_lexeme_wordforms(word_search_form, True)
                 return redirect('wordengine:show_translationlist', lexeme_result.keys())  # TODO Just a stub
@@ -241,24 +240,39 @@ class AddTranslationView(TemplateView):
 
     translation_class = forms.AddTranslationForm
     word_search_form_class = forms.SearchWordFormForm
-    word_search_form = word_search_form_class()  # Probably should be moved off here
 
     def get(self, request, *args, **kwargs):
-        if '_lexeme_search' in request.GET:
-            pass
+        try:
+            first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
 
-        if '_new_lexeme' in request.GET:
-            pass
-
-        else:
-            try:
-                first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])  # TODO Handle "no first lexeme" error
+            if '_lexeme_search' in request.GET:
+                word_search_form = self.word_search_form_class(request.GET)
+                lexeme_result = find_lexeme_wordforms(word_search_form, False)
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
-                                                            'word_search': self.word_search_form})
-            except KeyError:
+                                                            'word_search_form': word_search_form,
+                                                            'lexeme_result': lexeme_result, 'searchtype': 'translation'})
+
+            if '_new_lexeme' in request.GET:
                 pass
 
+            if '_add_as_translation' in request.GET:
+                translation_form = self.translation_class()
+                second_lexeme = models.Lexeme.objects.get(pk=request.GET['_add_as_translation'])
+                return render(request, self.template_name, {'first_lexeme': first_lexeme,
+                                                            'second_lexeme': second_lexeme,
+                                                            'translation_form': translation_form})
+
+            else:
+                word_search_form = self.word_search_form_class(request.GET)
+                return render(request, self.template_name, {'first_lexeme': first_lexeme,
+                                                            'word_search': word_search_form})
+
+        except KeyError:
+            pass  # TODO Handle "no first lexeme" error
+
     def post(self, request, *args, **kwargs):
-        translation = self.translation_class()
+        translation_form = self.translation_class()
         is_saved = False
+
+        change = models.DictChange(source)
         pass
