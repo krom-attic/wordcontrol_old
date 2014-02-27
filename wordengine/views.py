@@ -99,7 +99,7 @@ class AddWordFormView(TemplateView):
                                                         'lexeme_form': lexeme_form,
                                                         'source_form': self.source_form})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs): # TODO Add possibility to set "base" dialect for the whole lexeme
         self.word_form = self.word_form_class()
         is_saved = False
         lexeme_validated = 0
@@ -242,6 +242,7 @@ class AddTranslationView(TemplateView):
     word_search_form_class = forms.SearchWordFormForm
 
     def get(self, request, *args, **kwargs):
+        # TODO Second lexeme's parameters must match those of first
         try:
             first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
 

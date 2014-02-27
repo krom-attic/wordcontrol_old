@@ -135,6 +135,7 @@ class Language(Term):
 
     syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
     gramm_category_set_multi = models.ManyToManyField(GrammCategorySet)
+    source_required = models.BooleanField
 
 
 class Source(Term):
@@ -150,7 +151,7 @@ class DictChange(Change):
 
     user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
-    source = models.ForeignKey(Source)
+    source = models.ForeignKey(Source, null=True, blank=True)
 
 
 class MiscChange(Change):
@@ -202,6 +203,7 @@ class LexemeBase(LanguageEntity):
     """Base class for lexemes"""
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
+    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
 
     class Meta:
         abstract = True
