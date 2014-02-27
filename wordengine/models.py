@@ -199,11 +199,101 @@ class LanguageEntity(models.Model):
         abstract = True
 
 
+class AnimacyLanguageOrder(LanguageEntity):
+    """Class represents order of an Animacy grammatical category values in a language"""
+
+    animacy = models.ForeignKey(Animacy)
+    position = models.SmallIntegerField
+
+
+class AspectLanguageOrder(LanguageEntity):
+    """Class represents order of an Aspect grammatical category values in a language"""
+
+    aspect = models.ForeignKey(Aspect)
+    position = models.SmallIntegerField
+
+
+class CaseLanguageOrder(LanguageEntity):
+    """Class represents order of an Case grammatical category values in a language"""
+
+    case = models.ForeignKey(Case)
+    position = models.SmallIntegerField
+
+
+class ComparisonLanguageOrder(LanguageEntity):
+    """Class represents order of an Comparison grammatical category values in a language"""
+
+    comparison = models.ForeignKey(Comparison)
+    position = models.SmallIntegerField
+
+
+class GenderLanguageOrder(LanguageEntity):
+    """Class represents order of an Gender grammatical category values in a language"""
+
+    gender = models.ForeignKey(Gender)
+    position = models.SmallIntegerField
+
+
+class MoodLanguageOrder(LanguageEntity):
+    """Class represents order of an Mood grammatical category values in a language"""
+
+    mood = models.ForeignKey(Mood)
+    position = models.SmallIntegerField
+
+
+class NumberLanguageOrder(LanguageEntity):
+    """Class represents order of an Number grammatical category values in a language"""
+
+    number = models.ForeignKey(Number)
+    position = models.SmallIntegerField
+
+
+class PersonLanguageOrder(LanguageEntity):
+    """Class represents order of an Person grammatical category values in a language"""
+
+    person = models.ForeignKey(Person)
+    position = models.SmallIntegerField
+
+
+class PolarityLanguageOrder(LanguageEntity):
+    """Class represents order of an Polarity grammatical category values in a language"""
+
+    polarity = models.ForeignKey(Polarity)
+    position = models.SmallIntegerField
+
+
+class TenseLanguageOrder(LanguageEntity):
+    """Class represents order of an Tense grammatical category values in a language"""
+
+    tense = models.ForeignKey(Tense)
+    position = models.SmallIntegerField
+
+
+class VoiceLanguageOrder(LanguageEntity):
+    """Class represents order of an Voice grammatical category values in a language"""
+
+    voice = models.ForeignKey(Voice)
+    position = models.SmallIntegerField
+
+
+class GrammCategorySetLanguageOrder(LanguageEntity):
+
+    gramm_category_set = models.ForeignKey(GrammCategorySet)
+    position = models.SmallIntegerField
+
+
+class Inflection(LanguageEntity):
+
+    syntactic_categort_set = models.ForeignKey(SyntacticCategory)
+    value = models.CharField(max_length=512)
+
+
 class LexemeBase(LanguageEntity):
     """Base class for lexemes"""
 
-    syntactic_category = models.ForeignKey(SyntacticCategory)
+    syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    inflection = models.ForeignKey(Inflection, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -220,9 +310,9 @@ class WordFormBase(models.Model):
     """Base class for wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
-    gramm_category_set = models.ForeignKey(GrammCategorySet)
+    gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
+    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
@@ -292,24 +382,3 @@ class WordFormDeleted(models.Model):
     word_form = models.ForeignKey(WordForm)
     dict_change_delete = models.ForeignKey(DictChange, related_name='delete_word_form_set')
     dict_change_restore = models.ForeignKey(DictChange, related_name='restore_word_form_set', null=True, blank=True)
-
-
-class WordWordMemo(models.Model):
-    """Class for word/word memos"""
-
-    word_1 = models.CharField(max_length=512)
-    language_1 = models.ForeignKey(Language, related_name='language_fst_set')
-    word_2 = models.CharField(max_length=512)
-    language_2 = models.ForeignKey(Language, related_name='language_snd_set')
-    user = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_author")
-    comment = models.TextField(blank=True)
-
-
-class WordLexemeMemo(models.Model):
-    """Class for word/lexeme memos"""
-
-    word_1 = models.CharField(max_length=512)
-    language_1 = models.ForeignKey(Language)
-    lexeme = models.ForeignKey(Lexeme)
-    user = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_author")
-    comment = models.TextField(blank=True)
