@@ -15,12 +15,13 @@ class LexemeForm(forms.ModelForm):
 
     class Meta:
         model = models.Lexeme
+        widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
 
 
 class SourceSelectForm(forms.Form):
     """Form representing fields of a lexeme class"""
 
-    source = forms.ModelChoiceField(queryset=models.Source.objects.all())
+    source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
 
 
 class DoSmthWithIdForm(forms.Form):
@@ -39,3 +40,4 @@ class AddTranslationForm(forms.ModelForm):
 
     class Meta:
         model = models.Translation
+        exclude = ['lexeme_1', 'lexeme_2']

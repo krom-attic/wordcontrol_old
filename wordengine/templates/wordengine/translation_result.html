@@ -1,0 +1,19 @@
+{% if translation_search %}
+    <hr />
+
+
+    {% if translation_result %}
+        <h2>Translations</h2>
+            {% for lexeme, translations in translation_result.items %}
+            <p>
+                {{ lexeme }} —
+                {% for translation in translations %}
+                    {{ translation }},
+                {% endfor %}
+            </p>
+            {% endfor %}
+    {% else %}
+        <p>Translation search returned no results.</p>
+    {% endif %}
+
+{% endif %}
