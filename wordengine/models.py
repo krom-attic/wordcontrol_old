@@ -41,70 +41,18 @@ class UsageConstraint(Term):
     pass
 
 
-class Animacy(Term):
-    """Class represents values list for Animacy grammatical category"""
+class GrammCategoryType(Term):
+    """Class represents types of grammatical categories"""
 
     pass
 
 
-class Aspect(Term):
-    """Class represents values list for Aspect grammatical category"""
 
-    pass
+class GrammCategory(Term):
+    """Class represents values list for grammatical categories"""
 
+    gramm_category = models.ForeignKey(GrammCategoryType)
 
-class Case(Term):
-    """Class represents values list for Case grammatical category"""
-
-    pass
-
-
-class Comparison(Term):
-    """Class represents values list for Comparison grammatical category"""
-
-    pass
-
-
-class Gender(Term):
-    """Class represents values list for Gender grammatical category"""
-
-    pass
-
-
-class Mood(Term):
-    """Class represents values list for Mood grammatical category"""
-
-    pass
-
-
-class Number(Term):
-    """Class represents values list for Number grammatical category"""
-
-    pass
-
-
-class Person(Term):
-    """Class represents values list for Person grammatical category"""
-
-    pass
-
-
-class Polarity(Term):
-    """Class represents values list for Polarity grammatical category"""
-
-    pass
-
-
-class Tense(Term):
-    """Class represents values list for Tense grammatical category"""
-
-    pass
-
-
-class Voice(Term):
-    """Class represents values list for Voice grammatical category"""
-
-    pass
 
 
 class GrammCategorySet(models.Model):
@@ -198,10 +146,10 @@ class LanguageEntity(models.Model):
         abstract = True
 
 
-class AnimacyLanguageOrder(LanguageEntity):
+class GrammCategoryLanguageOrder(LanguageEntity):
     """Class represents order of an Animacy grammatical category values in a language"""
 
-    animacy = models.ForeignKey(Animacy)
+    gramm_category = models.ForeignKey(GrammCategory)
     position = models.SmallIntegerField()
 
 
