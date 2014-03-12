@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.db import transaction
 from django.db.models import Q
@@ -111,7 +110,9 @@ class AddWordFormView(TemplateView):
                 lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
                                                               'syntactic_category': kwargs['syntactic_category']})
                 self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
+                # TODO после префильтра не обновляется форма?
             except KeyError:
+                print("except")
                 lexeme_form = self.lexeme_form_class()
             try:
                 self.wordform_form = self.wordform_form_class(initial={'spelling': kwargs['spelling']})
@@ -146,7 +147,6 @@ class AddWordFormView(TemplateView):
             if self.wordform_form.is_valid():
                 self.wordform_form.save()
                 is_saved = True
-        # TODO: При удалении написания лексема всё равно создалась по сабмиту со старым описанием!
         if (not is_saved) or ('_continue_edit' in request.POST):  # _continue_edit isn't used right now
             if lexeme_validated == 1:
                 self.__prefilter({'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
