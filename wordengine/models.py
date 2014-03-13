@@ -239,7 +239,7 @@ class LexemeBase(LanguageEntity):
     """Base class for lexemes"""
 
     syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True) #TODO А не удалить ли это нахрен?
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
 
     class Meta:
