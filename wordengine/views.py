@@ -90,17 +90,21 @@ class AddWordFormView(TemplateView):
             self.source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
             self.wordform_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
             self.wordform_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+            #TODO Add another filter after gramm cat set becomes language dependent
 
         if filters['synt_cat']:
             synt_cat_filter = Q(syntactic_category=filters['synt_cat']) | Q(syntactic_category=None)
             self.wordform_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
-            #TODO Correct this after gramm cat becomes language dependent
 
     def get(self, request, *args, **kwargs):
         self.source_form = self.source_form_class()
         try:
-            given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
+            self.wordform_form = self.wordform_form_class(initial={'spelling': kwargs['spelling']})
+        except KeyError:
             self.wordform_form = self.wordform_form_class()
+
+        try:
+            given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
             self.__prefilter({'lang': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
             return render(request, self.template_name, {'given_lexeme': given_lexeme,
                                                         'wordform_form': self.wordform_form,
@@ -110,14 +114,8 @@ class AddWordFormView(TemplateView):
                 lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
                                                               'syntactic_category': kwargs['syntactic_category']})
                 self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
-                # TODO после префильтра не обновляется форма?
             except KeyError:
-                print("except")
                 lexeme_form = self.lexeme_form_class()
-            try:
-                self.wordform_form = self.wordform_form_class(initial={'spelling': kwargs['spelling']})
-            except KeyError:
-                self.wordform_form = self.wordform_form_class()
             return render(request, self.template_name, {'wordform_form': self.wordform_form,
                                                         'lexeme_form': lexeme_form,
                                                         'source_form': self.source_form})
@@ -137,17 +135,27 @@ class AddWordFormView(TemplateView):
         self.source_form = self.source_form_class(request.POST)
 
         if lexeme_validated > 0 and self.source_form.is_valid():
-            if lexeme_validated == 2:
-                lexeme = lexeme_form.save()
-            source = self.source_form.cleaned_data['source']
-            change = models.DictChange(source=source, user_changer=request.user)
-            change.save()
-            wordform_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
-            self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
-            if self.wordform_form.is_valid():
-                self.wordform_form.save()
-                is_saved = True
+            transaction.set_autocommit(False)
+            try:
+                if lexeme_validated == 2:
+                    lexeme = lexeme_form.save()
+                source = self.source_form.cleaned_data['source']
+                change = models.DictChange(source=source, user_changer=request.user)
+                change.save()
+                wordform_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
+                self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
+                if self.wordform_form.is_valid():
+                    self.wordform_form.save()
+                    messages.success(request, "The word has been added")
+                    transaction.commit()
+                    is_saved = True
+                else:
+                    transaction.rollback()
+            finally:
+                transaction.set_autocommit(True)
+
         if (not is_saved) or ('_continue_edit' in request.POST):  # _continue_edit isn't used right now
+            messages.warning(request, "The word hasn't been added")
             if lexeme_validated == 1:
                 self.__prefilter({'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
                 return render(request, self.template_name, {'wordform_form': self.wordform_form, 'given_lexeme': lexeme,
@@ -219,7 +227,6 @@ class ShowLexemeDetailsView(TemplateView):
     def get(self, request, *args, **kwargs):
         given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
         lexeme_words = given_lexeme.wordform_set.all()
-        print(kwargs['lexeme_id'])
         if not request.GET:
             return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
         else:
