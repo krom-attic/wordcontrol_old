@@ -51,7 +51,7 @@ class GrammCategoryType(Term):
 class GrammCategory(Term):
     """Class represents values list for grammatical categories"""
 
-    gramm_category = models.ForeignKey(GrammCategoryType)
+    gramm_category_type = models.ForeignKey(GrammCategoryType)
 
 
 
@@ -59,17 +59,7 @@ class GrammCategorySet(models.Model):
     """Class represents possible composite sets of grammar categories in a given language"""
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
-    animacy = models.ForeignKey(Animacy, null=True, blank=True)
-    aspect = models.ForeignKey(Aspect, null=True, blank=True)
-    case = models.ForeignKey(Case, null=True, blank=True)
-    comparison = models.ForeignKey(Comparison, null=True, blank=True)
-    gender = models.ForeignKey(Gender, null=True, blank=True)
-    mood = models.ForeignKey(Mood, null=True, blank=True)
-    number = models.ForeignKey(Number, null=True, blank=True)
-    person = models.ForeignKey(Person, null=True, blank=True)
-    polarity = models.ForeignKey(Polarity, null=True, blank=True)
-    tense = models.ForeignKey(Tense, null=True, blank=True)
-    voice = models.ForeignKey(Voice, null=True, blank=True)
+    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
 
     def __str__(self):
             return ' '.join(str(s) for s in [self.syntactic_category, self.person, self.tense, self.case, self.aspect,
@@ -82,7 +72,6 @@ class Language(Term):
     """Class represents languages present in the system"""
 
     syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
-    gramm_category_set_multi = models.ManyToManyField(GrammCategorySet)
 
 
 class Source(Term):
@@ -150,76 +139,6 @@ class GrammCategoryLanguageOrder(LanguageEntity):
     """Class represents order of an Animacy grammatical category values in a language"""
 
     gramm_category = models.ForeignKey(GrammCategory)
-    position = models.SmallIntegerField()
-
-
-class AspectLanguageOrder(LanguageEntity):
-    """Class represents order of an Aspect grammatical category values in a language"""
-
-    aspect = models.ForeignKey(Aspect)
-    position = models.SmallIntegerField()
-
-
-class CaseLanguageOrder(LanguageEntity):
-    """Class represents order of an Case grammatical category values in a language"""
-
-    case = models.ForeignKey(Case)
-    position = models.SmallIntegerField()
-
-
-class ComparisonLanguageOrder(LanguageEntity):
-    """Class represents order of an Comparison grammatical category values in a language"""
-
-    comparison = models.ForeignKey(Comparison)
-    position = models.SmallIntegerField()
-
-
-class GenderLanguageOrder(LanguageEntity):
-    """Class represents order of an Gender grammatical category values in a language"""
-
-    gender = models.ForeignKey(Gender)
-    position = models.SmallIntegerField()
-
-
-class MoodLanguageOrder(LanguageEntity):
-    """Class represents order of an Mood grammatical category values in a language"""
-
-    mood = models.ForeignKey(Mood)
-    position = models.SmallIntegerField()
-
-
-class NumberLanguageOrder(LanguageEntity):
-    """Class represents order of an Number grammatical category values in a language"""
-
-    number = models.ForeignKey(Number)
-    position = models.SmallIntegerField()
-
-
-class PersonLanguageOrder(LanguageEntity):
-    """Class represents order of an Person grammatical category values in a language"""
-
-    person = models.ForeignKey(Person)
-    position = models.SmallIntegerField()
-
-
-class PolarityLanguageOrder(LanguageEntity):
-    """Class represents order of an Polarity grammatical category values in a language"""
-
-    polarity = models.ForeignKey(Polarity)
-    position = models.SmallIntegerField()
-
-
-class TenseLanguageOrder(LanguageEntity):
-    """Class represents order of an Tense grammatical category values in a language"""
-
-    tense = models.ForeignKey(Tense)
-    position = models.SmallIntegerField()
-
-
-class VoiceLanguageOrder(LanguageEntity):
-    """Class represents order of an Voice grammatical category values in a language"""
-
-    voice = models.ForeignKey(Voice)
     position = models.SmallIntegerField()
 
 
