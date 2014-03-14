@@ -2,10 +2,10 @@ from django import forms
 from wordengine import models
 
 
-class WordFormForm(forms.ModelForm):
+class WordformForm(forms.ModelForm):
 
     class Meta:
-        model = models.WordForm
+        model = models.Wordform
         widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
         exclude = ['lexeme']
 
@@ -28,7 +28,7 @@ class DoSmthWithIdForm(forms.Form):
     given_id = forms.IntegerField()
 
 
-class SearchWordFormForm(forms.Form):
+class SearchWordformForm(forms.Form):
     spelling = forms.CharField(required=False)
     language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)

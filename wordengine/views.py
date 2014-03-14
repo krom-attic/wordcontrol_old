@@ -14,9 +14,9 @@ from collections import defaultdict
 def find_lexeme_wordforms(word_search, exact):
     if word_search.is_valid():
         if exact:
-            word_result = models.WordForm.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
+            word_result = models.Wordform.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
         else:
-            word_result = models.WordForm.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
+            word_result = models.Wordform.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
         if word_search.cleaned_data['language']:
             word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
         elif word_search.cleaned_data['syntactic_category']:
@@ -51,7 +51,7 @@ def index(request):
     return render(request, 'wordengine/index.html')
 
 
-class DoSmthWordFormView(TemplateView):
+class DoSmthWordformView(TemplateView):
     """Sandbox view
     """
 
@@ -63,18 +63,18 @@ class DoSmthWordFormView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         if '_restore_wordform' in request.POST:
-            wordform_form = get_object_or_404(models.WordForm, pk=request.POST['given_id'])
+            wordform_form = get_object_or_404(models.Wordform, pk=request.POST['given_id'])
             wordform_form.is_deleted = False
             wordform_form.save()
         return redirect('wordengine:action_result')
 
 
-class AddWordFormView(TemplateView):
+class AddWordformView(TemplateView):
     """New word addition view
     """
 
     lexeme_form_class = forms.LexemeForm
-    wordform_form_class = forms.WordFormForm
+    wordform_form_class = forms.WordformForm
     source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/word_add.html'
 
@@ -82,7 +82,7 @@ class AddWordFormView(TemplateView):
         self.wordform_form = self.wordform_form_class()
         # TODO Does it needs to place here a lexeme_form?
         self.source_form = self.source_form_class()
-        super(AddWordFormView, self).__init__(**kwargs)
+        super(AddWordformView, self).__init__(**kwargs)
 
     def __prefilter(self, filters):
         if filters['lang']:
@@ -142,7 +142,7 @@ class AddWordFormView(TemplateView):
                 source = self.source_form.cleaned_data['source']
                 change = models.DictChange(source=source, user_changer=request.user)
                 change.save()
-                wordform_form_initial = models.WordForm(lexeme=lexeme, dict_change_commit=change)
+                wordform_form_initial = models.Wordform(lexeme=lexeme, dict_change_commit=change)
                 self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
                 if self.wordform_form.is_valid():
                     self.wordform_form.save()
@@ -176,14 +176,14 @@ class AddWordFormView(TemplateView):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(AddWordFormView, self).dispatch(*args, **kwargs)
+        return super(AddWordformView, self).dispatch(*args, **kwargs)
 
 
 class ShowLexemeListView(TemplateView):
     """Show a list of wordfomrs view
     """
 
-    word_search_form_class = forms.SearchWordFormForm
+    word_search_form_class = forms.SearchWordformForm
     template_name = 'wordengine/lexeme_list.html'
 
     def get(self, request, *args, **kwargs):
@@ -241,7 +241,7 @@ class ShowLexemeDetailsView(TemplateView):
 @login_required
 @transaction.atomic
 def delete_wordform(request, wordform_id):
-    given_wordform = get_object_or_404(models.WordForm, pk=wordform_id)
+    given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
     #TODO handle 404 for wordform
     taken_lexeme = given_wordform.lexeme
     #TODO handle non-existant lexeme
@@ -255,7 +255,7 @@ def delete_wordform(request, wordform_id):
         change = models.DictChange(source=source, user_changer=request.user)
         change.save()
         given_wordform.is_deleted = True
-        deletion_record = models.WordFormDeleted(wordform=given_wordform, dict_change_delete=change)
+        deletion_record = models.WordformDeleted(wordform=given_wordform, dict_change_delete=change)
         given_wordform.save()
         deletion_record.save()
         #TODO Check if deletion is correct?
@@ -273,7 +273,7 @@ class AddTranslationView(TemplateView):
     template_name = 'wordengine/translation_add.html'
 
     translation_form_class = forms.AddTranslationForm
-    word_search_form_class = forms.SearchWordFormForm
+    word_search_form_class = forms.SearchWordformForm
     source_form_class = forms.SourceSelectForm
 
     def __init__(self, **kwargs):

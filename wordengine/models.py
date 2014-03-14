@@ -62,10 +62,7 @@ class GrammCategorySet(models.Model):
     gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
 
     def __str__(self):
-            return ' '.join(str(s) for s in [self.syntactic_category, self.person, self.tense, self.case, self.aspect,
-                                             self.voice, self.comparison, self.polarity, self.mood, self.animacy,
-                                             self.gender, self.number]
-                            if s)
+            return ' '.join(str(s) for s in self.gramm_category_multi.all())
 
 
 class Language(Term):
@@ -83,7 +80,7 @@ class Source(Term):
 
 class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
-     WordForms and Translations"""
+     Wordforms and Translations"""
 
     user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
@@ -172,7 +169,7 @@ class Lexeme(LexemeBase):
         return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
 
 
-class WordFormBase(models.Model):
+class WordformBase(models.Model):
     """Base class for wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
@@ -234,22 +231,22 @@ class TranslationDeleted(models.Model):
     dict_change_restore = models.ForeignKey(DictChange, related_name='restore_translation_set', null=True, blank=True)
 
 
-class WordForm(WordFormBase):
+class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     pass
 
 
-class WordFormPrevious(WordFormBase):
+class WordformPrevious(WordformBase):
     """Class representing wordform replaces"""
 
-    wordform = models.ForeignKey(WordForm)
+    wordform = models.ForeignKey(Wordform)
     dict_change_replace = models.ForeignKey(DictChange, related_name='replace_wordform_set')
 
 
-class WordFormDeleted(models.Model):
+class WordformDeleted(models.Model):
     """Class representing wordform deletions"""
 
-    wordform = models.ForeignKey(WordForm)
+    wordform = models.ForeignKey(Wordform)
     dict_change_delete = models.ForeignKey(DictChange, related_name='delete_wordform_set')
     dict_change_restore = models.ForeignKey(DictChange, related_name='restore_wordform_set', null=True, blank=True)
