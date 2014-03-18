@@ -1,12 +1,15 @@
 # Django settings for dj_wordcontrol project.
-import os
+import os, socket
 
-DEBUG = True
+if socket.gethostname() == 'ENTER_PRODUCTION_HOST_HERE!!!':  # Do the same for databases
+    DEBUG = True
+else:
+    DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    ('Kirill Grushetskij', 'kirill@grushetsky.ru')
 )
 
 MANAGERS = ADMINS
