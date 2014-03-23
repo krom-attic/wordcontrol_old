@@ -53,6 +53,9 @@ class GrammCategory(Term):
 
     gramm_category_type = models.ForeignKey(GrammCategoryType)
 
+    def __str__(self):
+        return ' '.join([self.term_full, str(self.gramm_category_type)])
+
 
 
 class GrammCategorySet(models.Model):
