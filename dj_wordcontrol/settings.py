@@ -1,10 +1,11 @@
 # Django settings for dj_wordcontrol project.
-import os, socket
+import os
+import socket
 
 if socket.gethostname() == 'ENTER_PRODUCTION_HOST_HERE!!!':  # Do the same for databases
-    DEBUG = True
-else:
     DEBUG = False
+else:
+    DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 

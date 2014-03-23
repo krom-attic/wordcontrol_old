@@ -71,11 +71,17 @@ class Language(Term):
     syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
 
 
+class SourceType(Term):
+
+    pass
+
+
 class Source(Term):
     """Class representing sources of language information"""
 
     language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
     description = models.TextField(blank=True)
+    source_type = models.ForeignKey(SourceType)
 
 
 class DictChange(Change):
@@ -96,11 +102,17 @@ class MiscChange(Change):
     new_value = models.CharField(max_length=512, blank=True)
 
 
+class DialectType(Term):
+
+    pass
+
+
 class Dialect(Term):
     """Class represents dialect present in the system"""
 
     language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
     parent_dialect = models.ForeignKey('self', null=True, blank=True)
+    dialect_type = models.ForeignKey(DialectType)
 
     def __str__(self):
         return ' '.join([self.term_full, str(self.language)])
@@ -169,6 +181,11 @@ class Lexeme(LexemeBase):
         return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
 
 
+class WordformType(Term):
+
+    pass
+
+
 class WordformBase(models.Model):
     """Base class for wordforms"""
 
@@ -177,8 +194,8 @@ class WordformBase(models.Model):
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
     dict_change_commit = models.ForeignKey(DictChange, editable=False)
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
+    wordform_type = models.ForeignKey(WordformType)
 
     def __str__(self):
         if self.writing_system:
@@ -235,6 +252,13 @@ class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     pass
+
+
+class WordformOccurance(models.Model):
+
+    wordform = models.ForeignKey(Wordform)
+    dialect = models.ForeignKey(Dialect)
+    source = models.ForeignKey(Source)
 
 
 class WordformPrevious(WordformBase):

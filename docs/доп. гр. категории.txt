@@ -1,0 +1,6 @@
+Доп. классификатор для глагола:
+1. finitness: participle, infinitive, gerund, masdar, converb
+возможно, потребуется иерархический классификатор
+2. orientation
+3. inclusivness
+4. валентность
