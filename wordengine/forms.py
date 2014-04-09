@@ -2,6 +2,10 @@ from django import forms
 from wordengine import models
 
 
+class DoSmthWithIdForm(forms.Form):
+    given_id = forms.IntegerField()
+
+
 class WordformForm(forms.ModelForm):
 
     class Meta:
@@ -10,12 +14,18 @@ class WordformForm(forms.ModelForm):
         exclude = ['lexeme']
 
 
+class WordformSampleForm(forms.ModelForm):
+
+    class Meta:
+        model = models.WordformSample
+        exclude = ['lexeme']
+
+
 class LexemeForm(forms.ModelForm):
     """Form representing fields of a lexeme class"""
 
     class Meta:
         model = models.Lexeme
-        widgets = {'dialect_multi': forms.CheckboxSelectMultiple}
 
 
 class SourceSelectForm(forms.Form):
@@ -23,9 +33,6 @@ class SourceSelectForm(forms.Form):
 
     source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
 
-
-class DoSmthWithIdForm(forms.Form):
-    given_id = forms.IntegerField()
 
 
 class SearchWordformForm(forms.Form):
