@@ -12,6 +12,7 @@ from collections import defaultdict
 # Common functions here
 
 def find_lexeme_wordforms(word_search, exact):
+    # AD 2014-04-09 - ok
     if word_search.is_valid():
         if exact:
             word_result = models.Wordform.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
@@ -31,7 +32,7 @@ def find_lexeme_wordforms(word_search, exact):
 
 
 def find_lexeme_translations(lexemes):
-
+    # AD 2014-04-09 - ok
     translation_result = dict()
 
     for lexeme in lexemes:
@@ -69,9 +70,26 @@ class DoSmthWordformView(TemplateView):
         return redirect('wordengine:action_result')
 
 
+def addsave():
+    # AD 2014-04-09 - ok
+
+    deletion_record = dict()
+    for upd_field in upd_fields.keys():
+        deletion_record[upd_field] = models.FieldChange(user_changer=request.user,
+                                                        object_type=upd_object.__class__.__name__,
+                                                        object_id=upd_object.id, field_name=upd_field,
+                                                        old_value=getattr(upd_object, upd_field))
+        setattr(upd_object, upd_field, upd_fields.get(upd_field))
+    upd_object.save()
+    for upd_field in deletion_record.keys():
+        deletion_record[upd_field].new_value = getattr(upd_object, upd_field)
+        deletion_record[upd_field].save()
+
+
 class AddWordformView(TemplateView):
     """New word addition view
     """
+    # AD 2014-04-09 -
 
     lexeme_form_class = forms.LexemeForm
     wordform_form_class = forms.WordformForm
@@ -139,18 +157,20 @@ class AddWordformView(TemplateView):
             try:
                 if lexeme_validated == 2:
                     lexeme = lexeme_form.save()
-                source = self.source_form.cleaned_data['source']
-                change = models.DictChange(source=source, user_changer=request.user)
-                change.save()
-                wordform_form_initial = models.Wordform(lexeme=lexeme, dict_change_commit=change)
+                wordform_form_initial = models.Wordform(lexeme=lexeme)
                 self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
                 if self.wordform_form.is_valid():
-                    self.wordform_form.save()
+                    wordform = self.wordform_form.save()
+                    source = self.source_form.cleaned_data['source']
+                    dict_change = models.DictChange(source=source, user_changer=request.user, object_type='Wordform',
+                                                    object_id=wordform.id)
+                    dict_change.save()
+                    #transaction.commit()
                     messages.success(request, "The word has been added")
-                    transaction.commit()
                     is_saved = True
+                    #transaction.rollback()
                 else:
-                    transaction.rollback()
+                    transaction.rollback() # тут какая-то ерунда, коммит всё равно происходит. подумать!
             finally:
                 transaction.set_autocommit(True)
 
@@ -180,6 +200,7 @@ class AddWordformView(TemplateView):
 
 
 class ShowLexemeListView(TemplateView):
+    # AD 2014-04-09 - ok
     """Show a list of wordfomrs view
     """
 
@@ -219,6 +240,8 @@ class ShowLexemeListView(TemplateView):
 
 
 class ShowLexemeDetailsView(TemplateView):
+    # AD 2014-04-09 - ok
+
     """Show details of lexeme view. Lexeme is indicated by spelling of a word
     """
 
@@ -238,28 +261,39 @@ class ShowLexemeDetailsView(TemplateView):
                 return redirect('wordengine:add_translation', lexeme_id)
 
 
+def modsave(request, upd_object, upd_fields):
+    # AD 2014-04-09 - ok
+
+    field_change = dict()
+    for upd_field in upd_fields.keys():
+        field_change[upd_field] = models.FieldChange(user_changer=request.user,
+                                                        object_type=upd_object.__class__.__name__,
+                                                        object_id=upd_object.id, field_name=upd_field,
+                                                        old_value=getattr(upd_object, upd_field))
+        setattr(upd_object, upd_field, upd_fields.get(upd_field))
+    upd_object.save()
+    for upd_field in field_change.keys():
+        field_change[upd_field].new_value = getattr(upd_object, upd_field)
+        field_change[upd_field].save()
+
+
 @login_required
 @transaction.atomic
 def delete_wordform(request, wordform_id):
+    # AD 2014-04-09 - ok
+
     given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
-    #TODO handle 404 for wordform
+    #TODO replace 404 with error description
     taken_lexeme = given_wordform.lexeme
-    #TODO handle non-existant lexeme
-    source = models.Source.objects.get(pk=1)
-    #TODO Is it ok to take the first source?
 
     if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
                                                      taken_lexeme.translationbase_snd_set.count() > 0):
         messages.add_message(request, messages.ERROR, "The word has translations and thus can't be deleted")
     else:
-        change = models.DictChange(source=source, user_changer=request.user)
-        change.save()
-        given_wordform.is_deleted = True
-        deletion_record = models.WordformDeleted(wordform=given_wordform, dict_change_delete=change)
-        given_wordform.save()
-        deletion_record.save()
-        #TODO Check if deletion is correct?
+        modsave(request, given_wordform, {'is_deleted': True})
+
         messages.add_message(request, messages.SUCCESS, "The word has been deleted")
+
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
         return redirect('wordengine:show_wordlist')
     else:
@@ -291,7 +325,8 @@ class AddTranslationView(TemplateView):
                 lexeme_result = find_lexeme_wordforms(word_search_form, False)
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'word_search_form': word_search_form,
-                                                            'lexeme_result': lexeme_result, 'searchtype': 'translation'})
+                                                            'lexeme_result': lexeme_result,
+                                                            'searchtype': 'in_translation'})
 
             if '_new_lexeme' in request.GET:
                 pass

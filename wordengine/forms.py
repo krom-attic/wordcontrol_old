@@ -39,6 +39,7 @@ class SearchWordformForm(forms.Form):
     spelling = forms.CharField(required=False)
     language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)
+    # Advanced search (filtering with dialect or grammatical category set) is possible
 
 
 class AddTranslationForm(forms.ModelForm):

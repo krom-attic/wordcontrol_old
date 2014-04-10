@@ -8,7 +8,7 @@
                 {% if searchtype == "regular" %}
                     <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
                     <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
-                {% elif searchtype == "translation" %}
+                {% elif searchtype == "in_translation" %}
                     <button name="_add_as_translation" value="{{ lexeme.id }}" type="submit">Add as translation</button>
                 {% endif %}
 
