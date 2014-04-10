@@ -70,26 +70,10 @@ class DoSmthWordformView(TemplateView):
         return redirect('wordengine:action_result')
 
 
-def addsave():
-    # AD 2014-04-09 - ok
-
-    deletion_record = dict()
-    for upd_field in upd_fields.keys():
-        deletion_record[upd_field] = models.FieldChange(user_changer=request.user,
-                                                        object_type=upd_object.__class__.__name__,
-                                                        object_id=upd_object.id, field_name=upd_field,
-                                                        old_value=getattr(upd_object, upd_field))
-        setattr(upd_object, upd_field, upd_fields.get(upd_field))
-    upd_object.save()
-    for upd_field in deletion_record.keys():
-        deletion_record[upd_field].new_value = getattr(upd_object, upd_field)
-        deletion_record[upd_field].save()
-
-
 class AddWordformView(TemplateView):
     """New word addition view
     """
-    # AD 2014-04-09 -
+    # AD 2014-04-09 - ok
 
     lexeme_form_class = forms.LexemeForm
     wordform_form_class = forms.WordformForm
@@ -97,8 +81,8 @@ class AddWordformView(TemplateView):
     template_name = 'wordengine/word_add.html'
 
     def __init__(self, **kwargs):
+        # Makes these forms global and thus available for filtering
         self.wordform_form = self.wordform_form_class()
-        # TODO Does it needs to place here a lexeme_form?
         self.source_form = self.source_form_class()
         super(AddWordformView, self).__init__(**kwargs)
 
@@ -139,7 +123,6 @@ class AddWordformView(TemplateView):
                                                         'source_form': self.source_form})
 
     def post(self, request, *args, **kwargs):
-        self.wordform_form = self.wordform_form_class()
         is_saved = False
         lexeme_validated = 0
         try:
@@ -165,14 +148,15 @@ class AddWordformView(TemplateView):
                     dict_change = models.DictChange(source=source, user_changer=request.user, object_type='Wordform',
                                                     object_id=wordform.id)
                     dict_change.save()
-                    #transaction.commit()
                     messages.success(request, "The word has been added")
                     is_saved = True
-                    #transaction.rollback()
-                else:
-                    transaction.rollback() # тут какая-то ерунда, коммит всё равно происходит. подумать!
             finally:
+                if not is_saved:
+                    transaction.rollback()
                 transaction.set_autocommit(True)
+        else:
+            self.wordform_form = self.wordform_form_class(request.POST)  # takes wordform from post if skipped this step above
+
 
         if (not is_saved) or ('_continue_edit' in request.POST):  # _continue_edit isn't used right now
             messages.warning(request, "The word hasn't been added")
@@ -311,6 +295,7 @@ class AddTranslationView(TemplateView):
     source_form_class = forms.SourceSelectForm
 
     def __init__(self, **kwargs):
+        # Makes these forms global and thus available for filtering
         self.source_form = self.source_form_class()
         self.translation_form = self.translation_form_class()
         super(AddTranslationView, self).__init__(**kwargs)
@@ -357,14 +342,14 @@ class AddTranslationView(TemplateView):
                 if lexeme_1.language.term_full < lexeme_2.language.term_full:
                     lexeme_1, lexeme_2 = lexeme_2, lexeme_1
             except KeyError:
-                pass # TODO Handle an lexeme error
-            change = models.DictChange(source=source, user_changer=request.user)
-            change.save()
-            translation_initial = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2, dict_change_commit=change)
+                pass  # TODO Handle an lexeme error
+            translation_initial = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
             self.translation_form = self.translation_form_class(request.POST, instance=translation_initial)
             if self.translation_form.is_valid():
-                print(self.translation_form)
-                self.translation_form.save()
+                translation = self.translation_form.save()
+                dict_change = models.DictChange(source=source, user_changer=request.user, object_type='Translation',
+                                                object_id=translation.id)
+                dict_change.save()
                 is_saved = True
 
         if is_saved:
