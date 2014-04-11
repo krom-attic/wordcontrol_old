@@ -74,21 +74,19 @@ class AddWordformView(TemplateView):
 
     lexeme_form_class = forms.LexemeForm
     wordform_form_class = forms.WordformForm
-    source_form_class = forms.SourceSelectForm
     template_name = 'wordengine/word_add.html'
 
     def __init__(self, **kwargs):
         # Makes these forms global and thus available for filtering
         self.wordform_form = self.wordform_form_class()
-        self.source_form = self.source_form_class()
         super(AddWordformView, self).__init__(**kwargs)
 
     def __prefilter(self, filters):
-        if filters['lang']:
-            lang_filter = Q(language=filters['lang']) | Q(language=None)
-            self.source_form.fields['source'].queryset = models.Source.objects.filter(lang_filter)
-            self.wordform_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(lang_filter)
-            self.wordform_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(lang_filter)
+        if filters['language']:
+            language_filter = Q(language=filters['language']) | Q(language=None)
+            self.wordform_form.fields['source'].queryset = models.Source.objects.filter(language_filter)
+            self.wordform_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(language_filter)
+            self.wordform_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(language_filter)
             #TODO Add another filter after gramm cat set becomes language dependent
 
         if filters['synt_cat']:
@@ -96,7 +94,6 @@ class AddWordformView(TemplateView):
             self.wordform_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
 
     def get(self, request, *args, **kwargs):
-        self.source_form = self.source_form_class()
         try:
             self.wordform_form = self.wordform_form_class(initial={'spelling': kwargs['spelling']})
         except KeyError:
@@ -104,30 +101,23 @@ class AddWordformView(TemplateView):
 
         try:
             given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
-            self.__prefilter({'lang': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
+            self.__prefilter({'language': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
             return render(request, self.template_name, {'given_lexeme': given_lexeme,
-                                                        'wordform_form': self.wordform_form,
-                                                        'source_form': self.source_form})
+                                                        'wordform_form': self.wordform_form})
         except KeyError:
             try:
-                lexeme_form = self.lexeme_form_class(initial={'syntactic_category'
-                                                              : kwargs['first_lexeme'].syntactic_category}) # TODO Нужно сделать объект
-                self.__prefilter({'synt_cat': kwargs['syntactic_category']})
-                return render(request, self.template_name, {'wordform_form': self.wordform_form,
-                                                            'lexeme_form': lexeme_form,
-                                                            'source_form': self.source_form,
-                                                            'add_type': True}) # TODO Заменить кнопки!
+                lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
+                                                              'syntactic_category': kwargs['syntactic_category']})
+                self.__prefilter({'language': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
             except KeyError:
-                try:
-                    lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
-                                                                  'syntactic_category': kwargs['syntactic_category']})
-                    self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
-                except KeyError:
-                    lexeme_form = self.lexeme_form_class()
-                return render(request, self.template_name, {'wordform_form': self.wordform_form,
-                                                            'lexeme_form': lexeme_form,
-                                                            'source_form': self.source_form})
-
+                lexeme_form = self.lexeme_form_class()
+            try:
+                first_lexeme = kwargs['first_lexeme']
+            except KeyError:
+                first_lexeme = False
+            return render(request, self.template_name, {'wordform_form': self.wordform_form,
+                                                        'lexeme_form': lexeme_form,
+                                                        'first_lexeme': first_lexeme})
     def post(self, request, *args, **kwargs):
         is_saved = False
         lexeme_validated = 0
@@ -139,9 +129,8 @@ class AddWordformView(TemplateView):
             if lexeme_form.is_valid():
                 lexeme_validated = 2
 
-        self.source_form = self.source_form_class(request.POST)
 
-        if lexeme_validated > 0 and self.source_form.is_valid():
+        if lexeme_validated > 0:
             transaction.set_autocommit(False)
             try:
                 if lexeme_validated == 2:
@@ -150,8 +139,7 @@ class AddWordformView(TemplateView):
                 self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
                 if self.wordform_form.is_valid():
                     wordform = self.wordform_form.save()
-                    source = self.source_form.cleaned_data['source']
-                    dict_change = models.DictChange(source=source, user_changer=request.user, object_type='Wordform',
+                    dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
                                                     object_id=wordform.id)
                     dict_change.save()
                     messages.success(request, "The word has been added")
@@ -163,17 +151,14 @@ class AddWordformView(TemplateView):
         else:
             self.wordform_form = self.wordform_form_class(request.POST)  # takes wordform from post if skipped this step above
 
-
         if (not is_saved) or ('_continue_edit' in request.POST):  # _continue_edit isn't used right now
             messages.warning(request, "The word hasn't been added")
             if lexeme_validated == 1:
-                self.__prefilter({'lang': lexeme.language, 'synt_cat': lexeme.syntactic_category})
-                return render(request, self.template_name, {'wordform_form': self.wordform_form, 'given_lexeme': lexeme,
-                                                            'source_form': self.source_form})
+                self.__prefilter({'language': lexeme.language, 'synt_cat': lexeme.syntactic_category})
+                return render(request, self.template_name, {'wordform_form': self.wordform_form, 'given_lexeme': lexeme})
             else:
-                self.__prefilter({'lang': request.POST['language'], 'synt_cat': request.POST['syntactic_category']})
-                return render(request, self.template_name, {'wordform_form': self.wordform_form, 'lexeme_form': lexeme_form,
-                                                            'source_form': self.source_form})
+                self.__prefilter({'language': request.POST['language'], 'synt_cat': request.POST['syntactic_category']})
+                return render(request, self.template_name, {'wordform_form': self.wordform_form, 'lexeme_form': lexeme_form})
 
         if '_add_new' in request.POST:
             return redirect('wordengine:add_wordform_lexeme')
@@ -181,6 +166,9 @@ class AddWordformView(TemplateView):
             return redirect('wordengine:add_wordform', lexeme.id)
         elif '_add_translation' in request.POST:
             return redirect('wordengine:add_translation', lexeme.id)
+        elif 'FIRST LEXEME' in request.POST:
+            pass
+            # TODO Add redirect to translation adding (with first_lexeme)
         else:
             return redirect('wordengine:show_lexemedetails', lexeme.id)
 
@@ -229,7 +217,6 @@ class ShowLexemeListView(TemplateView):
 
 
 class ShowLexemeDetailsView(TemplateView):
-
     """Show details of lexeme view. Lexeme is indicated by spelling of a word
     """
 
@@ -296,11 +283,9 @@ class AddTranslationView(TemplateView):
 
     translation_form_class = forms.AddTranslationForm
     word_search_form_class = forms.SearchWordformForm
-    source_form_class = forms.SourceSelectForm
 
     def __init__(self, **kwargs):
         # Makes these forms global and thus available for filtering
-        self.source_form = self.source_form_class()
         self.translation_form = self.translation_form_class()
         super(AddTranslationView, self).__init__(**kwargs)
 
@@ -318,14 +303,17 @@ class AddTranslationView(TemplateView):
                                                             'searchtype': 'in_translation'})
 
             if '_new_lexeme' in request.GET:
-                return redirect('wordengine:add_wordform_lexeme', first_lexeme.id)
+                language = request.GET['language']
+                syntactic_category = request.GET['syntactic_category']
+                spelling = request.GET['spelling']
+                return redirect('wordengine:add_wordform_lexeme', language=language,
+                                syntactic_category=syntactic_category,  spelling=spelling, first_lexeme=first_lexeme.id)
 
             if '_add_as_translation' in request.GET:
                 second_lexeme = models.Lexeme.objects.get(pk=request.GET['_add_as_translation'])
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'second_lexeme': second_lexeme,
-                                                            'translation_form': self.translation_form,
-                                                            'source_form': self.source_form})
+                                                            'translation_form': self.translation_form})
 
             else:
                 word_search_form = self.word_search_form_class(initial={'syntactic_category': first_lexeme.syntactic_category})
@@ -337,28 +325,24 @@ class AddTranslationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         is_saved = False
-        self.source_form = self.source_form_class(request.POST)
-        if self.source_form.is_valid():
-            source = self.source_form.cleaned_data['source']
-            try:
-                lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
-                lexeme_2 = models.Lexeme.objects.get(pk=request.POST['lexeme_2'])
-                if lexeme_1.language.term_full < lexeme_2.language.term_full:
-                    lexeme_1, lexeme_2 = lexeme_2, lexeme_1
-            except KeyError:
-                pass  # TODO Handle an lexeme error
-            translation_initial = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
-            self.translation_form = self.translation_form_class(request.POST, instance=translation_initial)
-            if self.translation_form.is_valid():
-                translation = self.translation_form.save()
-                dict_change = models.DictChange(source=source, user_changer=request.user, object_type='Translation',
-                                                object_id=translation.id)
-                dict_change.save()
-                is_saved = True
+        try:
+            lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
+            lexeme_2 = models.Lexeme.objects.get(pk=request.POST['lexeme_2'])
+            if lexeme_1.language.term_full < lexeme_2.language.term_full:
+                lexeme_1, lexeme_2 = lexeme_2, lexeme_1
+        except KeyError:
+            pass  # TODO Handle an lexeme error
+        translation_initial = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
+        self.translation_form = self.translation_form_class(request.POST, instance=translation_initial)
+        if self.translation_form.is_valid():
+            translation = self.translation_form.save()
+            dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+                                            object_id=translation.id)
+            dict_change.save()
+            is_saved = True
 
         if is_saved:
-            pass
-            return redirect('wordengine:index')
+            return redirect('wordengine:index')  # TODO Add messages and sensible redirect
 
         else:
-            pass
+            pass # TODO Add warnings

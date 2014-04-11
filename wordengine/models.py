@@ -96,7 +96,6 @@ class DictChange(Change):
 
     user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
-    source = models.ForeignKey(Source, null=True, blank=True)
 
 
 class FieldChange(Change):
@@ -174,14 +173,22 @@ class Lexeme(LexemeBase):
         return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
 
 
-class WordformBase(models.Model):
+class DictEntity(models.Model):
+    source = models.ManyToManyField(Source, null=True, blank=True)
+    comment = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class WordformBase(DictEntity):
     """Base class for wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
 
     def __str__(self):
         if self.writing_system:
@@ -195,15 +202,13 @@ class WordformBase(models.Model):
         abstract = True
 
 
-class TranslationBase(models.Model):
+class TranslationBase(DictEntity):
     """Base class for translations"""
 
     lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_snd_set')
     usage_constraint_multi = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    comment = models.TextField(blank=True)
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
 
     class Meta:
         abstract = True

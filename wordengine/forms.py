@@ -28,12 +28,6 @@ class LexemeForm(forms.ModelForm):
         model = models.Lexeme
 
 
-class SourceSelectForm(forms.Form):
-    """Form representing fields of a lexeme class"""
-
-    source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
-
-
 
 class SearchWordformForm(forms.Form):
     spelling = forms.CharField(required=False)
