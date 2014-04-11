@@ -12,7 +12,6 @@ from collections import defaultdict
 # Common functions here
 
 def find_lexeme_wordforms(word_search, exact):
-    # AD 2014-04-09 - ok
     if word_search.is_valid():
         if exact:
             word_result = models.Wordform.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
@@ -32,7 +31,6 @@ def find_lexeme_wordforms(word_search, exact):
 
 
 def find_lexeme_translations(lexemes):
-    # AD 2014-04-09 - ok
     translation_result = dict()
 
     for lexeme in lexemes:
@@ -73,7 +71,6 @@ class DoSmthWordformView(TemplateView):
 class AddWordformView(TemplateView):
     """New word addition view
     """
-    # AD 2014-04-09 - ok
 
     lexeme_form_class = forms.LexemeForm
     wordform_form_class = forms.WordformForm
@@ -113,14 +110,23 @@ class AddWordformView(TemplateView):
                                                         'source_form': self.source_form})
         except KeyError:
             try:
-                lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
-                                                              'syntactic_category': kwargs['syntactic_category']})
-                self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
+                lexeme_form = self.lexeme_form_class(initial={'syntactic_category'
+                                                              : kwargs['first_lexeme'].syntactic_category}) # TODO Нужно сделать объект
+                self.__prefilter({'synt_cat': kwargs['syntactic_category']})
+                return render(request, self.template_name, {'wordform_form': self.wordform_form,
+                                                            'lexeme_form': lexeme_form,
+                                                            'source_form': self.source_form,
+                                                            'add_type': True}) # TODO Заменить кнопки!
             except KeyError:
-                lexeme_form = self.lexeme_form_class()
-            return render(request, self.template_name, {'wordform_form': self.wordform_form,
-                                                        'lexeme_form': lexeme_form,
-                                                        'source_form': self.source_form})
+                try:
+                    lexeme_form = self.lexeme_form_class(initial={'language': kwargs['language'],
+                                                                  'syntactic_category': kwargs['syntactic_category']})
+                    self.__prefilter({'lang': kwargs['language'], 'synt_cat': kwargs['syntactic_category']})
+                except KeyError:
+                    lexeme_form = self.lexeme_form_class()
+                return render(request, self.template_name, {'wordform_form': self.wordform_form,
+                                                            'lexeme_form': lexeme_form,
+                                                            'source_form': self.source_form})
 
     def post(self, request, *args, **kwargs):
         is_saved = False
@@ -184,7 +190,6 @@ class AddWordformView(TemplateView):
 
 
 class ShowLexemeListView(TemplateView):
-    # AD 2014-04-09 - ok
     """Show a list of wordfomrs view
     """
 
@@ -224,7 +229,6 @@ class ShowLexemeListView(TemplateView):
 
 
 class ShowLexemeDetailsView(TemplateView):
-    # AD 2014-04-09 - ok
 
     """Show details of lexeme view. Lexeme is indicated by spelling of a word
     """
@@ -246,12 +250,13 @@ class ShowLexemeDetailsView(TemplateView):
 
 
 def modsave(request, upd_object, upd_fields):
-    # AD 2014-04-09 - ok
 
     field_change = dict()
     for upd_field in upd_fields.keys():
         field_change[upd_field] = models.FieldChange(user_changer=request.user,
                                                         object_type=upd_object.__class__.__name__,
+                                                        #К атрибуту __class__ не очень хорошо обращаться
+                                                        #Через type, например вытащи
                                                         object_id=upd_object.id, field_name=upd_field,
                                                         old_value=getattr(upd_object, upd_field))
         setattr(upd_object, upd_field, upd_fields.get(upd_field))
@@ -264,7 +269,6 @@ def modsave(request, upd_object, upd_fields):
 @login_required
 @transaction.atomic
 def delete_wordform(request, wordform_id):
-    # AD 2014-04-09 - ok
 
     given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
     #TODO replace 404 with error description
@@ -314,7 +318,7 @@ class AddTranslationView(TemplateView):
                                                             'searchtype': 'in_translation'})
 
             if '_new_lexeme' in request.GET:
-                pass
+                return redirect('wordengine:add_wordform_lexeme', first_lexeme.id)
 
             if '_add_as_translation' in request.GET:
                 second_lexeme = models.Lexeme.objects.get(pk=request.GET['_add_as_translation'])
@@ -324,7 +328,7 @@ class AddTranslationView(TemplateView):
                                                             'source_form': self.source_form})
 
             else:
-                word_search_form = self.word_search_form_class(request.GET)
+                word_search_form = self.word_search_form_class(initial={'syntactic_category': first_lexeme.syntactic_category})
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'word_search_form': word_search_form})
 

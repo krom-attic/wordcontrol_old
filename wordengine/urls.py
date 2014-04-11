@@ -5,6 +5,8 @@ urlpatterns = patterns('',
                        url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),  # Depricated?
                        url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<spelling>\w*)$',
                            views.AddWordformView.as_view(), name='add_wordform_lexeme'),
+                       url(r'^add/word/like=(?P<first_lexeme>\d*)$', views.AddWordformView.as_view(),
+                           name='add_wordform_lexeme'),
                        url(r'^add/word/addto=(?P<lexeme_id>\d+)$', views.AddWordformView.as_view(), name='add_wordform'),
                        url(r'^$', views.index, name='index'),
                        url(r'^dosmth$', views.DoSmthWordformView.as_view(), name='do_something'),
