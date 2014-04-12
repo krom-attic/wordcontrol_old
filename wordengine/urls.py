@@ -5,7 +5,7 @@ urlpatterns = patterns('',
                        url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),  # Depricated?
                        url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<spelling>\w*)$',
                            views.AddWordformView.as_view(), name='add_wordform_lexeme'),
-                       url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<first_lexeme>\d*)&(?P<spelling>\w*)$',
+                       url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<first_lexeme_id>\d*)&(?P<spelling>\w*)$',
                            views.AddWordformView.as_view(), name='add_wordform_lexeme'),
                        url(r'^add/word/addto=(?P<lexeme_id>\d+)$', views.AddWordformView.as_view(), name='add_wordform'),
                        url(r'^$', views.index, name='index'),
@@ -15,5 +15,7 @@ urlpatterns = patterns('',
                        url(r'^view/words$', views.ShowLexemeListView.as_view(), name='show_wordlist'),
                        url(r'^delete/word/(?P<wordform_id>\d+)$', views.delete_wordform, name='delete_wordform'),
                        url(r'^add/translation/addto=(?P<lexeme_id>\d+)$', views.AddTranslationView.as_view(),
-                           name='add_translation')
+                           name='add_translation'),
+                       url(r'^add/translation/addto=(?P<lexeme_id>\d+)&(?P<second_lexeme_id>\d+)$',
+                           views.AddTranslationView.as_view(), name='add_translation')
                        )

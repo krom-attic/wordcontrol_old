@@ -16,7 +16,8 @@
     {{ wordform_form.as_p }}
 
     {% if first_lexeme %}
-        <input type="submit" value="Submit as translation" name=first_lexeme />
+        <input type="hidden" name="first_lexeme" value="{{ first_lexeme.id }}" />
+        <input type="submit" value="Submit as translation" name="_goto_translation" />
     {% else %}
         <input type="submit" value="Submit" />
         <input type="submit" value="Submit and add a new word" name="_add_new" />

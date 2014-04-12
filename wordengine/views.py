@@ -46,6 +46,7 @@ def find_lexeme_translations(lexemes):
 
 # Actual views here
 
+
 def index(request):
     return render(request, 'wordengine/index.html')
 
@@ -112,12 +113,13 @@ class AddWordformView(TemplateView):
             except KeyError:
                 lexeme_form = self.lexeme_form_class()
             try:
-                first_lexeme = kwargs['first_lexeme']
+                first_lexeme = models.Lexeme.objects.get(pk=kwargs['first_lexeme_id'])
             except KeyError:
                 first_lexeme = False
             return render(request, self.template_name, {'wordform_form': self.wordform_form,
                                                         'lexeme_form': lexeme_form,
                                                         'first_lexeme': first_lexeme})
+
     def post(self, request, *args, **kwargs):
         is_saved = False
         lexeme_validated = 0
@@ -128,7 +130,6 @@ class AddWordformView(TemplateView):
             lexeme_form = self.lexeme_form_class(request.POST)
             if lexeme_form.is_valid():
                 lexeme_validated = 2
-
 
         if lexeme_validated > 0:
             transaction.set_autocommit(False)
@@ -166,9 +167,9 @@ class AddWordformView(TemplateView):
             return redirect('wordengine:add_wordform', lexeme.id)
         elif '_add_translation' in request.POST:
             return redirect('wordengine:add_translation', lexeme.id)
-        elif 'FIRST LEXEME' in request.POST:
-            pass
-            # TODO Add redirect to translation adding (with first_lexeme)
+        elif '_goto_translation' in request.POST:
+            first_lexeme = models.Lexeme.objects.get(pk=request.POST['first_lexeme'])
+            return redirect('wordengine:add_translation', first_lexeme.id, lexeme.id)
         else:
             return redirect('wordengine:show_lexemedetails', lexeme.id)
 
@@ -241,11 +242,9 @@ def modsave(request, upd_object, upd_fields):
     field_change = dict()
     for upd_field in upd_fields.keys():
         field_change[upd_field] = models.FieldChange(user_changer=request.user,
-                                                        object_type=upd_object.__class__.__name__,
-                                                        #К атрибуту __class__ не очень хорошо обращаться
-                                                        #Через type, например вытащи
-                                                        object_id=upd_object.id, field_name=upd_field,
-                                                        old_value=getattr(upd_object, upd_field))
+                                                     object_type=type(upd_object).__name__,
+                                                     object_id=upd_object.id, field_name=upd_field,
+                                                     old_value=getattr(upd_object, upd_field))
         setattr(upd_object, upd_field, upd_fields.get(upd_field))
     upd_object.save()
     for upd_field in field_change.keys():
@@ -307,7 +306,8 @@ class AddTranslationView(TemplateView):
                 syntactic_category = request.GET['syntactic_category']
                 spelling = request.GET['spelling']
                 return redirect('wordengine:add_wordform_lexeme', language=language,
-                                syntactic_category=syntactic_category,  spelling=spelling, first_lexeme=first_lexeme.id)
+                                syntactic_category=syntactic_category,  spelling=spelling,
+                                first_lexeme_id=first_lexeme.id)
 
             if '_add_as_translation' in request.GET:
                 second_lexeme = models.Lexeme.objects.get(pk=request.GET['_add_as_translation'])
@@ -316,9 +316,15 @@ class AddTranslationView(TemplateView):
                                                             'translation_form': self.translation_form})
 
             else:
-                word_search_form = self.word_search_form_class(initial={'syntactic_category': first_lexeme.syntactic_category})
-                return render(request, self.template_name, {'first_lexeme': first_lexeme,
-                                                            'word_search_form': word_search_form})
+                try:
+                    second_lexeme = models.Lexeme.objects.get(pk=kwargs['second_lexeme_id'])
+                    return render(request, self.template_name, {'first_lexeme': first_lexeme,
+                                                                'second_lexeme': second_lexeme,
+                                                                'translation_form': self.translation_form})
+                except KeyError:
+                    word_search_form = self.word_search_form_class(initial={'syntactic_category': first_lexeme.syntactic_category})
+                    return render(request, self.template_name, {'first_lexeme': first_lexeme,
+                                                                'word_search_form': word_search_form})
 
         except KeyError:
             pass  # TODO Handle "no first lexeme" error
@@ -342,7 +348,9 @@ class AddTranslationView(TemplateView):
             is_saved = True
 
         if is_saved:
-            return redirect('wordengine:index')  # TODO Add messages and sensible redirect
+            messages.success(request, "The word has been added")
+            return redirect('wordengine:index')  # TODO Add sensible redirect
 
         else:
-            pass # TODO Add warnings
+            messages.warning(request, "The word hasn't been added")
+            # TODO Add sensible redirect
