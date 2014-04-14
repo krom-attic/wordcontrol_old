@@ -39,8 +39,8 @@ def find_lexeme_translations(lexemes):
             translation_list.append(translation.lexeme_2)
         for translation in models.Translation.objects.filter(lexeme_2=lexeme):
             translation_list.append(translation.lexeme_1)
-        if len(translation_list) > 0:
-            translation_result[lexeme] = translation_list
+        # if len(translation_list) > 0:
+        translation_result[lexeme] = translation_list
 
     return translation_result
 
@@ -211,10 +211,13 @@ class ShowLexemeListView(TemplateView):
             elif '_add_translation' in request.GET:
                 lexeme_id = request.GET['_add_translation']
                 return redirect('wordengine:add_translation', lexeme_id)
-
-            else:
+            elif '_add_wordform' in request.GET:
                 lexeme_id = request.GET['_add_wordform']
                 return redirect('wordengine:add_wordform', lexeme_id)
+
+            else:
+                messages.error(request, "Invalid request")
+                return render(request, self.template_name, {'word_search_form': word_search_form})
 
 
 class ShowLexemeDetailsView(TemplateView):
@@ -229,13 +232,18 @@ class ShowLexemeDetailsView(TemplateView):
         if not request.GET:
             return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
         else:
-            try:
+            if '_add_word' in request.GET:
                 lexeme_id = request.GET['_add_word']
                 return redirect('wordengine:add_wordform', lexeme_id)
-            except KeyError:
+            elif '_add_translation' in request.GET:
                 lexeme_id = request.GET['_add_translation']
                 return redirect('wordengine:add_translation', lexeme_id)
-
+            elif '_find_translation' in request.GET:
+                lexeme_id = request.GET['_find_translation']
+                return redirect('wordengine:show_wordlist', lexeme_id)  # TODO Выполнить поиск перевода по лексеме
+            else:
+                messages.error(request, "Invalid request")
+                return redirect('wordengine:index')  # TODO Остаться на странице с той же лексемой
 
 def modsave(request, upd_object, upd_fields):
 

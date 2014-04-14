@@ -7,7 +7,7 @@
     <h2>Second word</h2>
         {% if second_lexeme %}
             {{ second_lexeme }}
-            <h2>Translation comments</h2>
+            <h2>Translation details</h2>
                 <form action="" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="lexeme_1" value="{{ first_lexeme.id }}" />
