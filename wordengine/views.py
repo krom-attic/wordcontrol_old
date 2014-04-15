@@ -39,7 +39,6 @@ def find_lexeme_translations(lexemes):
             translation_list.append(translation.lexeme_2)
         for translation in models.Translation.objects.filter(lexeme_2=lexeme):
             translation_list.append(translation.lexeme_1)
-        # if len(translation_list) > 0:
         translation_result[lexeme] = translation_list
 
     return translation_result
@@ -252,7 +251,6 @@ def modsave(request, upd_object, upd_fields):
 def delete_wordform(request, wordform_id):
 
     given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
-    #TODO replace 404 with error description
     taken_lexeme = given_wordform.lexeme
 
     if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
@@ -326,13 +324,10 @@ class AddTranslationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         is_saved = False
-        try:
-            lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
-            lexeme_2 = models.Lexeme.objects.get(pk=request.POST['lexeme_2'])
-            if lexeme_1.language.term_full < lexeme_2.language.term_full:
-                lexeme_1, lexeme_2 = lexeme_2, lexeme_1
-        except KeyError:
-            pass  # TODO Handle an lexeme error
+        lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
+        lexeme_2 = models.Lexeme.objects.get(pk=request.POST['lexeme_2'])
+        if lexeme_1.language.term_full < lexeme_2.language.term_full:
+            lexeme_1, lexeme_2 = lexeme_2, lexeme_1
         translation_initial = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
         self.translation_form = self.translation_form_class(request.POST, instance=translation_initial)
         if self.translation_form.is_valid():
