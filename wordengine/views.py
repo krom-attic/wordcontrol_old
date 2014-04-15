@@ -48,7 +48,7 @@ def find_lexeme_translations(lexemes):
 
 
 def index(request):
-    return render(request, 'wordengine/index.html')
+    return redirect('wordengine:show_wordlist')
 
 
 class DoSmthWordformView(TemplateView):
@@ -101,7 +101,7 @@ class AddWordformView(TemplateView):
             self.wordform_form = self.wordform_form_class()
 
         try:
-            given_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
+            given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
             self.__prefilter({'language': given_lexeme.language, 'synt_cat': given_lexeme.syntactic_category})
             return render(request, self.template_name, {'given_lexeme': given_lexeme,
                                                         'wordform_form': self.wordform_form})
@@ -113,7 +113,7 @@ class AddWordformView(TemplateView):
             except KeyError:
                 lexeme_form = self.lexeme_form_class()
             try:
-                first_lexeme = models.Lexeme.objects.get(pk=kwargs['first_lexeme_id'])
+                first_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['first_lexeme_id'])
             except KeyError:
                 first_lexeme = False
             return render(request, self.template_name, {'wordform_form': self.wordform_form,
@@ -179,7 +179,7 @@ class AddWordformView(TemplateView):
 
 
 class ShowLexemeListView(TemplateView):
-    """Show a list of wordfomrs view
+    """Show a list of lexemes
     """
 
     word_search_form_class = forms.SearchWordformForm
@@ -201,14 +201,19 @@ class ShowLexemeListView(TemplateView):
                 return render(request, self.template_name, {'word_search_form': word_search_form,
                                                             'translation_result': translation_result,
                                                             'translation_search': 'word_search'})
-
-            elif '_find_translation' in request.GET:
-                lexeme_result = models.Lexeme.objects.get(pk=request.GET['_find_translation'])
+            elif '_lexeme_details' in request.GET:
+                given_lexeme = get_object_or_404(models.Lexeme.objects.get, pk=request.GET['_lexeme_details'])
+                lexeme_words = given_lexeme.wordform_set.all()
+                return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                            'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
+            elif '_find_translation' in request.GET:  # combines both of above
+                lexeme_result = get_object_or_404(models.Lexeme.objects.get, pk=request.GET['_find_translation'])
+                lexeme_words = lexeme_result.wordform_set.all()
                 translation_result = find_lexeme_translations([lexeme_result])
                 return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                            'given_lexeme': lexeme_result, 'lexeme_words': lexeme_words,
                                                             'translation_result': translation_result,
-                                                            'translation_search': 'word_search'})
-
+                                                            'translation_search': 'exact_lexeme'})
             elif '_new_lexeme' in request.GET:
                 language = request.GET['language']
                 syntactic_category = request.GET['syntactic_category']
@@ -226,31 +231,6 @@ class ShowLexemeListView(TemplateView):
                 messages.error(request, "Invalid request")
                 return render(request, self.template_name, {'word_search_form': word_search_form})
 
-
-class ShowLexemeDetailsView(TemplateView):
-    """Show details of lexeme view. Lexeme is indicated by spelling of a word
-    """
-
-    template_name = 'wordengine/lexeme_details.html'
-
-    def get(self, request, *args, **kwargs):
-        given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
-        lexeme_words = given_lexeme.wordform_set.all()
-        if not request.GET:
-            return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
-        else:
-            if '_add_word' in request.GET:
-                return redirect('wordengine:add_wordform', given_lexeme.id)
-            elif '_add_translation' in request.GET:
-                return redirect('wordengine:add_translation', given_lexeme.id)
-            elif '_find_translation' in request.GET:
-                translation_result = find_lexeme_translations([given_lexeme])
-                return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words,
-                                                            'translation_result': translation_result,
-                                                            'translation_search': 'exact_lexeme'})
-            else:
-                messages.error(request, "Invalid request")
-                return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
 def modsave(request, upd_object, upd_fields):
 
@@ -306,7 +286,7 @@ class AddTranslationView(TemplateView):
     def get(self, request, *args, **kwargs):
         # TODO Second lexeme's parameters must match those of first
         try:
-            first_lexeme = models.Lexeme.objects.get(pk=kwargs['lexeme_id'])
+            first_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
 
             if '_lexeme_search' in request.GET:
                 word_search_form = self.word_search_form_class(request.GET)
@@ -325,14 +305,14 @@ class AddTranslationView(TemplateView):
                                 first_lexeme_id=first_lexeme.id)
 
             if '_add_as_translation' in request.GET:
-                second_lexeme = models.Lexeme.objects.get(pk=request.GET['_add_as_translation'])
+                second_lexeme = get_object_or_404(models.Lexeme, pk=request.GET['_add_as_translation'])
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'second_lexeme': second_lexeme,
                                                             'translation_form': self.translation_form})
 
             else:
                 try:
-                    second_lexeme = models.Lexeme.objects.get(pk=kwargs['second_lexeme_id'])
+                    second_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['second_lexeme_id'])
                     return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                                 'second_lexeme': second_lexeme,
                                                                 'translation_form': self.translation_form})
