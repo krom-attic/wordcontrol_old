@@ -4,7 +4,9 @@
 <h2>Translations</h2>
     {% if translation_result %}
         {% for lexeme, translations in translation_result.items %}
-            <h3>{{ lexeme }}</h3>
+            {% if translation_search == "word_search" %}
+                <h3>{{ lexeme }}</h3>
+            {% endif %}
             {% if translations %}
             <ol>
                 {% for translation in translations %}

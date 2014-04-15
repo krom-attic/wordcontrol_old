@@ -200,7 +200,14 @@ class ShowLexemeListView(TemplateView):
                 translation_result = find_lexeme_translations(lexeme_result.keys())
                 return render(request, self.template_name, {'word_search_form': word_search_form,
                                                             'translation_result': translation_result,
-                                                            'translation_search': True})
+                                                            'translation_search': 'word_search'})
+
+            elif '_find_translation' in request.GET:
+                lexeme_result = models.Lexeme.objects.get(pk=request.GET['_find_translation'])
+                translation_result = find_lexeme_translations([lexeme_result])
+                return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                            'translation_result': translation_result,
+                                                            'translation_search': 'word_search'})
 
             elif '_new_lexeme' in request.GET:
                 language = request.GET['language']
@@ -233,17 +240,17 @@ class ShowLexemeDetailsView(TemplateView):
             return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
         else:
             if '_add_word' in request.GET:
-                lexeme_id = request.GET['_add_word']
-                return redirect('wordengine:add_wordform', lexeme_id)
+                return redirect('wordengine:add_wordform', given_lexeme.id)
             elif '_add_translation' in request.GET:
-                lexeme_id = request.GET['_add_translation']
-                return redirect('wordengine:add_translation', lexeme_id)
+                return redirect('wordengine:add_translation', given_lexeme.id)
             elif '_find_translation' in request.GET:
-                lexeme_id = request.GET['_find_translation']
-                return redirect('wordengine:show_wordlist', lexeme_id)  # TODO Выполнить поиск перевода по лексеме
+                translation_result = find_lexeme_translations([given_lexeme])
+                return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words,
+                                                            'translation_result': translation_result,
+                                                            'translation_search': 'exact_lexeme'})
             else:
                 messages.error(request, "Invalid request")
-                return redirect('wordengine:index')  # TODO Остаться на странице с той же лексемой
+                return render(request, self.template_name, {'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
 
 def modsave(request, upd_object, upd_fields):
 
