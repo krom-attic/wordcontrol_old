@@ -1,0 +1,1762 @@
+[
+{
+    "model": "sessions.session", 
+    "fields": {
+        "expire_date": "2014-04-23T20:26:57.660Z", 
+        "session_data": "ODFjMDMwNzU5ZTA1NGY0YjVjNDEzMGNkNWE1YWQzYWNlOThjNjQ5ZTp7Il9hdXRoX3VzZXJfYmFja2VuZCI6ImRqYW5nby5jb250cmliLmF1dGguYmFja2VuZHMuTW9kZWxCYWNrZW5kIiwiX2F1dGhfdXNlcl9pZCI6MX0="
+    }, 
+    "pk": "6fvsuy67cmkjmqvy0cn6wyr6z464eeep"
+},
+{
+    "model": "sites.site", 
+    "fields": {
+        "name": "example.com", 
+        "domain": "example.com"
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.syntacticcategory", 
+    "fields": {
+        "term_full": "Verb", 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.syntacticcategory", 
+    "fields": {
+        "term_full": "Noun", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.syntacticcategory", 
+    "fields": {
+        "term_full": "Adjective", 
+        "term_abbr": ""
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Animacy", 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Aspect", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Case", 
+        "term_abbr": ""
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Comparison", 
+        "term_abbr": ""
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Gender", 
+        "term_abbr": ""
+    }, 
+    "pk": 5
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Infiniteness", 
+        "term_abbr": ""
+    }, 
+    "pk": 6
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Mood", 
+        "term_abbr": ""
+    }, 
+    "pk": 7
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Number", 
+        "term_abbr": ""
+    }, 
+    "pk": 8
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Person", 
+        "term_abbr": ""
+    }, 
+    "pk": 9
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Polarity", 
+        "term_abbr": ""
+    }, 
+    "pk": 10
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Tense", 
+        "term_abbr": ""
+    }, 
+    "pk": 11
+},
+{
+    "model": "wordengine.grammcategorytype", 
+    "fields": {
+        "term_full": "Voice", 
+        "term_abbr": ""
+    }, 
+    "pk": 12
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Nominative", 
+        "term_abbr": "nom", 
+        "position": null
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Partitive", 
+        "term_abbr": "prt", 
+        "position": null
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Genitive", 
+        "term_abbr": "gen", 
+        "position": null
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Accusative", 
+        "term_abbr": "acc", 
+        "position": null
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Adessive", 
+        "term_abbr": "ads", 
+        "position": null
+    }, 
+    "pk": 5
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Ablative", 
+        "term_abbr": "abl", 
+        "position": null
+    }, 
+    "pk": 6
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Allative", 
+        "term_abbr": "all", 
+        "position": null
+    }, 
+    "pk": 7
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Inessive", 
+        "term_abbr": "ins", 
+        "position": null
+    }, 
+    "pk": 8
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Elative", 
+        "term_abbr": "elt", 
+        "position": null
+    }, 
+    "pk": 9
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Illative", 
+        "term_abbr": "ill", 
+        "position": null
+    }, 
+    "pk": 10
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Essive", 
+        "term_abbr": "iss", 
+        "position": null
+    }, 
+    "pk": 11
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Translative", 
+        "term_abbr": "trn", 
+        "position": null
+    }, 
+    "pk": 12
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Comitative", 
+        "term_abbr": "com", 
+        "position": null
+    }, 
+    "pk": 13
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Terminative", 
+        "term_abbr": "trm", 
+        "position": null
+    }, 
+    "pk": 14
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 3, 
+        "term_full": "Abessive", 
+        "term_abbr": "abs", 
+        "position": null
+    }, 
+    "pk": 15
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 4, 
+        "term_full": "Positive", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 16
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 4, 
+        "term_full": "Comparative", 
+        "term_abbr": "cmp", 
+        "position": null
+    }, 
+    "pk": 17
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 4, 
+        "term_full": "Superlative", 
+        "term_abbr": "sup", 
+        "position": null
+    }, 
+    "pk": 18
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 7, 
+        "term_full": "Indicative", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 19
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 7, 
+        "term_full": "Imperative", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 20
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 7, 
+        "term_full": "Conditional", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 21
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 8, 
+        "term_full": "Singular", 
+        "term_abbr": "sg", 
+        "position": null
+    }, 
+    "pk": 22
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 8, 
+        "term_full": "Plural", 
+        "term_abbr": "pl", 
+        "position": null
+    }, 
+    "pk": 23
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 9, 
+        "term_full": "First", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 24
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 9, 
+        "term_full": "Second", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 25
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 9, 
+        "term_full": "Third", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 26
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 9, 
+        "term_full": "Indefinite-personal form", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 27
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Present", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 28
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Past", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 29
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Future", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 30
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Perfect", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 31
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Pluperfect", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 32
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "da-infinitive", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 33
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "ma-infinitive", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 34
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Infinitive", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 35
+},
+{
+    "model": "wordengine.grammcategory", 
+    "fields": {
+        "gramm_category_type": 11, 
+        "term_full": "Infinitive (1)", 
+        "term_abbr": "", 
+        "position": null
+    }, 
+    "pk": 36
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            33
+        ]
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            34
+        ]
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            22, 
+            28
+        ]
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            23, 
+            28
+        ]
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 2, 
+        "gramm_category_multi": [
+            1, 
+            22
+        ]
+    }, 
+    "pk": 5
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 2, 
+        "gramm_category_multi": [
+            3, 
+            22
+        ]
+    }, 
+    "pk": 6
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            35
+        ]
+    }, 
+    "pk": 7
+},
+{
+    "model": "wordengine.grammcategoryset", 
+    "fields": {
+        "syntactic_category": 1, 
+        "gramm_category_multi": [
+            36
+        ]
+    }, 
+    "pk": 8
+},
+{
+    "model": "wordengine.language", 
+    "fields": {
+        "term_full": "I\u017eoran", 
+        "syntactic_category_multi": [
+            1, 
+            2, 
+            3
+        ], 
+        "term_abbr": "Izh"
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.language", 
+    "fields": {
+        "term_full": "Russian", 
+        "syntactic_category_multi": [
+            1, 
+            2, 
+            3
+        ], 
+        "term_abbr": "rus"
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.language", 
+    "fields": {
+        "term_full": "Finnish", 
+        "syntactic_category_multi": [
+            1, 
+            2, 
+            3
+        ], 
+        "term_abbr": "fin"
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.sourcetype", 
+    "fields": {
+        "term_full": "Own knowledge", 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.sourcetype", 
+    "fields": {
+        "term_full": "Dictionary/Educational", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.source", 
+    "fields": {
+        "description": "", 
+        "language": 1, 
+        "term_full": "Nirvi", 
+        "source_type": 2, 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.dialect", 
+    "fields": {
+        "parent_dialect": null, 
+        "language": 1, 
+        "term_full": "Alalaukan", 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.dialect", 
+    "fields": {
+        "parent_dialect": 1, 
+        "language": 1, 
+        "term_full": "South Alalaukan", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.dialect", 
+    "fields": {
+        "parent_dialect": 1, 
+        "language": 1, 
+        "term_full": "East Alalaukan", 
+        "term_abbr": ""
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.dialect", 
+    "fields": {
+        "parent_dialect": null, 
+        "language": 1, 
+        "term_full": "Soikkolan", 
+        "term_abbr": ""
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.writingsystemtype", 
+    "fields": {
+        "term_full": "Phonetic strict", 
+        "term_abbr": ""
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.writingsystemtype", 
+    "fields": {
+        "term_full": "Phonetic loose", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.writingsystemtype", 
+    "fields": {
+        "term_full": "Orphographic", 
+        "term_abbr": ""
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.writingsystem", 
+    "fields": {
+        "writing_system_type": 1, 
+        "description": "", 
+        "language": null, 
+        "term_full": "International Phonetic Alphabet", 
+        "term_abbr": "IPA"
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.writingsystem", 
+    "fields": {
+        "writing_system_type": 2, 
+        "description": "", 
+        "language": 1, 
+        "term_full": "Finno-Ugric Simplified Transcription", 
+        "term_abbr": ""
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 1, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 1, 
+        "language": 2, 
+        "inflection": null
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": null, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": null, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": null, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 5
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": null, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 6
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 3, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 7
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 3, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 8
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 3, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 9
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 1, 
+        "language": 2, 
+        "inflection": null
+    }, 
+    "pk": 10
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 2, 
+        "language": 1, 
+        "inflection": null
+    }, 
+    "pk": 11
+},
+{
+    "model": "wordengine.lexeme", 
+    "fields": {
+        "syntactic_category": 2, 
+        "language": 2, 
+        "inflection": null
+    }, 
+    "pk": 12
+},
+{
+    "model": "wordengine.translation", 
+    "fields": {
+        "usage_constraint_multi": [], 
+        "lexeme_2": 2, 
+        "comment": "", 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "lexeme_1": 1
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.translation", 
+    "fields": {
+        "usage_constraint_multi": [], 
+        "lexeme_2": 1, 
+        "comment": "", 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "lexeme_1": 10
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.translation", 
+    "fields": {
+        "usage_constraint_multi": [], 
+        "lexeme_2": 11, 
+        "comment": "", 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "lexeme_1": 12
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 1, 
+        "gramm_category_set": 1, 
+        "writing_system": 2, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "tullA"
+    }, 
+    "pk": 1
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 1, 
+        "gramm_category_set": 2, 
+        "writing_system": 2, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "tulema"
+    }, 
+    "pk": 2
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 2, 
+        "gramm_category_set": 7, 
+        "writing_system": null, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "\u0438\u0434\u0442\u0438"
+    }, 
+    "pk": 3
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 10, 
+        "gramm_category_set": 7, 
+        "writing_system": null, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "\u043f\u0440\u0438\u0445\u043e\u0434\u0438\u0442\u044c"
+    }, 
+    "pk": 4
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 11, 
+        "gramm_category_set": 5, 
+        "writing_system": 2, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "kissA"
+    }, 
+    "pk": 5
+},
+{
+    "model": "wordengine.wordform", 
+    "fields": {
+        "lexeme": 12, 
+        "gramm_category_set": 5, 
+        "writing_system": null, 
+        "is_deleted": false, 
+        "dialect_multi": [], 
+        "spelling": "\u043a\u043e\u0448\u043a\u0430"
+    }, 
+    "pk": 6
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add permission", 
+        "content_type": 1, 
+        "codename": "add_permission"
+    }, 
+    "pk": 1
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change permission", 
+        "content_type": 1, 
+        "codename": "change_permission"
+    }, 
+    "pk": 2
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete permission", 
+        "content_type": 1, 
+        "codename": "delete_permission"
+    }, 
+    "pk": 3
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add group", 
+        "content_type": 2, 
+        "codename": "add_group"
+    }, 
+    "pk": 4
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change group", 
+        "content_type": 2, 
+        "codename": "change_group"
+    }, 
+    "pk": 5
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete group", 
+        "content_type": 2, 
+        "codename": "delete_group"
+    }, 
+    "pk": 6
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add user", 
+        "content_type": 3, 
+        "codename": "add_user"
+    }, 
+    "pk": 7
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change user", 
+        "content_type": 3, 
+        "codename": "change_user"
+    }, 
+    "pk": 8
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete user", 
+        "content_type": 3, 
+        "codename": "delete_user"
+    }, 
+    "pk": 9
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add content type", 
+        "content_type": 4, 
+        "codename": "add_contenttype"
+    }, 
+    "pk": 10
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change content type", 
+        "content_type": 4, 
+        "codename": "change_contenttype"
+    }, 
+    "pk": 11
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete content type", 
+        "content_type": 4, 
+        "codename": "delete_contenttype"
+    }, 
+    "pk": 12
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add session", 
+        "content_type": 5, 
+        "codename": "add_session"
+    }, 
+    "pk": 13
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change session", 
+        "content_type": 5, 
+        "codename": "change_session"
+    }, 
+    "pk": 14
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete session", 
+        "content_type": 5, 
+        "codename": "delete_session"
+    }, 
+    "pk": 15
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add site", 
+        "content_type": 6, 
+        "codename": "add_site"
+    }, 
+    "pk": 16
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change site", 
+        "content_type": 6, 
+        "codename": "change_site"
+    }, 
+    "pk": 17
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete site", 
+        "content_type": 6, 
+        "codename": "delete_site"
+    }, 
+    "pk": 18
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add log entry", 
+        "content_type": 7, 
+        "codename": "add_logentry"
+    }, 
+    "pk": 19
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change log entry", 
+        "content_type": 7, 
+        "codename": "change_logentry"
+    }, 
+    "pk": 20
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete log entry", 
+        "content_type": 7, 
+        "codename": "delete_logentry"
+    }, 
+    "pk": 21
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add syntactic category", 
+        "content_type": 8, 
+        "codename": "add_syntacticcategory"
+    }, 
+    "pk": 22
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change syntactic category", 
+        "content_type": 8, 
+        "codename": "change_syntacticcategory"
+    }, 
+    "pk": 23
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete syntactic category", 
+        "content_type": 8, 
+        "codename": "delete_syntacticcategory"
+    }, 
+    "pk": 24
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add usage constraint", 
+        "content_type": 9, 
+        "codename": "add_usageconstraint"
+    }, 
+    "pk": 25
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change usage constraint", 
+        "content_type": 9, 
+        "codename": "change_usageconstraint"
+    }, 
+    "pk": 26
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete usage constraint", 
+        "content_type": 9, 
+        "codename": "delete_usageconstraint"
+    }, 
+    "pk": 27
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add gramm category type", 
+        "content_type": 10, 
+        "codename": "add_grammcategorytype"
+    }, 
+    "pk": 28
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change gramm category type", 
+        "content_type": 10, 
+        "codename": "change_grammcategorytype"
+    }, 
+    "pk": 29
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete gramm category type", 
+        "content_type": 10, 
+        "codename": "delete_grammcategorytype"
+    }, 
+    "pk": 30
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add gramm category", 
+        "content_type": 11, 
+        "codename": "add_grammcategory"
+    }, 
+    "pk": 31
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change gramm category", 
+        "content_type": 11, 
+        "codename": "change_grammcategory"
+    }, 
+    "pk": 32
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete gramm category", 
+        "content_type": 11, 
+        "codename": "delete_grammcategory"
+    }, 
+    "pk": 33
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add gramm category set", 
+        "content_type": 12, 
+        "codename": "add_grammcategoryset"
+    }, 
+    "pk": 34
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change gramm category set", 
+        "content_type": 12, 
+        "codename": "change_grammcategoryset"
+    }, 
+    "pk": 35
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete gramm category set", 
+        "content_type": 12, 
+        "codename": "delete_grammcategoryset"
+    }, 
+    "pk": 36
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add language", 
+        "content_type": 13, 
+        "codename": "add_language"
+    }, 
+    "pk": 37
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change language", 
+        "content_type": 13, 
+        "codename": "change_language"
+    }, 
+    "pk": 38
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete language", 
+        "content_type": 13, 
+        "codename": "delete_language"
+    }, 
+    "pk": 39
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add source type", 
+        "content_type": 14, 
+        "codename": "add_sourcetype"
+    }, 
+    "pk": 40
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change source type", 
+        "content_type": 14, 
+        "codename": "change_sourcetype"
+    }, 
+    "pk": 41
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete source type", 
+        "content_type": 14, 
+        "codename": "delete_sourcetype"
+    }, 
+    "pk": 42
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add source", 
+        "content_type": 15, 
+        "codename": "add_source"
+    }, 
+    "pk": 43
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change source", 
+        "content_type": 15, 
+        "codename": "change_source"
+    }, 
+    "pk": 44
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete source", 
+        "content_type": 15, 
+        "codename": "delete_source"
+    }, 
+    "pk": 45
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add dict change", 
+        "content_type": 16, 
+        "codename": "add_dictchange"
+    }, 
+    "pk": 46
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change dict change", 
+        "content_type": 16, 
+        "codename": "change_dictchange"
+    }, 
+    "pk": 47
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete dict change", 
+        "content_type": 16, 
+        "codename": "delete_dictchange"
+    }, 
+    "pk": 48
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add field change", 
+        "content_type": 17, 
+        "codename": "add_fieldchange"
+    }, 
+    "pk": 49
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change field change", 
+        "content_type": 17, 
+        "codename": "change_fieldchange"
+    }, 
+    "pk": 50
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete field change", 
+        "content_type": 17, 
+        "codename": "delete_fieldchange"
+    }, 
+    "pk": 51
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add dialect", 
+        "content_type": 18, 
+        "codename": "add_dialect"
+    }, 
+    "pk": 52
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change dialect", 
+        "content_type": 18, 
+        "codename": "change_dialect"
+    }, 
+    "pk": 53
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete dialect", 
+        "content_type": 18, 
+        "codename": "delete_dialect"
+    }, 
+    "pk": 54
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add writing system type", 
+        "content_type": 19, 
+        "codename": "add_writingsystemtype"
+    }, 
+    "pk": 55
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change writing system type", 
+        "content_type": 19, 
+        "codename": "change_writingsystemtype"
+    }, 
+    "pk": 56
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete writing system type", 
+        "content_type": 19, 
+        "codename": "delete_writingsystemtype"
+    }, 
+    "pk": 57
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add writing system", 
+        "content_type": 20, 
+        "codename": "add_writingsystem"
+    }, 
+    "pk": 58
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change writing system", 
+        "content_type": 20, 
+        "codename": "change_writingsystem"
+    }, 
+    "pk": 59
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete writing system", 
+        "content_type": 20, 
+        "codename": "delete_writingsystem"
+    }, 
+    "pk": 60
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add gramm category set language order", 
+        "content_type": 22, 
+        "codename": "add_grammcategorysetlanguageorder"
+    }, 
+    "pk": 64
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change gramm category set language order", 
+        "content_type": 22, 
+        "codename": "change_grammcategorysetlanguageorder"
+    }, 
+    "pk": 65
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete gramm category set language order", 
+        "content_type": 22, 
+        "codename": "delete_grammcategorysetlanguageorder"
+    }, 
+    "pk": 66
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add inflection", 
+        "content_type": 23, 
+        "codename": "add_inflection"
+    }, 
+    "pk": 67
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change inflection", 
+        "content_type": 23, 
+        "codename": "change_inflection"
+    }, 
+    "pk": 68
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete inflection", 
+        "content_type": 23, 
+        "codename": "delete_inflection"
+    }, 
+    "pk": 69
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add lexeme", 
+        "content_type": 24, 
+        "codename": "add_lexeme"
+    }, 
+    "pk": 70
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change lexeme", 
+        "content_type": 24, 
+        "codename": "change_lexeme"
+    }, 
+    "pk": 71
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete lexeme", 
+        "content_type": 24, 
+        "codename": "delete_lexeme"
+    }, 
+    "pk": 72
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add translated term", 
+        "content_type": 25, 
+        "codename": "add_translatedterm"
+    }, 
+    "pk": 73
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change translated term", 
+        "content_type": 25, 
+        "codename": "change_translatedterm"
+    }, 
+    "pk": 74
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete translated term", 
+        "content_type": 25, 
+        "codename": "delete_translatedterm"
+    }, 
+    "pk": 75
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add translation", 
+        "content_type": 26, 
+        "codename": "add_translation"
+    }, 
+    "pk": 76
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change translation", 
+        "content_type": 26, 
+        "codename": "change_translation"
+    }, 
+    "pk": 77
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete translation", 
+        "content_type": 26, 
+        "codename": "delete_translation"
+    }, 
+    "pk": 78
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add wordform", 
+        "content_type": 27, 
+        "codename": "add_wordform"
+    }, 
+    "pk": 79
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change wordform", 
+        "content_type": 27, 
+        "codename": "change_wordform"
+    }, 
+    "pk": 80
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete wordform", 
+        "content_type": 27, 
+        "codename": "delete_wordform"
+    }, 
+    "pk": 81
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can add wordform sample", 
+        "content_type": 28, 
+        "codename": "add_wordformsample"
+    }, 
+    "pk": 82
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can change wordform sample", 
+        "content_type": 28, 
+        "codename": "change_wordformsample"
+    }, 
+    "pk": 83
+},
+{
+    "model": "auth.permission", 
+    "fields": {
+        "name": "Can delete wordform sample", 
+        "content_type": 28, 
+        "codename": "delete_wordformsample"
+    }, 
+    "pk": 84
+},
+{
+    "model": "auth.user", 
+    "fields": {
+        "last_name": "", 
+        "email": "", 
+        "is_active": true, 
+        "is_staff": true, 
+        "is_superuser": true, 
+        "username": "krom", 
+        "first_name": "", 
+        "password": "pbkdf2_sha256$12000$RVV1gkhHwHCn$6IP6t4ASFFJox0RD+iXJJgqCSkcjSPSJeQOF+FQJh60=", 
+        "user_permissions": [], 
+        "groups": [], 
+        "date_joined": "2014-04-09T18:55:40.146Z", 
+        "last_login": "2014-04-09T20:26:57.655Z"
+    }, 
+    "pk": 1
+},
+{
+    "model": "admin.logentry", 
+    "fields": {
+        "change_message": "Changed term_full.", 
+        "action_flag": 2, 
+        "object_id": "1", 
+        "user": 1, 
+        "content_type": 13, 
+        "action_time": "2014-04-09T20:27:08.529Z", 
+        "object_repr": "I\u017eoran"
+    }, 
+    "pk": 1
+},
+{
+    "model": "admin.logentry", 
+    "fields": {
+        "change_message": "Changed term_full.", 
+        "action_flag": 2, 
+        "object_id": "1", 
+        "user": 1, 
+        "content_type": 13, 
+        "action_time": "2014-04-09T20:36:02.833Z", 
+        "object_repr": "I\u017eoran"
+    }, 
+    "pk": 2
+},
+{
+    "model": "admin.logentry", 
+    "fields": {
+        "change_message": "", 
+        "action_flag": 1, 
+        "object_id": "4", 
+        "user": 1, 
+        "content_type": 13, 
+        "action_time": "2014-04-09T20:42:42.719Z", 
+        "object_repr": "\u017e\u017e\u00e4\u0161\u00e4\u00eb\u0161\u00f5\u00f5\u0161wer435tr"
+    }, 
+    "pk": 3
+},
+{
+    "model": "admin.logentry", 
+    "fields": {
+        "change_message": "", 
+        "action_flag": 3, 
+        "object_id": "4", 
+        "user": 1, 
+        "content_type": 13, 
+        "action_time": "2014-04-09T20:43:04.770Z", 
+        "object_repr": "\u017e\u017e\u00e4\u0161\u00e4\u00eb\u0161\u00f5\u00f5\u0161wer435tr"
+    }, 
+    "pk": 4
+},
+{
+    "model": "admin.logentry", 
+    "fields": {
+        "change_message": "", 
+        "action_flag": 3, 
+        "object_id": "4", 
+        "user": 1, 
+        "content_type": 13, 
+        "action_time": "2014-04-09T20:43:27.803Z", 
+        "object_repr": "\u017e\u017e\u00e4\u0161\u00e4\u00eb\u0161\u00f5\u00f5\u0161wer435tr"
+    }, 
+    "pk": 5
+}
+]

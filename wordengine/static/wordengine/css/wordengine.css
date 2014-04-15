@@ -1,3 +1,5 @@
+/* Messages */
+
 div.error {
 border: 4px double red;
 }
@@ -6,6 +8,12 @@ div.success {
 border: 4px double green;
 }
 
-li.deleted {
+div.warning {
+border: 4px double yellow;
+}
+
+/* Other styles */
+
+.deleted {
 text-decoration: line-through;
 }

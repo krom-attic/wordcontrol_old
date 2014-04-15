@@ -1,10 +1,21 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}Lexeme details{% endblock %}
 {% block pagebody %}
-    <p>{{ given_lexeme }}</p>
+    <h1>Word management</h1>
+    <h2>Lexeme details</h2>
+    <h3>{{ given_lexeme }}</h3>
     <ul>
     {% for word in lexeme_words %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }} ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
+        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }}
+        ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
     {% endfor %}
     </ul>
+    <form action="" method="get">
+        <button name="_add_word" type="submit">Add word</button>
+        <button name="_add_translation" type="submit">Add translation</button>
+        <button name="_find_translation" type="submit">Find translation</button>
+    </form>
+
+    {% include "wordengine/translation_result.html" %}
+
 {% endblock %}
