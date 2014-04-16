@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib import auth
 
-# Verified against Architecture Design as of 2013.12.30
-
 
 class Change(models.Model):
     """Abstract base class representing submitted change."""
@@ -149,7 +147,7 @@ class GrammCategorySetLanguageOrder(LanguageEntity):
     position = models.SmallIntegerField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('language', 'position',)
+        unique_together = ('language', 'position')
 
 
 class Inflection(LanguageEntity):

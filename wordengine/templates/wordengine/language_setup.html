@@ -6,7 +6,9 @@
     <form action="" method="post">
         {% csrf_token %}
         {{ language_form.as_p }}
-
+        {% for grcatset_order_form in grcatset_order_forms %}
+            {{ grcatset_order_form.as_p }}
+        {% endfor %}
 
         <input type="submit" value="Save" name="_language_setup" />
     </form>

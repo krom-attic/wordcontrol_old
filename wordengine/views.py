@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import UpdateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db import transaction
@@ -379,25 +380,38 @@ class LanguageSetupView(TemplateView):
         given_language = get_object_or_404(models.Language, pk=kwargs['language_id'])
         language_form = self.language_form_class(instance=given_language)
         grcatsets = get_list_or_404(models.GrammCategorySet)
-        grcatsetorder_forms = []
+        grcatset_order_forms = []
         for grcatset in grcatsets:
             try:
                 grcatset_pos = models.GrammCategorySetLanguageOrder.objects.get(language=given_language,
                                                                                 gramm_category_set=grcatset)
-                grcatsetorder_forms.append(self.grcatsetorder_form_class(instance=grcatset_pos))
+                grcatset_order_forms.append(self.grcatsetorder_form_class(instance=grcatset_pos))
             except ObjectDoesNotExist:
-                grcatsetorder_forms.append(self.grcatsetorder_form_class(initial={'language': given_language,
+                grcatset_order_forms.append(self.grcatsetorder_form_class(initial={'language': given_language,
                                                                                   'gramm_category_set': grcatset,
                                                                                   'position': -1}))
         return render(request, self.template_name, {'language_form': language_form,
-                                                    'grammcatorder_forms': grcatsetorder_forms})
+                                                    'grcatset_order_forms': grcatset_order_forms})
 
     def post(self, request, *args, **kwargs):
-        lang = self.language_form_class(request.POST)
-        lang.save()
-        #models.GrammCategorySetLanguageOrder.objects.filter(language=given_language)
-
+        given_language = get_object_or_404(models.Language, pk=kwargs['language_id'])
+        lang = self.language_form_class(request.POST, instance=given_language)
+        try:
+            for existing_grcatset in models.GrammCategorySetLanguageOrder.objects.filter(language=given_language):
+                existing_grcatset.delete()
+        except ObjectDoesNotExist:
+            pass
+        for grcatset_id in request.POST.getlist('gramm_category_set'):
+            grcatset = models.GrammCategorySet.objects.get(pk=grcatset_id)
+            position = request.POST.getlist('position')[request.POST.getlist('gramm_category_set').index(grcatset_id)]
+            if position != '-1':
+                grcatset_pos = models.GrammCategorySetLanguageOrder(language=given_language, gramm_category_set=grcatset,
+                                                                    position=position)
+                grcatset_pos.save()
+        lang.save()  # TODO Add messages
+        return render(request, self.template_name, {'language_form': lang})
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(LanguageSetupView, self).dispatch(*args, **kwargs)
+
