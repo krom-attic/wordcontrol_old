@@ -17,5 +17,8 @@ urlpatterns = patterns('',
                        url(r'^add/translation/addto=(?P<lexeme_id>\d+)$', views.AddTranslationView.as_view(),
                            name='add_translation'),
                        url(r'^add/translation/addto=(?P<lexeme_id>\d+)&(?P<second_lexeme_id>\d+)$',
-                           views.AddTranslationView.as_view(), name='add_translation')
+                           views.AddTranslationView.as_view(), name='add_translation'),
+                       url(r'^admin$', views.AdminView.as_view(), name='admin'),
+                       url(r'^admin/language/(?P<language_id>\d+)$', views.LanguageSetupView.as_view(),
+                           name='language_setup'),
                        )

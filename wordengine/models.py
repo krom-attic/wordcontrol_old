@@ -148,6 +148,9 @@ class GrammCategorySetLanguageOrder(LanguageEntity):
     gramm_category_set = models.ForeignKey(GrammCategorySet)
     position = models.SmallIntegerField(null=True, blank=True)
 
+    class Meta:
+        unique_together = ('language', 'position',)
+
 
 class Inflection(LanguageEntity):
 

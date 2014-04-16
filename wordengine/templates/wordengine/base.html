@@ -8,10 +8,10 @@
 
 <body>
     <div><strong>Navigation:</strong> <a href="{% url 'wordengine:index' %}">Start screen</a> |
-    <a href="">Add multiple translations</a>
-    <a href="">Quickly add translations</a>
+    <a href="">Add multiple translations</a> |
+    <a href="">Quickly add translations</a> |
     <a href="{% url 'wordengine:add_wordform_lexeme' %}">Add word (directly)</a> |
-    <a href="{% url 'admin:index' %}">Administer</a></div>
+    <a href="{% url 'wordengine:admin' %}">Administer</a></div>
 <hr />
 
 {% for message in messages %}

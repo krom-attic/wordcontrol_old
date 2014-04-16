@@ -1,0 +1,13 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Manage words{% endblock %}
+{% block pagebody %}
+
+<h1>System administration</h1>
+    <h2>Language setup</h2>
+    <form action="" method="get">
+        {{ admin_form.as_p }}
+        <input type="submit" value="Setup" name="_language_setup" />
+    </form>
+    <h2>Django built-in admin panel</h2>
+    <a href="{% url 'admin:index' %}">Main page</a></div>
+{% endblock %}
