@@ -83,19 +83,18 @@ class AddWordformView(TemplateView):
         super(AddWordformView, self).__init__(**kwargs)
 
     def __prefilter(self, filters):
+        if filters['synt_cat']:
+            synt_cat_filter = Q(syntactic_category=filters['synt_cat']) | Q(syntactic_category=None)
+            self.wordform_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
+
         if filters['language']:
             language_filter = Q(language=filters['language']) | Q(language=None)
             self.wordform_form.fields['source'].queryset = models.Source.objects.filter(language_filter)
             self.wordform_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(language_filter)
             self.wordform_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(language_filter)
-            grcatset_order = models.GrammCategorySetLanguageOrder.objects.filter(language_filter)\
-                .values_list('gramm_category_set', flat=True).order_by('position')
             self.wordform_form.fields['gramm_category_set'].queryset =\
-                models.GrammCategorySet.objects.filter(pk__in=grcatset_order)
-        if filters['synt_cat']:
-            synt_cat_filter = Q(syntactic_category=filters['synt_cat']) | Q(syntactic_category=None)
-            self.wordform_form.fields['gramm_category_set'].queryset =\
-                self.wordform_form.fields['gramm_category_set'].queryset.filter(synt_cat_filter)
+                self.wordform_form.fields['gramm_category_set'].queryset.filter(language_filter).order_by('position')
+            # If position null is sorted before any position. Maybe a fix must be introduced
 
     def get(self, request, *args, **kwargs):
         try:
@@ -376,42 +375,36 @@ class LanguageSetupView(TemplateView):
 
     template_name = 'wordengine/language_setup.html'
     language_form_class = forms.LanguageSetupForm
-    grcatsetorder_form_class = forms.GrammCategorySetLanguageOrderForm
+    grcatsetorder_form_class = forms.GrammCategorySetForm
 
     def get(self, request, *args, **kwargs):
         given_language = get_object_or_404(models.Language, pk=kwargs['language_id'])
         language_form = self.language_form_class(instance=given_language)
-        grcatsets = get_list_or_404(models.GrammCategorySet)
-        grcatset_order_forms = []
+        grcatsets = get_list_or_404(models.GrammCategorySet, language=given_language)
+        grcatset_forms = {}
         for grcatset in grcatsets:
-            try:
-                grcatset_pos = models.GrammCategorySetLanguageOrder.objects.get(language=given_language,
-                                                                                gramm_category_set=grcatset)
-                grcatset_order_forms.append(self.grcatsetorder_form_class(instance=grcatset_pos))
-            except ObjectDoesNotExist:
-                grcatset_order_forms.append(self.grcatsetorder_form_class(initial={'language': given_language,
-                                                                                  'gramm_category_set': grcatset,
-                                                                                  'position': -1}))
-        return render(request, self.template_name, {'language_form': language_form,
-                                                    'grcatset_order_forms': grcatset_order_forms})
+            grcatset_forms[grcatset.id] = self.grcatsetorder_form_class(instance=grcatset)
+
+        return render(request, self.template_name, {'language_form': language_form, 'grcatset_forms': grcatset_forms})
 
     def post(self, request, *args, **kwargs):
         given_language = get_object_or_404(models.Language, pk=kwargs['language_id'])
-        lang = self.language_form_class(request.POST, instance=given_language)
-        try:
-            for existing_grcatset in get_list_or_404(models.GrammCategorySetLanguageOrder, language=given_language):
-                existing_grcatset.delete()
-        except ObjectDoesNotExist:
-            pass
-        for grcatset_id in request.POST.getlist('gramm_category_set'):
-            grcatset = models.GrammCategorySet.objects.get(pk=grcatset_id)
-            position = request.POST.getlist('position')[request.POST.getlist('gramm_category_set').index(grcatset_id)]
-            if position != '-1':
-                grcatset_pos = models.GrammCategorySetLanguageOrder(language=given_language, gramm_category_set=grcatset,
-                                                                    position=position)
-                grcatset_pos.save()
-        lang.save()  # TODO Add messages
-        return render(request, self.template_name, {'language_form': lang})
+        language_form = self.language_form_class(request.POST, instance=given_language)
+       # TODO Add function to add gramm cat sets to the language
+  #      try:
+  #          for existing_grcatset in get_list_or_404(models.GrammCategorySetLanguageOrder, language=given_language):
+#                existing_grcatset.delete()
+#        except ObjectDoesNotExist:
+#            pass
+#        for grcatset_id in request.POST.getlist('gramm_category_set'):
+#            grcatset = models.GrammCategorySet.objects.get(pk=grcatset_id)
+#            position = request.POST.getlist('position')[request.POST.getlist('gramm_category_set').index(grcatset_id)]
+#            if position != '-1':
+#                grcatset_pos = models.GrammCategorySetLanguageOrder(language=given_language, gramm_category_set=grcatset,
+ #                                                                   position=position)
+                #grcatset_pos.save()
+        language_form.save()  # TODO Add messages
+        return render(request, self.template_name, {'language_form': language_form})
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):

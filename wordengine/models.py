@@ -47,7 +47,6 @@ class GrammCategoryType(Term):
     pass
 
 
-
 class GrammCategory(Term):
     """Class represents values list for grammatical categories"""
 
@@ -56,17 +55,6 @@ class GrammCategory(Term):
 
     def __str__(self):
         return ' '.join([self.term_full, str(self.gramm_category_type)])
-
-
-
-class GrammCategorySet(models.Model):
-    """Class represents possible composite sets of grammar categories in a given language"""
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
-
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_multi.all())
 
 
 class Language(Term):
@@ -140,11 +128,16 @@ class LanguageEntity(models.Model):
         abstract = True
 
 
-class GrammCategorySetLanguageOrder(LanguageEntity):
-    """Class represents presence and order of a grammatical category sets in a language"""
+class GrammCategorySet(LanguageEntity):
+    """Class represents possible composite sets of grammar categories and its order in a given language
+    """
 
-    gramm_category_set = models.ForeignKey(GrammCategorySet)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
     position = models.SmallIntegerField(null=True, blank=True)
+
+    def __str__(self):
+            return ' '.join(str(s) for s in self.gramm_category_multi.all())
 
     class Meta:
         unique_together = ('language', 'position')

@@ -57,12 +57,26 @@ class LanguageSetupForm(forms.ModelForm):
         model = models.Language
 
 
-class GrammCategorySetLanguageOrderForm(forms.ModelForm):
-    """ Form for displaying grammar category sets and their application
+class GrammCategorySetForm(forms.ModelForm):
+    """ Form for editing grammatical categories
     """
 
     class Meta:
-        model = models.GrammCategorySetLanguageOrder
-        widgets = {'gramm_category_set': forms.Select}
+        model = models.GrammCategorySet
         exclude = ['language']
+
+
+class QuickTranslationAddSetupForm(forms.ModelForm):
+    """ Form for setting up initial parameters for quick translation addition
+    """
+
+    language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
+    language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
+    syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)
+    source_1 = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)  # Can be "Not needed" or "As for translation"
+    source_2 = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)  # Can be "Not needed" or "As for translation"
+    source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
+
+
+
 
