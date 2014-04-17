@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import UpdateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db import transaction
@@ -89,11 +88,14 @@ class AddWordformView(TemplateView):
             self.wordform_form.fields['source'].queryset = models.Source.objects.filter(language_filter)
             self.wordform_form.fields['writing_system'].queryset = models.WritingSystem.objects.filter(language_filter)
             self.wordform_form.fields['dialect_multi'].queryset = models.Dialect.objects.filter(language_filter)
-            #TODO Add another filter after gramm cat set becomes language dependent
-
+            grcatset_order = models.GrammCategorySetLanguageOrder.objects.filter(language_filter)\
+                .values_list('gramm_category_set', flat=True).order_by('position')
+            self.wordform_form.fields['gramm_category_set'].queryset =\
+                models.GrammCategorySet.objects.filter(pk__in=grcatset_order)
         if filters['synt_cat']:
             synt_cat_filter = Q(syntactic_category=filters['synt_cat']) | Q(syntactic_category=None)
-            self.wordform_form.fields['gramm_category_set'].queryset = models.GrammCategorySet.objects.filter(synt_cat_filter)
+            self.wordform_form.fields['gramm_category_set'].queryset =\
+                self.wordform_form.fields['gramm_category_set'].queryset.filter(synt_cat_filter)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -397,7 +399,7 @@ class LanguageSetupView(TemplateView):
         given_language = get_object_or_404(models.Language, pk=kwargs['language_id'])
         lang = self.language_form_class(request.POST, instance=given_language)
         try:
-            for existing_grcatset in models.GrammCategorySetLanguageOrder.objects.filter(language=given_language):
+            for existing_grcatset in get_list_or_404(models.GrammCategorySetLanguageOrder, language=given_language):
                 existing_grcatset.delete()
         except ObjectDoesNotExist:
             pass

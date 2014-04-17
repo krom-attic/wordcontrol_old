@@ -171,7 +171,11 @@ class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
     def __str__(self):
-        return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
+        try:
+            spelling = self.wordform_set.first().spelling
+        except AttributeError:
+            spelling = '[No wordform attached]'
+        return ' | '.join(str(s) for s in [spelling, self.language, self.syntactic_category])
 
 
 class DictEntity(models.Model):
@@ -192,9 +196,9 @@ class WordformBase(DictEntity):
     writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
 
     def __str__(self):
-        if self.writing_system:
+        try:
             ws = str(self.writing_system.term_abbr)
-        else:
+        except AttributeError:
             ws = ""
         return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
     #TODO Include dialects into description
