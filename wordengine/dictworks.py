@@ -57,18 +57,17 @@ def parse_data_import(datafile): # TODO Doesn't work by now
 
     content = datafile.read()
 
-    encoding = 'cp1251'    # TODO http://pypi.python.org/pypi/chardet
+    encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
 
-    if encoding != 'utf-8':
-        content = str(content.decode(encoding, 'replace').encode('utf-8'))
+    content = str(content.decode(encoding, 'replace'))
+
 
     filestream = io.StringIO(content)
-    dialect = csv.Sniffer().sniff(content)
-
-    reader = csv.DictReader(filestream.read().splitlines(), dialect=dialect)
-    results = [row for row in reader]
-
-    print(results)
+    #dialect = csv.Sniffer().sniff(content)
+    print(filestream.read())
+    reader = csv.reader(filestream.read(), delimiter=',', quoting=csv.QUOTE_NONE)
+    for row in reader:
+        print(row)
 
     # for chunk in datafile.chunks():
     # reader = csv.reader(str(chunk.decode('cp1251').splitlines()), delimiter=',', quoting=csv.QUOTE_NONE)
