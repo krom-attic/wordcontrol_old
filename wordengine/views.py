@@ -5,47 +5,11 @@ from django.utils.decorators import method_decorator
 from django.db import transaction
 from django.db.models import Q
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist
-from wordengine import forms, models
-from collections import defaultdict
-
-
-# Common functions here
-
-def find_lexeme_wordforms(word_search, exact):
-    if word_search.is_valid():
-        if exact:
-            word_result = models.Wordform.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
-        else:
-            word_result = models.Wordform.objects.filter(spelling__istartswith=word_search.cleaned_data['spelling'])
-        if word_search.cleaned_data['language']:
-            word_result = word_result.filter(lexeme__language__exact=word_search.cleaned_data['language'])
-        elif word_search.cleaned_data['syntactic_category']:
-            word_result = word_result.filter(lexeme__syntactic_category__exact=
-                                             word_search.cleaned_data['syntactic_category'])
-    temp_lexeme_result = defaultdict(list)
-    for word in word_result:
-        temp_lexeme_result[word.lexeme].append(word)
-    lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but seems doesn't)
-    #TODO Invalid search handling
-    return lexeme_result
-
-
-def find_lexeme_translations(lexemes):
-    translation_result = dict()
-
-    for lexeme in lexemes:
-        translation_list = []
-        for translation in models.Translation.objects.filter(lexeme_1=lexeme):
-            translation_list.append(translation.lexeme_2)
-        for translation in models.Translation.objects.filter(lexeme_2=lexeme):
-            translation_list.append(translation.lexeme_1)
-        translation_result[lexeme] = translation_list
-
-    return translation_result
+from wordengine import forms
+from wordengine.dictworks import *
+import csv
 
 # Actual views here
-
 
 def index(request):
     return redirect('wordengine:show_wordlist')
@@ -204,12 +168,12 @@ class ShowLexemeListView(TemplateView):
                                                             'translation_result': translation_result,
                                                             'translation_search': 'word_search'})
             elif '_lexeme_details' in request.GET:
-                given_lexeme = get_object_or_404(models.Lexeme.objects.get, pk=request.GET['_lexeme_details'])
+                given_lexeme = get_object_or_404(models.Lexeme, pk=request.GET['_lexeme_details'])
                 lexeme_words = given_lexeme.wordform_set.all()
                 return render(request, self.template_name, {'word_search_form': word_search_form,
                                                             'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
             elif '_find_translation' in request.GET:  # combines both of above
-                lexeme_result = get_object_or_404(models.Lexeme.objects.get, pk=request.GET['_find_translation'])
+                lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation'])
                 lexeme_words = lexeme_result.wordform_set.all()
                 translation_result = find_lexeme_translations([lexeme_result])
                 return render(request, self.template_name, {'word_search_form': word_search_form,
@@ -232,21 +196,6 @@ class ShowLexemeListView(TemplateView):
             else:
                 messages.error(request, "Invalid request")
                 return render(request, self.template_name, {'word_search_form': word_search_form})
-
-
-def modsave(request, upd_object, upd_fields):
-
-    field_change = dict()
-    for upd_field in upd_fields.keys():
-        field_change[upd_field] = models.FieldChange(user_changer=request.user,
-                                                     object_type=type(upd_object).__name__,
-                                                     object_id=upd_object.id, field_name=upd_field,
-                                                     old_value=getattr(upd_object, upd_field))
-        setattr(upd_object, upd_field, upd_fields.get(upd_field))
-    upd_object.save()
-    for upd_field in field_change.keys():
-        field_change[upd_field].new_value = getattr(upd_object, upd_field)
-        field_change[upd_field].save()
 
 
 @login_required
@@ -410,3 +359,22 @@ class LanguageSetupView(TemplateView):
     def dispatch(self, *args, **kwargs):
         return super(LanguageSetupView, self).dispatch(*args, **kwargs)
 
+
+
+class DictionaryDataImportView(TemplateView):
+    """ Class view for importing dictionary data via file upload
+    """
+
+    template_name = 'wordengine/data_import.html'
+    upload_form_class = forms.UploadFileForm
+
+    def get(self, request, *args, **kwargs):
+        upload_form = self.upload_form_class()
+        return render(request, self.template_name, {'upload_form': upload_form})
+
+    def post(self, request, *args, **kwargs):
+        upload_form = self.upload_form_class(request.POST, request.FILES)
+        if upload_form.is_valid():
+            parse_data_import(request.FILES['file'])
+            upload_form = self.upload_form_class()
+        return render(request, self.template_name, {'upload_form': upload_form})

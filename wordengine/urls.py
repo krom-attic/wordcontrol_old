@@ -21,4 +21,5 @@ urlpatterns = patterns('',
                        url(r'^admin$', views.AdminView.as_view(), name='admin'),
                        url(r'^admin/language/(?P<language_id>\d+)$', views.LanguageSetupView.as_view(),
                            name='language_setup'),
+                       url(r'^add/mass/import$', views.DictionaryDataImportView.as_view(), name='import_data'),
                        )

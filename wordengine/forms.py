@@ -78,5 +78,5 @@ class QuickTranslationAddSetupForm(forms.ModelForm):
     source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
 
 
-
-
+class UploadFileForm(forms.Form):
+    file  = forms.FileField()
