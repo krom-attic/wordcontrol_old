@@ -2,6 +2,7 @@ from wordengine import models
 from collections import defaultdict
 import csv
 import io
+import codecs
 
 # Common functions here
 
@@ -53,7 +54,7 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(datafile): # TODO Doesn't work by now
+def parse_data_import(datafile):  # TODO Larger files should be saved to disk beforehand
 
     content = datafile.read()
 
@@ -64,10 +65,12 @@ def parse_data_import(datafile): # TODO Doesn't work by now
 
     filestream = io.StringIO(content)
     #dialect = csv.Sniffer().sniff(content)
-    print(filestream.read())
-    reader = csv.reader(filestream.read(), delimiter=',', quoting=csv.QUOTE_NONE)
-    for row in reader:
-        print(row)
+
+    # reader = csv.DictReader(filestream.read(), delimiter=',', quoting=csv.QUOTE_NONE)
+    with codecs.open('d:/test.csv', 'rU', 'utf-16') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for row in reader:
+            print(row)
 
     # for chunk in datafile.chunks():
     # reader = csv.reader(str(chunk.decode('cp1251').splitlines()), delimiter=',', quoting=csv.QUOTE_NONE)
