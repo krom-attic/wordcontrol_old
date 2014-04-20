@@ -4,9 +4,11 @@ import csv
 import io
 import codecs
 
+
 # Common functions here
 
 def find_lexeme_wordforms(word_search, exact):
+
     if word_search.is_valid():
         if exact:
             word_result = models.Wordform.objects.filter(spelling__iexact=word_search.cleaned_data['spelling'])
@@ -26,6 +28,7 @@ def find_lexeme_wordforms(word_search, exact):
 
 
 def find_lexeme_translations(lexemes):
+
     translation_result = dict()
 
     for lexeme in lexemes:
@@ -63,13 +66,14 @@ def parse_data_import(datafile):
         content = str(content.decode(encoding, 'replace'))
         filestream = io.StringIO(content)
     # else:
-    #     TODO Larger files should be saved to disk beforehand - chunks?
+    #     TODO Larger files should be saved to disk beforehand
     #     filestream = codecs.open('d:/test.csv', 'rU', 'utf-16')
 
     with filestream as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE
         for row in reader:
             print(row)
+
 
     # for chunk in datafile.chunks():
     # reader = csv.reader(str(chunk.decode('cp1251').splitlines()), delimiter=',', quoting=csv.QUOTE_NONE)
