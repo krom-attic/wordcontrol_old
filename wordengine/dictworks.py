@@ -54,21 +54,20 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(datafile):  # TODO Larger files should be saved to disk beforehand
+def parse_data_import(datafile):
 
-    content = datafile.read()
+    if True:
+        content = datafile.read()
+        encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
+        # dialect = csv.Sniffer().sniff(content)  # TODO Detect dialect
+        content = str(content.decode(encoding, 'replace'))
+        filestream = io.StringIO(content)
+    # else:
+    #     TODO Larger files should be saved to disk beforehand - chunks?
+    #     filestream = codecs.open('d:/test.csv', 'rU', 'utf-16')
 
-    encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
-
-    content = str(content.decode(encoding, 'replace'))
-
-
-    filestream = io.StringIO(content)
-    #dialect = csv.Sniffer().sniff(content)
-
-    # reader = csv.DictReader(filestream.read(), delimiter=',', quoting=csv.QUOTE_NONE)
-    with codecs.open('d:/test.csv', 'rU', 'utf-16') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
+    with filestream as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE
         for row in reader:
             print(row)
 
