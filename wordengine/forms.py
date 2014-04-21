@@ -66,16 +66,26 @@ class GrammCategorySetForm(forms.ModelForm):
         exclude = ['language']
 
 
-class QuickTranslationAddSetupForm(forms.ModelForm):
+class TranslationImportForm(forms.Form):
     """ Form for setting up initial parameters for quick translation addition
     """
 
+    WORD_SOURCE_CHOICES = (
+        (0, 'Not needed'),
+        (1, 'As for translation'),
+    )
+
     language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
-    syntactic_category = forms.ModelChoiceField(queryset=models.SyntacticCategory.objects.all(), required=False)
-    source_1 = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)  # Can be "Not needed" or "As for translation"
-    source_2 = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)  # Can be "Not needed" or "As for translation"
     source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
+    source_1 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES, required=False)
+    source_2 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES, required=False)
+    dialect_1_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
+    dialect_2_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
+    writing_system_ortho_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_phon_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_ortho_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_phon_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
 
 
 class UploadFileForm(forms.Form):

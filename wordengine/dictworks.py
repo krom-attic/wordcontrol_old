@@ -3,6 +3,8 @@ from collections import defaultdict
 import csv
 import io
 import codecs
+from django.db import transaction
+from django.db import IntegrityError
 
 
 # Common functions here
@@ -57,27 +59,143 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(datafile):
+# def add_new_word():
+#     transaction.set_autocommit(False)
+#     try:
+#         if lexeme_validated == 2:
+#             lexeme = lexeme_form.save()
+#         wordform_form_initial = models.Wordform(lexeme=lexeme)
+#         self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
+#         if self.wordform_form.is_valid():
+#             wordform = self.wordform_form.save()
+#             dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+#                                             object_id=wordform.id)
+#             dict_change.save()
+#             messages.success(request, "The word has been added")
+#             is_saved = True
+#     finally:
+#         if not is_saved:
+#             transaction.rollback()
+#         transaction.set_autocommit(True)
 
-    if True:
-        content = datafile.read()
-        encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
-        # dialect = csv.Sniffer().sniff(content)  # TODO Detect dialect
-        content = str(content.decode(encoding, 'replace'))
-        filestream = io.StringIO(content)
-    # else:
-    #     TODO Larger files should be saved to disk beforehand
-    #     filestream = codecs.open('d:/test.csv', 'rU', 'utf-16')
 
-    with filestream as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE
-        for row in reader:
-            print(row)
+def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
+
+    content = datafile.read()
+    encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
+    # csv_dialect = csv.Sniffer().sniff(content)  # TODO CSV Detect dialect
+    content = str(content.decode(encoding, 'replace'))  # Why 'replace'?
+    filestream = io.StringIO(content)
+
+    with filestream as csvfile:  # TODO Wrap with manual commit
+        reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE?
+        language_1 = models.Language.objects.get(pk=postdata['language_1'])
+        language_2 = models.Language.objects.get(pk=postdata['language_2'])
+        source_translation = models.Source.objects.get(pk=postdata['source_translation'])
+        WORD_SOURCES = {0: None, 1: source_translation}
+        source_1 = WORD_SOURCES.get(postdata['source_1'])
+        source_2 = WORD_SOURCES.get(postdata['source_2'])
+        writing_system_ortho_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_1'])
+        writing_system_phon_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_1'])
+        writing_system_ortho_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_2'])
+        writing_system_phon_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_2'])
+        dialect_1_default = models.Dialect.objects.get(pk=postdata['dialect_1_default'])
+        dialect_2_default = models.Dialect.objects.get(pk=postdata['dialect_2_default'])
+
+        transaction.set_autocommit(False)
+        for row in reader:  # Split larger files by chunks?
+            if row.get('Часть речи'):  # TODO Get default value from form
+
+                lexeme_1 = models.Lexeme(language=language_1,
+                                         syntactic_category=models.SyntacticCategory.objects.get(pk=1))  # TODO Get corresponding synt cat value
+                lexeme_1.save()
+
+                lexeme_2 = models.Lexeme(language=language_2,
+                                         syntactic_category=models.SyntacticCategory.objects.get(pk=1))  # TODO Get corresponding synt cat value
+                lexeme_2.save()
+
+                translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
+                translation.save()
+                translation.source.add(source_translation)
+
+            try:
+                # TODO Set default gr cat per every synt cat (get from order?)
+                wordform_ortho_1 = models.Wordform(lexeme=lexeme_1, spelling=row.get('Написание 1'),
+                                                   gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
+                                                   writing_system=writing_system_ortho_1)
+            except KeyError:
+                wordform_ortho_1 = None
+
+            try:
+                # TODO Set default gr cat per every synt cat (get from order?)
+                wordform_phon_1 = models.Wordform(lexeme=lexeme_1, spelling=row.get('Произношение 1'),
+                                                  gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
+                                                  writing_system=writing_system_phon_1)
+            except KeyError:
+                wordform_phon_1 = None
+
+            try:
+                # TODO Set default gr cat per every synt cat (get from order?)
+                wordform_ortho_2 = models.Wordform(lexeme=lexeme_2, spelling=row.get('Написание 2'),
+                                                   gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
+                                                   writing_system=writing_system_ortho_2)
+            except KeyError:
+                wordform_ortho_2 = None
+
+            try:
+                # TODO Set default gr cat per every synt cat (get from order?)
+                wordform_phon_2 = models.Wordform(lexeme=lexeme_2, spelling=row.get('Произношение 2'),
+                                                  gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
+                                                  writing_system=writing_system_phon_2)
+            except KeyError:
+                wordform_phon_2 = None
+
+            wordform_ortho_1.save()
+            wordform_phon_1.save()
+            wordform_ortho_2.save()
+            wordform_phon_2.save()
+
+            try:
+                wordform_ortho_1.dialect_multi.add(row.get('Диалект 1'))
+            except ValueError:
+                wordform_ortho_1.dialect_multi.add(dialect_1_default)
+            try:
+                wordform_ortho_1.source.add(source_1)
+            except IntegrityError:
+                pass
+
+            try:
+                wordform_phon_1.dialect_multi.add(row.get('Диалект 1'))
+            except ValueError:
+                wordform_phon_1.dialect_multi.add(dialect_1_default)
+            try:
+                wordform_phon_1.source.add(source_1)
+            except IntegrityError:
+                pass
+
+            try:
+                wordform_ortho_2.dialect_multi.add(row.get('Диалект 2'))
+            except ValueError:
+                wordform_ortho_2.dialect_multi.add(dialect_2_default)
+            try:
+                wordform_ortho_2.source.add(source_2)
+            except IntegrityError:
+                pass
+
+            try:
+                wordform_phon_2.dialect_multi.add(row.get('Диалект 2'))
+            except ValueError:
+                wordform_phon_2.dialect_multi.add(dialect_2_default)
+            try:
+                wordform_phon_2.source.add(source_2)
+            except IntegrityError:
+                pass
+
+            # Does it need to be saved?
+
+        transaction.rollback()
+        transaction.set_autocommit(True)
 
 
-    # for chunk in datafile.chunks():
-    # reader = csv.reader(str(chunk.decode('cp1251').splitlines()), delimiter=',', quoting=csv.QUOTE_NONE)
-    # for row in reader:
-    #     print(row)
-    #for line in chunk.splitlines():
-    #   print(line.decode('utf_16'))
+            # TODO Add form for commenting and duplicates resolution
+            # TODO Suggest translation constraint if marked in a csv
