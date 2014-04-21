@@ -188,14 +188,6 @@ class WordformBase(DictEntity):
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
 
-    def __str__(self):
-        try:
-            ws = str(self.writing_system.term_abbr)
-        except AttributeError:
-            ws = ""
-        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
-    #TODO Include dialects into description
-
     class Meta:
         abstract = True
 
@@ -233,6 +225,14 @@ class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+
+    def __str__(self):
+        try:
+            ws = str(self.writing_system.term_abbr)
+        except AttributeError:
+            ws = ""
+        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
+    #TODO Include dialects into description
 
 
 class WordformSample(WordformBase):

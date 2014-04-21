@@ -365,16 +365,20 @@ class DictionaryDataImportView(TemplateView):
     """ Class view for importing dictionary data via file upload
     """
 
-    template_name = 'wordengine/data_import.html'
+    template_name = 'wordengine/translation_import.html'
+    translation_import_form_class = forms.TranslationImportForm
     upload_form_class = forms.UploadFileForm
 
     def get(self, request, *args, **kwargs):
+        translation_import_form = self.translation_import_form_class()
         upload_form = self.upload_form_class()
-        return render(request, self.template_name, {'upload_form': upload_form})
+        print(translation_import_form)
+        return render(request, self.template_name, {'translation_import_form': translation_import_form,
+                                                    'upload_form': upload_form})
 
     def post(self, request, *args, **kwargs):
+        translation_import_form = self.translation_import_form_class(request.POST)
         upload_form = self.upload_form_class(request.POST, request.FILES)
-        if upload_form.is_valid():
-            parse_data_import(request.FILES['file'])
-            upload_form = self.upload_form_class()
-        return render(request, self.template_name, {'upload_form': upload_form})
+        if translation_import_form.is_valid() and upload_form.is_valid():
+            parse_data_import(request.POST, request.FILES['file'])
+        return render(request, self.template_name)
