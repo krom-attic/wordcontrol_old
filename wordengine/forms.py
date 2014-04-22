@@ -75,11 +75,11 @@ class TranslationImportForm(forms.Form):
         (1, 'As for translation'),
     )
 
-    language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
-    language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
-    source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
-    source_1 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES, required=False)
-    source_2 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES, required=False)
+    language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all())
+    language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all())
+    source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all())
+    source_1 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
+    source_2 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
     dialect_1_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
     dialect_2_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
     writing_system_ortho_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)

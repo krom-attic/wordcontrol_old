@@ -103,6 +103,7 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
         dialect_2_default = models.Dialect.objects.get(pk=postdata['dialect_2_default'])
 
         transaction.set_autocommit(False)
+
         for row in reader:  # Split larger files by chunks?
             if row.get('Часть речи'):
                 synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get('Часть речи'))
@@ -158,12 +159,14 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
                                                        gramm_category_set=current_row_params[2][1],
                                                        writing_system=current_row_params[1])
                     wordform.save()
+                    wordform.dialect_multi.add(current_row_params[2][2])
                     try:
                         wordform.dialect_multi.add(current_row_params[2][2])
                     except ValueError:
                         wordform.dialect_multi.add(current_row_params[2][3])
+                    wordform.source.add(current_row_params[2][4])
                     try:
-                        wordform.source.add(current_row_params[2][4])
+                        wordform.source.add(current_row_params[2][4])  # TODO WTF? Почему разные ошибки ловятся?
                     except IntegrityError:
                         pass
                     print(models.Wordform.objects.filter(pk=wordform.id).values())
