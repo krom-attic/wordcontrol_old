@@ -3,8 +3,8 @@ from collections import defaultdict
 import csv
 import io
 import codecs
-from django.db import transaction
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
+from django.core.exceptions import ObjectDoesNotExist
 
 
 # Common functions here
@@ -104,94 +104,71 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
 
         transaction.set_autocommit(False)
         for row in reader:  # Split larger files by chunks?
-            if row.get('Часть речи'):  # TODO Get default value from form
+            if row.get('Часть речи'):
+                synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get('Часть речи'))
 
-                lexeme_1 = models.Lexeme(language=language_1,
-                                         syntactic_category=models.SyntacticCategory.objects.get(pk=1))  # TODO Get corresponding synt cat value
+                lexeme_1 = models.Lexeme(language=language_1, syntactic_category=synt_cat)
                 lexeme_1.save()
+                print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
 
-                lexeme_2 = models.Lexeme(language=language_2,
-                                         syntactic_category=models.SyntacticCategory.objects.get(pk=1))  # TODO Get corresponding synt cat value
+                try:
+                    main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_1,
+                                                                           syntactic_category=synt_cat)\
+                        .order_by('position').first()
+                except ObjectDoesNotExist:
+                    main_gr_cat_1 = None
+
+                print(main_gr_cat_1)
+
+                lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)
                 lexeme_2.save()
+                print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
+
+                try:
+                    main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_2,
+                                                                           syntactic_category=synt_cat)\
+                        .order_by('position').first()
+
+                except ObjectDoesNotExist:
+                    main_gr_cat_2 = None
+
+                print(main_gr_cat_2)
 
                 translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
                 translation.save()
                 translation.source.add(source_translation)
+                print(models.Translation.objects.filter(pk=translation.id).values())
 
-            try:
-                # TODO Set default gr cat per every synt cat (get from order?)
-                wordform_ortho_1 = models.Wordform(lexeme=lexeme_1, spelling=row.get('Написание 1'),
-                                                   gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
-                                                   writing_system=writing_system_ortho_1)
-            except KeyError:
-                wordform_ortho_1 = None
+            WORDFORM_PARAMS = (
+                (lexeme_1, main_gr_cat_1, 'Диалект 1', dialect_1_default, source_1),
+                (lexeme_2, main_gr_cat_2, 'Диалект 2', dialect_2_default, source_2),
+            )
 
-            try:
-                # TODO Set default gr cat per every synt cat (get from order?)
-                wordform_phon_1 = models.Wordform(lexeme=lexeme_1, spelling=row.get('Произношение 1'),
-                                                  gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
-                                                  writing_system=writing_system_phon_1)
-            except KeyError:
-                wordform_phon_1 = None
+            ROW_GET_PARAMS = (
+                ('Написание 1', writing_system_ortho_1, WORDFORM_PARAMS[0]),
+                ('Произношение 1', writing_system_phon_1, WORDFORM_PARAMS[0]),
+                ('Написание 2', writing_system_ortho_2, WORDFORM_PARAMS[1]),
+                ('Произношение 2', writing_system_phon_2, WORDFORM_PARAMS[1]),
+            )
 
-            try:
-                # TODO Set default gr cat per every synt cat (get from order?)
-                wordform_ortho_2 = models.Wordform(lexeme=lexeme_2, spelling=row.get('Написание 2'),
-                                                   gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
-                                                   writing_system=writing_system_ortho_2)
-            except KeyError:
-                wordform_ortho_2 = None
+            for current_row_params in ROW_GET_PARAMS:
+                current_word = row.get(current_row_params[0])
+                if current_word:
+                    wordform = models.Wordform(lexeme=current_row_params[2][0], spelling=current_word,
+                                                       gramm_category_set=current_row_params[2][1],
+                                                       writing_system=current_row_params[1])
+                    wordform.save()
+                    try:
+                        wordform.dialect_multi.add(current_row_params[2][2])
+                    except ValueError:
+                        wordform.dialect_multi.add(current_row_params[2][3])
+                    try:
+                        wordform.source.add(current_row_params[2][4])
+                    except IntegrityError:
+                        pass
+                    print(models.Wordform.objects.filter(pk=wordform.id).values())
 
-            try:
-                # TODO Set default gr cat per every synt cat (get from order?)
-                wordform_phon_2 = models.Wordform(lexeme=lexeme_2, spelling=row.get('Произношение 2'),
-                                                  gramm_category_set=models.GrammCategorySet.objects.get(pk=1),
-                                                  writing_system=writing_system_phon_2)
-            except KeyError:
-                wordform_phon_2 = None
-
-            wordform_ortho_1.save()
-            wordform_phon_1.save()
-            wordform_ortho_2.save()
-            wordform_phon_2.save()
-
-            try:
-                wordform_ortho_1.dialect_multi.add(row.get('Диалект 1'))
-            except ValueError:
-                wordform_ortho_1.dialect_multi.add(dialect_1_default)
-            try:
-                wordform_ortho_1.source.add(source_1)
-            except IntegrityError:
-                pass
-
-            try:
-                wordform_phon_1.dialect_multi.add(row.get('Диалект 1'))
-            except ValueError:
-                wordform_phon_1.dialect_multi.add(dialect_1_default)
-            try:
-                wordform_phon_1.source.add(source_1)
-            except IntegrityError:
-                pass
-
-            try:
-                wordform_ortho_2.dialect_multi.add(row.get('Диалект 2'))
-            except ValueError:
-                wordform_ortho_2.dialect_multi.add(dialect_2_default)
-            try:
-                wordform_ortho_2.source.add(source_2)
-            except IntegrityError:
-                pass
-
-            try:
-                wordform_phon_2.dialect_multi.add(row.get('Диалект 2'))
-            except ValueError:
-                wordform_phon_2.dialect_multi.add(dialect_2_default)
-            try:
-                wordform_phon_2.source.add(source_2)
-            except IntegrityError:
-                pass
-
-            # Does it need to be saved?
+            # Does it need to be saved after "add"?
 
         transaction.rollback()
         transaction.set_autocommit(True)
