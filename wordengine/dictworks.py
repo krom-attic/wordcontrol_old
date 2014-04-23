@@ -199,11 +199,6 @@ def parse_data_import(postdata, datafile):
                             wordform.dialect_multi.add(dialect)
                         except IntegrityError:
                             pass  # Nothing to do if dialect isn't specified anywhere
-                        # except ValueError:
-                        #     try:
-                        #         wordform.dialect_multi.add()
-                        #     except IntegrityError:
-                        #         pass  # Nothing to do if dialect isn't specified anywhere
                         try:
                             wordform.source.add(current_row_params[2][3])
                         except IntegrityError:
