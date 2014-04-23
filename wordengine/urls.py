@@ -2,16 +2,14 @@ from django.conf.urls import patterns, url
 from wordengine import views
 
 urlpatterns = patterns('',
+                       url(r'^$', views.index, name='index'),
                        url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),  # Depricated?
                        url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<spelling>\w*)$',
                            views.AddWordformView.as_view(), name='add_wordform_lexeme'),
                        url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<first_lexeme_id>\d*)&(?P<spelling>\w*)$',
                            views.AddWordformView.as_view(), name='add_wordform_lexeme'),
                        url(r'^add/word/addto=(?P<lexeme_id>\d+)$', views.AddWordformView.as_view(), name='add_wordform'),
-                       url(r'^$', views.index, name='index'),
                        url(r'^dosmth$', views.DoSmthWordformView.as_view(), name='do_something'),
-                       url(r'^view/lexeme/(?P<lexeme_id>\d+)$', views.ShowLexemeDetailsView.as_view(),
-                           name='show_lexemedetails'),
                        url(r'^view/words$', views.ShowLexemeListView.as_view(), name='show_wordlist'),
                        url(r'^view/words/(?P<lexeme_id>\d+)$', views.ShowLexemeListView.as_view(),
                            name='show_wordlist'),
@@ -19,5 +17,9 @@ urlpatterns = patterns('',
                        url(r'^add/translation/addto=(?P<lexeme_id>\d+)$', views.AddTranslationView.as_view(),
                            name='add_translation'),
                        url(r'^add/translation/addto=(?P<lexeme_id>\d+)&(?P<second_lexeme_id>\d+)$',
-                           views.AddTranslationView.as_view(), name='add_translation')
+                           views.AddTranslationView.as_view(), name='add_translation'),
+                       url(r'^admin$', views.AdminView.as_view(), name='admin'),
+                       url(r'^admin/language/(?P<language_id>\d+)$', views.LanguageSetupView.as_view(),
+                           name='language_setup'),
+                       url(r'^add/mass/import$', views.DictionaryDataImportView.as_view(), name='import_data'),
                        )

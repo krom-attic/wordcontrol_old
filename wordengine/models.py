@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib import auth
 
-# Verified against Architecture Design as of 2013.12.30
-
 
 class Change(models.Model):
     """Abstract base class representing submitted change."""
@@ -21,7 +19,7 @@ class Term(models.Model):
     """Abstract base class for all terms in dictionary."""
 
     term_full = models.CharField(max_length=256)
-    term_abbr = models.CharField(max_length=64, blank=True)
+    term_abbr = models.CharField(max_length=64, blank=True)  # TODO May be it should be unique???
 
     def __str__(self):
         return self.term_full
@@ -49,7 +47,6 @@ class GrammCategoryType(Term):
     pass
 
 
-
 class GrammCategory(Term):
     """Class represents values list for grammatical categories"""
 
@@ -58,17 +55,6 @@ class GrammCategory(Term):
 
     def __str__(self):
         return ' '.join([self.term_full, str(self.gramm_category_type)])
-
-
-
-class GrammCategorySet(models.Model):
-    """Class represents possible composite sets of grammar categories in a given language"""
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
-
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_multi.all())
 
 
 class Language(Term):
@@ -142,11 +128,19 @@ class LanguageEntity(models.Model):
         abstract = True
 
 
-class GrammCategorySetLanguageOrder(LanguageEntity):
-    """Class represents presence and order of a grammatical category sets in a language"""
+class GrammCategorySet(LanguageEntity):
+    """Class represents possible composite sets of grammar categories and its order in a given language
+    """
 
-    gramm_category_set = models.ForeignKey(GrammCategorySet)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
     position = models.SmallIntegerField(null=True, blank=True)
+
+    def __str__(self):
+            return ' '.join(str(s) for s in self.gramm_category_multi.all())
+
+    class Meta:
+        unique_together = ('language', 'position')
 
 
 class Inflection(LanguageEntity):
@@ -170,7 +164,11 @@ class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
     def __str__(self):
-        return ' | '.join(str(s) for s in [self.wordform_set.first().spelling, self.language, self.syntactic_category])
+        try:
+            spelling = self.wordform_set.first().spelling
+        except AttributeError:
+            spelling = '[No wordform attached]'
+        return ' | '.join(str(s) for s in [spelling, self.language, self.syntactic_category])
 
 
 class DictEntity(models.Model):
@@ -189,14 +187,6 @@ class WordformBase(DictEntity):
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
-
-    def __str__(self):
-        if self.writing_system:
-            ws = str(self.writing_system.term_abbr)
-        else:
-            ws = ""
-        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
-    #TODO Include dialects into description
 
     class Meta:
         abstract = True
@@ -235,6 +225,14 @@ class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+
+    def __str__(self):
+        try:
+            ws = str(self.writing_system.term_abbr)
+        except AttributeError:
+            ws = ""
+        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
+    #TODO Include dialects into description
 
 
 class WordformSample(WordformBase):

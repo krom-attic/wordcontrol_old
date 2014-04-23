@@ -1,5 +1,3 @@
-__author__ = 'Blane'
-
 from django.contrib import admin
 import wordengine.models
 
@@ -16,4 +14,4 @@ admin.site.register(wordengine.models.Wordform)
 admin.site.register(wordengine.models.Translation)
 admin.site.register(wordengine.models.TranslatedTerm)
 admin.site.register(wordengine.models.Source)
-
+admin.site.register(wordengine.models.GrammCategoryType)

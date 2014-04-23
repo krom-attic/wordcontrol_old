@@ -10,7 +10,8 @@
             {% if translations %}
             <ol>
                 {% for translation in translations %}
-                    <li><a href="{% url 'wordengine:show_lexemedetails' translation.id %}">{{ translation }}</a></li>
+                    <li>{{ translation }}
+                        ::: <a href="{% url 'wordengine:show_wordlist' translation.id %}">(details)</a> :::</li>
                 {% endfor %}
             </ol>
             {% else %}

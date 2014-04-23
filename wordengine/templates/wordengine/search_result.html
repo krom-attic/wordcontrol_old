@@ -6,12 +6,13 @@
         {% for lexeme, words in lexeme_result.items %}
             <p>
 
-                <a href="{% url 'wordengine:show_lexemedetails' lexeme.id %}">{{ lexeme }}</a>
-                (found:{% for found_word in words %} {{ found_word.spelling }}{% endfor %})<br />
+                {{ lexeme }}
+                (found:{% for found_word in words %} {{ found_word.spelling }}{% endfor %})
+                ::: <a href="{% url 'wordengine:show_wordlist' lexeme.id %}">(details)</a> :::<br />
+                    <button name="_find_translation" value="{{ lexeme.id }}" type="submit">Find translation</button>
                 {% if searchtype == "regular" %}
                     <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
                     <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
-                    <button name="_find_translation" value="{{ lexeme.id }}" type="submit">Find translation</button>
                 {% elif searchtype == "in_translation" %}
                     <button name="_add_as_translation" value="{{ lexeme.id }}" type="submit">Add as translation</button>
                 {% endif %}

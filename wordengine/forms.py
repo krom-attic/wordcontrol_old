@@ -36,10 +36,57 @@ class SearchWordformForm(forms.Form):
     # Advanced search (filtering with dialect or grammatical category set) is possible
 
 
+class AdminForm(forms.Form):
+    """Form for admin panel"""
+
+    language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
+
+
 class AddTranslationForm(forms.ModelForm):
-    """Form representing translation
-    """
+    """Form representing translation"""
 
     class Meta:
         model = models.Translation
         exclude = ['lexeme_1', 'lexeme_2']
+
+
+class LanguageSetupForm(forms.ModelForm):
+    """Form representing language settings"""
+
+    class Meta:
+        model = models.Language
+
+
+class GrammCategorySetForm(forms.ModelForm):
+    """ Form for editing grammatical categories
+    """
+
+    class Meta:
+        model = models.GrammCategorySet
+        exclude = ['language']
+
+
+class TranslationImportForm(forms.Form):
+    """ Form for setting up initial parameters for quick translation addition
+    """
+
+    WORD_SOURCE_CHOICES = (
+        (0, 'Not needed'),
+        (1, 'As for translation'),
+    )
+
+    language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all())
+    language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all())
+    source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all())
+    source_1 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
+    source_2 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
+    dialect_1_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
+    dialect_2_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
+    writing_system_ortho_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_phon_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_ortho_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    writing_system_phon_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+
+
+class UploadFileForm(forms.Form):
+    file  = forms.FileField()
