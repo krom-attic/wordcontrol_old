@@ -2,6 +2,15 @@
 {% block pagetitle %}Quick translation addition{% endblock %}
 {% block pagebody %}
 <h1>Add translations</h1>
+    {% if added_translations %}
+    <h2>Translations added</h2>
+        <ul>
+            {% for translation in added_translations %}
+                <li>{{ translation.lexeme_1 }} — {{ translation.lexeme_2 }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <h2>Mass parameters</h2>
 
     <form action="" method="post" enctype="multipart/form-data">

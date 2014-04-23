@@ -79,7 +79,7 @@ def modsave(request, upd_object, upd_fields):
 #         transaction.set_autocommit(True)
 
 
-def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
+def parse_data_import(postdata, datafile):
 
     content = datafile.read()
     encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
@@ -93,24 +93,47 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
         language_2 = models.Language.objects.get(pk=postdata['language_2'])
         source_translation = models.Source.objects.get(pk=postdata['source_translation'])
         WORD_SOURCES = {0: None, 1: source_translation}
+          # TODO Fix field name hardcode
+        ROW_CAPTIONS = {'spell1': 'Написание 1', 'transcr1': 'Произношение 1', 'synt_cat': 'Часть речи', 'spell2':
+                        'Написание 2', 'transcr2': 'Произношение 2', 'transl_constr': 'Ограничение перевода'}
         source_1 = WORD_SOURCES.get(postdata['source_1'])
         source_2 = WORD_SOURCES.get(postdata['source_2'])
-        writing_system_ortho_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_1'])
-        writing_system_phon_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_1'])
-        writing_system_ortho_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_2'])
-        writing_system_phon_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_2'])
-        dialect_1_default = models.Dialect.objects.get(pk=postdata['dialect_1_default'])
-        dialect_2_default = models.Dialect.objects.get(pk=postdata['dialect_2_default'])
+        try:
+            writing_system_ortho_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_1'])
+        except ValueError:
+            writing_system_ortho_1 = None
+        try:
+            writing_system_phon_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_1'])
+        except ValueError:
+            writing_system_phon_1 = None
+        try:
+            writing_system_ortho_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_2'])
+        except ValueError:
+            writing_system_ortho_2 = None
+        try:
+            writing_system_phon_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_2'])
+        except ValueError:
+            writing_system_phon_2 = None
+        try:
+            dialect_1_default = models.Dialect.objects.get(pk=postdata['dialect_1_default'])
+        except ValueError:
+            dialect_1_default = None
+        try:
+            dialect_2_default = models.Dialect.objects.get(pk=postdata['dialect_2_default'])
+        except ValueError:
+            dialect_2_default = None
 
         transaction.set_autocommit(False)
 
+        added_translations = []
+
         for row in reader:  # Split larger files by chunks?
-            if row.get('Часть речи'):
-                synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get('Часть речи'))
+            if row.get(ROW_CAPTIONS['synt_cat']):
+                synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get(ROW_CAPTIONS['synt_cat']))
 
                 lexeme_1 = models.Lexeme(language=language_1, syntactic_category=synt_cat)
                 lexeme_1.save()
-                print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
+                # print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
 
                 try:
                     main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_1,
@@ -119,11 +142,12 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
                 except ObjectDoesNotExist:
                     main_gr_cat_1 = None
 
-                print(main_gr_cat_1)
+                # print(main_gr_cat_1)
 
-                lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)
+            if row.get(ROW_CAPTIONS['spell2']) or row.get(ROW_CAPTIONS['transcr2']):
+                lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)  # TODO Add import error
                 lexeme_2.save()
-                print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
+                # print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
 
                 try:
                     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_2,
@@ -133,49 +157,73 @@ def parse_data_import(postdata, datafile):  # TODO Fix field name hardcode
                 except ObjectDoesNotExist:
                     main_gr_cat_2 = None
 
-                print(main_gr_cat_2)
+                # print(main_gr_cat_2)
 
                 translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
                 translation.save()
                 translation.source.add(source_translation)
-                print(models.Translation.objects.filter(pk=translation.id).values())
+                added_translations.append(translation)
+                # print(models.Translation.objects.filter(pk=translation.id).values())
 
             WORDFORM_PARAMS = (
-                (lexeme_1, main_gr_cat_1, 'Диалект 1', dialect_1_default, source_1),
-                (lexeme_2, main_gr_cat_2, 'Диалект 2', dialect_2_default, source_2),
+                (lexeme_1, main_gr_cat_1, dialect_1_default, source_1),
+                (lexeme_2, main_gr_cat_2, dialect_2_default, source_2),
             )
 
             ROW_GET_PARAMS = (
-                ('Написание 1', writing_system_ortho_1, WORDFORM_PARAMS[0]),
-                ('Произношение 1', writing_system_phon_1, WORDFORM_PARAMS[0]),
-                ('Написание 2', writing_system_ortho_2, WORDFORM_PARAMS[1]),
-                ('Произношение 2', writing_system_phon_2, WORDFORM_PARAMS[1]),
+                (ROW_CAPTIONS['spell1'], writing_system_ortho_1, WORDFORM_PARAMS[0]),
+                (ROW_CAPTIONS['transcr1'], writing_system_phon_1, WORDFORM_PARAMS[0]),
+                (ROW_CAPTIONS['spell2'], writing_system_ortho_2, WORDFORM_PARAMS[1]),
+                (ROW_CAPTIONS['transcr2'], writing_system_phon_2, WORDFORM_PARAMS[1]),
             )
 
             for current_row_params in ROW_GET_PARAMS:
-                current_word = row.get(current_row_params[0])
-                if current_word:
-                    wordform = models.Wordform(lexeme=current_row_params[2][0], spelling=current_word,
-                                                       gramm_category_set=current_row_params[2][1],
-                                                       writing_system=current_row_params[1])
-                    wordform.save()
-                    wordform.dialect_multi.add(current_row_params[2][2])
-                    try:
-                        wordform.dialect_multi.add(current_row_params[2][2])
-                    except ValueError:
-                        wordform.dialect_multi.add(current_row_params[2][3])
-                    wordform.source.add(current_row_params[2][4])
-                    try:
-                        wordform.source.add(current_row_params[2][4])  # TODO WTF? Почему разные ошибки ловятся?
-                    except IntegrityError:
-                        pass
-                    print(models.Wordform.objects.filter(pk=wordform.id).values())
-
+                current_row_wordform = row.get(current_row_params[0])
+                if current_row_wordform:
+                    for current_wordform in current_row_wordform.split(' | '):
+                        current_wordform = current_wordform.split(' (')  # TODO Check whether only 2 parts generated
+                        try:
+                            current_wordform[1] = current_wordform[1].rstrip(')')
+                        except IndexError:
+                            current_wordform.append(None)
+                        wordform = models.Wordform(lexeme=current_row_params[2][0], spelling=current_wordform[0],
+                                                           gramm_category_set=current_row_params[2][1],
+                                                           writing_system=current_row_params[1])
+                        wordform.save()
+                        if current_wordform[1]:
+                            dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
+                                                                 language=current_row_params[2][0].language)
+                        else:
+                            dialect = current_row_params[2][2]
+                        try:
+                            wordform.dialect_multi.add(dialect)
+                        except IntegrityError:
+                            pass  # Nothing to do if dialect isn't specified anywhere
+                        # except ValueError:
+                        #     try:
+                        #         wordform.dialect_multi.add()
+                        #     except IntegrityError:
+                        #         pass  # Nothing to do if dialect isn't specified anywhere
+                        try:
+                            wordform.source.add(current_row_params[2][3])
+                        except IntegrityError:
+                            pass  # Nothing to do if source isn't specified anywhere
+                        # print(models.Wordform.objects.filter(pk=wordform.id).values())
+            if lexeme_1.wordform_set.first():
+                current_wordforms = lexeme_1.wordform_set
+            else:
+                try:
+                    for wordform in current_wordforms.all():
+                        wordform.pk = None
+                        wordform.lexeme = lexeme_1
+                        wordform.save()
+                except UnboundLocalError:
+                    pass  # TODO Handle blank first wordform error
             # Does it need to be saved after "add"?
 
-        transaction.rollback()
-        transaction.set_autocommit(True)
+        # TODO Add form for commenting and duplicates resolution
+        # TODO Suggest translation constraint if marked in a csv
 
 
-            # TODO Add form for commenting and duplicates resolution
-            # TODO Suggest translation constraint if marked in a csv
+
+        return added_translations

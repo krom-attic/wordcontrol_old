@@ -151,48 +151,46 @@ class ShowLexemeListView(TemplateView):
     template_name = 'wordengine/lexeme_list.html'
 
     def get(self, request, *args, **kwargs):
-        if not request.GET:
-            return render(request, self.template_name, {'word_search_form': self.word_search_form_class()})
-        else:
-            word_search_form = self.word_search_form_class(request.GET)
+        word_search_form = self.word_search_form_class(request.GET)
 
-            if '_lexeme_search' in request.GET:
-                lexeme_result = find_lexeme_wordforms(word_search_form, False)
-                return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                            'lexeme_result': lexeme_result, 'searchtype': 'regular'})
-            elif '_translation_search' in request.GET:
-                lexeme_result = find_lexeme_wordforms(word_search_form, True)
-                translation_result = find_lexeme_translations(lexeme_result.keys())
-                return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                            'translation_result': translation_result,
-                                                            'translation_search': 'word_search'})
-            elif '_lexeme_details' in request.GET:
-                given_lexeme = get_object_or_404(models.Lexeme, pk=request.GET['_lexeme_details'])
+        if '_lexeme_search' in request.GET:
+            lexeme_result = find_lexeme_wordforms(word_search_form, False)
+            return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                        'lexeme_result': lexeme_result, 'searchtype': 'regular'})
+        elif '_translation_search' in request.GET:
+            lexeme_result = find_lexeme_wordforms(word_search_form, True)
+            translation_result = find_lexeme_translations(lexeme_result.keys())
+            return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                        'translation_result': translation_result,
+                                                        'translation_search': 'word_search'})
+        elif '_find_translation' in request.GET:  # combines both of above
+            lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation'])
+            lexeme_words = lexeme_result.wordform_set.all()
+            translation_result = find_lexeme_translations([lexeme_result])
+            return render(request, self.template_name, {'word_search_form': word_search_form,
+                                                        'given_lexeme': lexeme_result, 'lexeme_words': lexeme_words,
+                                                        'translation_result': translation_result,
+                                                        'translation_search': 'exact_lexeme'})
+        elif '_new_lexeme' in request.GET:
+            language = request.GET['language']
+            syntactic_category = request.GET['syntactic_category']
+            spelling = request.GET['spelling']
+            return redirect('wordengine:add_wordform_lexeme', language=language,
+                            syntactic_category=syntactic_category,  spelling=spelling)
+        elif '_add_translation' in request.GET:
+            lexeme_id = request.GET['_add_translation']
+            return redirect('wordengine:add_translation', lexeme_id)
+        elif '_add_wordform' in request.GET:
+            lexeme_id = request.GET['_add_wordform']
+            return redirect('wordengine:add_wordform', lexeme_id)
+
+        else:
+            try:
+                given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
                 lexeme_words = given_lexeme.wordform_set.all()
                 return render(request, self.template_name, {'word_search_form': word_search_form,
                                                             'given_lexeme': given_lexeme, 'lexeme_words': lexeme_words})
-            elif '_find_translation' in request.GET:  # combines both of above
-                lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation'])
-                lexeme_words = lexeme_result.wordform_set.all()
-                translation_result = find_lexeme_translations([lexeme_result])
-                return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                            'given_lexeme': lexeme_result, 'lexeme_words': lexeme_words,
-                                                            'translation_result': translation_result,
-                                                            'translation_search': 'exact_lexeme'})
-            elif '_new_lexeme' in request.GET:
-                language = request.GET['language']
-                syntactic_category = request.GET['syntactic_category']
-                spelling = request.GET['spelling']
-                return redirect('wordengine:add_wordform_lexeme', language=language,
-                                syntactic_category=syntactic_category,  spelling=spelling)
-            elif '_add_translation' in request.GET:
-                lexeme_id = request.GET['_add_translation']
-                return redirect('wordengine:add_translation', lexeme_id)
-            elif '_add_wordform' in request.GET:
-                lexeme_id = request.GET['_add_wordform']
-                return redirect('wordengine:add_wordform', lexeme_id)
-
-            else:
+            except KeyError:
                 messages.error(request, "Invalid request")
                 return render(request, self.template_name, {'word_search_form': word_search_form})
 
@@ -215,7 +213,7 @@ def delete_wordform(request, wordform_id):
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
         return redirect('wordengine:show_wordlist')
     else:
-        return redirect('wordengine:show_lexemedetails', taken_lexeme.id)
+        return redirect('wordengine:show_wordlist', taken_lexeme.id)
 
 
 class AddTranslationView(TemplateView):
@@ -289,7 +287,7 @@ class AddTranslationView(TemplateView):
             dict_change.save()
             is_saved = True
 
-        if is_saved:
+        if is_saved:  # TODO Excessive flag should be removed
             messages.success(request, "The word has been added")
             return redirect('wordengine:index')  # TODO Add sensible redirect
 
@@ -380,5 +378,11 @@ class DictionaryDataImportView(TemplateView):
         translation_import_form = self.translation_import_form_class(request.POST)
         upload_form = self.upload_form_class(request.POST, request.FILES)
         if translation_import_form.is_valid() and upload_form.is_valid():
-            parse_data_import(request.POST, request.FILES['file'])
-        return render(request, self.template_name)
+            added_translations = parse_data_import(request.POST, request.FILES['file'])
+            # transaction.rollback()
+            transaction.set_autocommit(True)
+        else:
+            added_translations = None
+        return render(request, self.template_name, {'translation_import_form': translation_import_form,
+                                                    'upload_form': upload_form,
+                                                    'added_translations': added_translations})
