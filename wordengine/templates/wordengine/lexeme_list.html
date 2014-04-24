@@ -6,8 +6,8 @@
     <h2>Lexeme parameters</h2>
         <form action="" method="get">
             {{ word_search_form.as_p }}
-            <input type="submit" value="Find lexeme" name="_lexeme_search" />
-            <input type="submit" value="Find translation" name="_translation_search">
+            <input type="submit" value="Find lexeme" name="_find_lexeme" />
+            <input type="submit" value="Find translation" name="_find_translation">
             <input type="submit" value="New lexeme" name="_new_lexeme" />
 
             {% include "wordengine/search_result.html" %}

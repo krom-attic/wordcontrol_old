@@ -9,7 +9,7 @@
                 {{ lexeme }}
                 (found:{% for found_word in words %} {{ found_word.spelling }}{% endfor %})
                 ::: <a href="{% url 'wordengine:show_wordlist' lexeme.id %}">(details)</a> :::<br />
-                    <button name="_find_translation" value="{{ lexeme.id }}" type="submit">Find translation</button>
+                    <button name="_find_translation_lexeme" value="{{ lexeme.id }}" type="submit">Find translation</button>
                 {% if searchtype == "regular" %}
                     <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
                     <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
