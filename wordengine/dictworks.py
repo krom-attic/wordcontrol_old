@@ -79,17 +79,17 @@ def parse_data_import(request):
         source_1 = WORD_SOURCES.get(request.POST['source_1'])
         source_2 = WORD_SOURCES.get(request.POST['source_2'])
         try:
-            writing_system_ortho_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_ortho_1'])
+            writing_system_orth_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_1'])
         except ValueError:
-            writing_system_ortho_1 = None
+            writing_system_orth_1 = None
         try:
             writing_system_phon_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_1'])
         except ValueError:
             writing_system_phon_1 = None
         try:
-            writing_system_ortho_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_ortho_2'])
+            writing_system_orth_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_2'])
         except ValueError:
-            writing_system_ortho_2 = None
+            writing_system_orth_2 = None
         try:
             writing_system_phon_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_2'])
         except ValueError:
@@ -157,9 +157,9 @@ def parse_data_import(request):
             )
 
             ROW_GET_PARAMS = (
-                (ROW_CAPTIONS['spell1'], writing_system_ortho_1, WORDFORM_PARAMS[0]),
+                (ROW_CAPTIONS['spell1'], writing_system_orth_1, WORDFORM_PARAMS[0]),
                 (ROW_CAPTIONS['transcr1'], writing_system_phon_1, WORDFORM_PARAMS[0]),
-                (ROW_CAPTIONS['spell2'], writing_system_ortho_2, WORDFORM_PARAMS[1]),
+                (ROW_CAPTIONS['spell2'], writing_system_orth_2, WORDFORM_PARAMS[1]),
                 (ROW_CAPTIONS['transcr2'], writing_system_phon_2, WORDFORM_PARAMS[1]),
             )
 

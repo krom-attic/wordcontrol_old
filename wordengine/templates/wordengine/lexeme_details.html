@@ -1,11 +1,11 @@
-{% if given_lexeme %}
+{% if exact_lexeme %}
 <hr />
 
 <h2>Lexeme details</h2>
-    <h3>{{ given_lexeme }}</h3>
+    <h3>{{ exact_lexeme.spellings.0.0 }} {{ exact_lexeme.transcrtiptions.0.1 }}</h3>
     <ul>
-    {% for word in lexeme_words %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word }}
+    {% for word, word_f in exact_lexeme.transcrtiptions %}
+        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word_f }}
         ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
     {% endfor %}
     </ul>

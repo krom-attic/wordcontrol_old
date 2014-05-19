@@ -156,6 +156,13 @@ class LexemeBase(LanguageEntity):
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
     # Absence of a dialectical dependency is intentional
 
+    def __str__(self):
+        try:
+            spelling = self.wordform_set.first().spelling
+        except AttributeError:
+            spelling = '[No wordform attached]'
+        return ' | '.join(str(s) for s in [spelling, self.language, self.syntactic_category])
+
     class Meta:
         abstract = True
 
@@ -163,12 +170,7 @@ class LexemeBase(LanguageEntity):
 class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
-    def __str__(self):
-        try:
-            spelling = self.wordform_set.first().spelling
-        except AttributeError:
-            spelling = '[No wordform attached]'
-        return ' | '.join(str(s) for s in [spelling, self.language, self.syntactic_category])
+    pass
 
 
 class DictEntity(models.Model):
