@@ -129,7 +129,12 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'wordengine'
+
+    # HOMEBREW APPS
+    'wordengine',
+
+    # THIRDPARTY APPS
+    'south',
 )
 
 # A sample logging configuration. The only tangible logging
