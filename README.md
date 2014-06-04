@@ -26,3 +26,13 @@ A CR should be converted to a work item directly if there is no one-to-many (or 
 
 After work planned for an UC or F is done, the results are recorded in the corresponding UC or F.
 Any pending changes caused by CRs to UCs and Fs are made only after the current realisation state is documented.
+
+Deployment process
+------------------
+This project is using South.
+Create migration profile:
+manage.py schemamigration wordengine --auto
+Apply migration profile:
+manage.py migrate wordengine
+
+This project will use Fabric as soon as it is update for Python 3 (http://www.fabfile.org/).
