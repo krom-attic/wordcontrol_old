@@ -142,25 +142,6 @@ class AddWordformView(TemplateView):
         return super(AddWordformView, self).dispatch(*args, **kwargs)
 
 
-class LexemePresentation:
-    """ Class for "ready-for-presenting" lexeme
-    """
-
-    def __init__(self, lexeme_id):
-        self.id = lexeme_id
-
-        self.spellings = [lexeme_id.wordform_set.filter(writing_system=3)]
-
-        TRANSCRIPT_BRACKETS={  # TODO Unhardcode this
-            1: ('[{}]'),
-            2: ('/{}/')
-        }
-        self.transcrtiptions = []
-        for wordform_phon in lexeme_id.wordform_set.filter(Q(writing_system=1) | Q(writing_system=2)):
-            self.transcrtiptions.append([wordform_phon, TRANSCRIPT_BRACKETS[wordform_phon.writing_system.id]
-                .format(wordform_phon.spelling)])
-
-
 class ShowLexemeListView(TemplateView):
     """ Show a list of lexemes
     """
@@ -207,9 +188,9 @@ class ShowLexemeListView(TemplateView):
         else:
             try:
                 given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
-                exact_lexeme = LexemePresentation(given_lexeme)
+                print(given_lexeme.wordform_set.first().extended)
                 return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                            'exact_lexeme': exact_lexeme})
+                                                            'exact_lexeme': given_lexeme})
             except KeyError:
                 return render(request, self.template_name, {'word_search_form': word_search_form})
             # except:

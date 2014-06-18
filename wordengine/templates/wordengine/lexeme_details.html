@@ -2,10 +2,19 @@
 <hr />
 
 <h2>Lexeme details</h2>
-    <h3>{{ exact_lexeme.spellings.0.0 }} {{ exact_lexeme.transcrtiptions.0.1 }}</h3>
+    <h3>
+        {% if exact_lexeme.spellings or exact_lexeme.transcriptions %}
+            {{ exact_lexeme.spellings.0.formatted }} {{ exact_lexeme.transcriptions.0.formatted }}
+        {% else %}
+            {{ exact_lexeme.uncertains.0.formatted }}
+        {% endif %}
+    </h3>
+    <p>{{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }} <br />
+       Inflection: {{ exact_lexeme.inflection }}</p>
+    <p>Variants:</p>
     <ul>
-    {% for word, word_f in exact_lexeme.transcrtiptions %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word_f }}
+    {% for word in exact_lexeme.wordform_set.all %}
+        <li {% if word.is_deleted %} class="deleted"{% endif %}>{{ word.extended }}
         ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
     {% endfor %}
     </ul>
