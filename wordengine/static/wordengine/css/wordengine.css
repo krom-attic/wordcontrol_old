@@ -12,8 +12,17 @@ div.warning {
 border: 4px double yellow;
 }
 
+/* Hyperlinks */
+a {
+text-decoration: none;
+}
+
 /* Other styles */
 
 .deleted {
 text-decoration: line-through;
+}
+
+.underdots {
+border-bottom: 1px dotted #222;
 }

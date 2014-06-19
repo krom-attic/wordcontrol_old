@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # Common functions here
 
-def find_lexeme_wordforms(word_search, exact):
+def find_lexemes_wordforms(word_search, exact):
 
     if word_search.is_valid():
         if exact:
@@ -29,7 +29,7 @@ def find_lexeme_wordforms(word_search, exact):
     return lexeme_result
 
 
-def find_lexeme_translations(lexemes):
+def find_translations(lexemes):
 
     translation_result = dict()
 

@@ -142,7 +142,7 @@ class AddWordformView(TemplateView):
         return super(AddWordformView, self).dispatch(*args, **kwargs)
 
 
-class ShowLexemeListView(TemplateView):
+class LexemeView(TemplateView):
     """ Show a list of lexemes
     """
 
@@ -152,13 +152,16 @@ class ShowLexemeListView(TemplateView):
     def get(self, request, *args, **kwargs):
         word_search_form = self.word_search_form_class(request.GET)
 
+        # "Lexeme parameters" form operations
         if '_find_lexeme' in request.GET:
-            lexeme_result = find_lexeme_wordforms(word_search_form, False)
+            lexeme_result = find_lexemes_wordforms(word_search_form, False)
+            print(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'searchtype': 'regular'})
         elif '_find_translation' in request.GET:
-            lexeme_result = find_lexeme_wordforms(word_search_form, True)
-            translation_result = find_lexeme_translations(lexeme_result.keys())
+            lexeme_result = find_lexemes_wordforms(word_search_form, True)
+            print(lexeme_result)
+            translation_result = find_translations(lexeme_result.keys())
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'translation_result': translation_result,
                                                         'translation_search': 'word_search'})
@@ -169,15 +172,15 @@ class ShowLexemeListView(TemplateView):
             return redirect('wordengine:add_wordform_lexeme', language=language,
                             syntactic_category=syntactic_category,  spelling=spelling)
 
+        # "Search results" form operations
         elif '_find_translation_lexeme' in request.GET:  # find translation of a particular lexeme
-            lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation'])
+            lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation_lexeme'])
             lexeme_words = lexeme_result.wordform_set.all()
-            translation_result = find_lexeme_translations([lexeme_result])
+            translation_result = find_translations([lexeme_result])
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'lexeme_words': lexeme_words,
                                                         'translation_result': translation_result,
                                                         'translation_search': 'exact_lexeme'})
-
         elif '_add_translation' in request.GET:
             lexeme_id = request.GET['_add_translation']
             return redirect('wordengine:add_translation', lexeme_id)
@@ -185,10 +188,10 @@ class ShowLexemeListView(TemplateView):
             lexeme_id = request.GET['_add_wordform']
             return redirect('wordengine:add_wordform', lexeme_id)
 
+        # URL parsing
         else:
             try:
                 given_lexeme = get_object_or_404(models.Lexeme, pk=kwargs['lexeme_id'])
-                print(given_lexeme.wordform_set.first().extended)
                 return render(request, self.template_name, {'word_search_form': word_search_form,
                                                             'exact_lexeme': given_lexeme})
             except KeyError:
@@ -242,7 +245,7 @@ class AddTranslationView(TemplateView):
 
         if '_lexeme_search' in request.GET:
             word_search_form = self.word_search_form_class(request.GET)
-            lexeme_result = find_lexeme_wordforms(word_search_form, False)
+            lexeme_result = find_lexemes_wordforms(word_search_form, False)
             return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                         'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result,
@@ -376,7 +379,6 @@ class DictionaryDataImportView(TemplateView):
     def get(self, request, *args, **kwargs):
         translation_import_form = self.translation_import_form_class()
         upload_form = self.upload_form_class()
-        print(translation_import_form)
         return render(request, self.template_name, {'translation_import_form': translation_import_form,
                                                     'upload_form': upload_form})
 

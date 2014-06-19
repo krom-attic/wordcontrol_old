@@ -2,23 +2,23 @@
 <hr />
 
 <h2>Search results</h2>
-    {% if lexeme_result %}
-        {% for lexeme, words in lexeme_result.items %}
-            <p>
-
-                {{ lexeme }}
-                (found:{% for found_word in words %} {{ found_word.spelling }}{% endfor %})
-                ::: <a href="{% url 'wordengine:show_wordlist' lexeme.id %}">(details)</a> :::<br />
-                    <button name="_find_translation_lexeme" value="{{ lexeme.id }}" type="submit">Find translation</button>
-                {% if searchtype == "regular" %}
-                    <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
-                    <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
-                {% elif searchtype == "in_translation" %}
-                    <button name="_add_as_translation" value="{{ lexeme.id }}" type="submit">Add as translation</button>
-                {% endif %}
-            </p>
-        {% endfor %}
-    {% else %}
+    {% for lexeme, words in lexeme_result.items %}
+        <p> <a href="{% url 'wordengine:show_wordlist' lexeme.id %}"><strong>
+            {{ lexeme.spellings.0.formatted }} {{ lexeme.transcriptions.0.formatted }}
+            </strong>
+            — {{ lexeme.language }} {{ lexeme.syntactic_category }}</a>
+            <br />
+            (found:{% for found_word in words %} {{ found_word.spelling }}{% endfor %})
+            <br />
+                <button name="_find_translation_lexeme" value="{{ lexeme.id }}" type="submit">Find translation</button>
+            {% if searchtype == "regular" %}
+                <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
+                <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
+            {% elif searchtype == "in_translation" %}
+                <button name="_add_as_translation" value="{{ lexeme.id }}" type="submit">Add as translation</button>
+            {% endif %}
+        </p>
+    {% empty %}
         <p>Search returned no results.</p>
-    {% endif %}
+    {% endfor %}
 {% endif %}

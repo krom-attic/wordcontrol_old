@@ -165,17 +165,11 @@ class LexemeBase(LanguageEntity):
     def transcriptions(self):
         return self.wordform_set.filter(writing_system__writing_system_type__in=[1, 2])
 
-    @property
-    def uncertains(self):
-        return self.wordform_set.filter(writing_system=None)
-
     def __str__(self):
         if self.spellings.first():
             title_wordform = self.spellings.first().formatted
         elif self.transcriptions.first():
             title_wordform = self.transcriptions.first().formatted
-        elif self.uncertains.first():
-            title_wordform = self.uncertains.first().formatted
         else:
             title_wordform = '[No wordform attached]'
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
@@ -205,7 +199,7 @@ class WordformBase(DictEntity):
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
+    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)  # TODO Make this field mandatory
 
     TRANSCRIPT_BRACKETS = {  # TODO Unhardcode this
         1: ('[{}]'),
@@ -221,6 +215,10 @@ class WordformBase(DictEntity):
                 return self.spelling
         else:
             return self.spelling
+
+    @property
+    def ws(self):
+        return str(self.writing_system)
 
     class Meta:
         abstract = True
@@ -261,13 +259,9 @@ class Wordform(WordformBase):
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
 
     @property
-    def extended(self):
-        extended_formatted = self.formatted
-        if self.dialect_multi:
-            extended_formatted += ' (' + str(self.dialect_multi.all()) + ')'
-        if self.writing_system:
-            extended_formatted += ' ws:' + str(self.writing_system)
-        return extended_formatted
+    def dialects(self):
+        if self.dialect_multi.first():
+            return ', '.join(str(s) for s in self.dialect_multi.all())
 
     def __str__(self):
         try:
