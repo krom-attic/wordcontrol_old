@@ -2,6 +2,7 @@ WordControl
 ===========
 
 Word Control is an application for a collaboration on documenting endangered languages, especially its lexicon and phonology.
+Detailed documentation is in Russian, since there is no participants in the project who doesn't speak Russian so far. But as this project is intended for international use, documentation will be translated into English when needed.  
 
 Development process (v. 2)
 --------------------------

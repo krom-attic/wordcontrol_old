@@ -60,9 +60,9 @@ class AddWordformView(TemplateView):
             # If position null is sorted before any position. Maybe a fix must be introduced
 
     def get(self, request, *args, **kwargs):
-        try:
+        if 'spelling' in kwargs:
             self.wordform_form = self.wordform_form_class(initial={'spelling': kwargs['spelling']})
-        except KeyError:
+        else:
             self.wordform_form = self.wordform_form_class()
 
         try:
