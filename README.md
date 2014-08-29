@@ -36,4 +36,6 @@ manage.py schemamigration wordengine --auto
 Apply migration profile:
 manage.py migrate wordengine
 
+South will be deprecated with Django 1.7
+
 This project will use Fabric as soon as it is update for Python 3 (http://www.fabfile.org/).

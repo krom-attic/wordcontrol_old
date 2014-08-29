@@ -35,9 +35,15 @@ class SyntacticCategory(Term):
     pass
 
 
-
 class UsageConstraint(Term):
     """Class represents usage constraints (used in translations) list"""
+
+    pass
+
+
+class Theme(Term):
+    """ Class for translation themes
+    """
 
     pass
 
@@ -150,11 +156,21 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class LexemeBase(LanguageEntity):
-    """Base class for lexemes"""
+class SemanticGroup():
+    # TODO: resolve circular dependency
+    lexeme = models.ForeignKey(Lexeme)
+    comment = models.TextField(blank=True)
+    theme = models.ManyToManyField(Theme, null=True, blank=True)
+    translation_multi = models.ManyToManyField(Translation, null=True, blank=True)
+
+
+class Lexeme(LanguageEntity):
+    """Class representing current lexemes
+    """
 
     syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
+    semantic_group_multi = models.ManyToManyField()  # TODO: Add relation
     # Absence of a dialectical dependency is intentional
 
     @property
@@ -178,10 +194,18 @@ class LexemeBase(LanguageEntity):
         abstract = True
 
 
-class Lexeme(LexemeBase):
-    """Class representing current lexemes"""
-
+class SpecialRelationType():
+    """ Class for types of lexemes' special relations
+    """
     pass
+
+
+class SpecialRelation():
+    """ Class for lexemes' special relations
+    """
+    lexeme_1 = models.ForeignKey(Lexeme)
+    lexeme_2 = models.ForeignKey(Lexeme)
+    special_relation_type = models.ForeignKey(Lexeme)
 
 
 class DictEntity(models.Model):
@@ -194,12 +218,13 @@ class DictEntity(models.Model):
 
 
 class WordformBase(DictEntity):
-    """Base class for wordforms"""
+    """Base class for wordforms
+    """
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)  # TODO Make this field mandatory
+    writing_system = models.ForeignKey(WritingSystem)
 
     TRANSCRIPT_BRACKETS = {  # TODO Unhardcode this
         1: ('[{}]'),
@@ -224,13 +249,18 @@ class WordformBase(DictEntity):
         abstract = True
 
 
-class TranslationBase(DictEntity):
-    """Base class for translations"""
+class Translation(DictEntity):
+    """Class representing current translations
+    """
 
     lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_snd_set')
-    usage_constraint_multi = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    usage_constraint_multi_1 = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    usage_constraint_multi_2 = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    dialect_multi_1 = models.ManyToManyField(Dialect, null=True, blank=True)
+    dialect_multi_2 = models.ManyToManyField(Dialect, null=True, blank=True)
+    comment_1 = models.TextField(blank=True)
+    comment_2 = models.TextField(blank=True)
 
     class Meta:
         abstract = True
@@ -245,12 +275,6 @@ class TranslatedTerm(LanguageEntity):
     term_id = models.IntegerField()
     term_full_translation = models.CharField(max_length=256)
     term_abbr_translation = models.CharField(max_length=64, blank=True)
-
-
-class Translation(TranslationBase):
-    """Class representing current translations"""
-
-    pass
 
 
 class Wordform(WordformBase):
