@@ -74,7 +74,6 @@ def parse_data_import(uploaded_file):
     for row in csvreader:
          print(row)
 
-
 #     language_1 = models.Language.objects.get(pk=request.POST['language_1'])
 #     language_2 = models.Language.objects.get(pk=request.POST['language_2'])
 #     source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
