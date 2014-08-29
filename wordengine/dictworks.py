@@ -59,155 +59,161 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(request):
+def parse_data_import(uploaded_file):
+    """
+    @param uploaded_file:
+    @return:
 
-    content = request.FILES['file'].read()
-    encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
-    # csv_dialect = csv.Sniffer().sniff(content)  # TODO CSV Detect dialect
-    content = str(content.decode(encoding, 'replace'))  # Why 'replace'?
-    filestream = io.StringIO(content)
+    It's probably impossible to detect (sniff) dialect and encoding correctly, because MS Excel prepares CSV files
+    incorrectly. May be some parsing setting should be introduced.
+    """
 
-    with filestream as csvfile:  # TODO Wrap with manual commit
-        reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE?
-        language_1 = models.Language.objects.get(pk=request.POST['language_1'])
-        language_2 = models.Language.objects.get(pk=request.POST['language_2'])
-        source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
-        WORD_SOURCES = {0: None, 1: source_translation}
-          # TODO Fix field name hardcode
-        ROW_CAPTIONS = {'spell1': 'Написание 1', 'transcr1': 'Произношение 1', 'synt_cat': 'Часть речи', 'spell2':
-                        'Написание 2', 'transcr2': 'Произношение 2', 'transl_constr': 'Ограничение перевода'}
-        source_1 = WORD_SOURCES.get(request.POST['source_1'])
-        source_2 = WORD_SOURCES.get(request.POST['source_2'])
-        try:
-            writing_system_orth_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_1'])
-        except ValueError:
-            writing_system_orth_1 = None
-        try:
-            writing_system_phon_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_1'])
-        except ValueError:
-            writing_system_phon_1 = None
-        try:
-            writing_system_orth_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_2'])
-        except ValueError:
-            writing_system_orth_2 = None
-        try:
-            writing_system_phon_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_2'])
-        except ValueError:
-            writing_system_phon_2 = None
-        try:
-            dialect_1_default = models.Dialect.objects.get(pk=request.POST['dialect_1_default'])
-        except ValueError:
-            dialect_1_default = None
-        try:
-            dialect_2_default = models.Dialect.objects.get(pk=request.POST['dialect_2_default'])
-        except ValueError:
-            dialect_2_default = None
+    # TODO Wrap with manual commit
 
-        transaction.set_autocommit(False)
-
-        added_translations = []
-
-        for row in reader:  # Split larger files by chunks?
-            if row.get(ROW_CAPTIONS['synt_cat']):
-                synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get(ROW_CAPTIONS['synt_cat']))
-
-                lexeme_1 = models.Lexeme(language=language_1, syntactic_category=synt_cat)
-                lexeme_1.save()
-                # print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
-
-                try:
-                    main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_1,
-                                                                           syntactic_category=synt_cat)\
-                        .order_by('position').first()
-                except ObjectDoesNotExist:
-                    main_gr_cat_1 = None
-
-                # print(main_gr_cat_1)
-
-            if row.get(ROW_CAPTIONS['spell2']) or row.get(ROW_CAPTIONS['transcr2']):
-                lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)  # TODO Add import error
-                lexeme_2.save()
-                # print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
-
-                try:
-                    main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_2,
-                                                                           syntactic_category=synt_cat)\
-                        .order_by('position').first()
-
-                except ObjectDoesNotExist:
-                    main_gr_cat_2 = None
-
-                # print(main_gr_cat_2)
-
-                # TR REF START
-                translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
-                translation.save()
-                translation.source.add(source_translation)
-                dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
-                                                object_id=translation.id)
-                dict_change.save()
-                # TR REF FINISH
-                added_translations.append(translation)
-                # print(models.Translation.objects.filter(pk=translation.id).values())
+    csvreader = csv.DictReader(codecs.iterdecode(uploaded_file, 'utf-16'), delimiter=';')
+    for row in csvreader:
+         print(row)
 
 
-            WORDFORM_PARAMS = (
-                (lexeme_1, main_gr_cat_1, dialect_1_default, source_1),
-                (lexeme_2, main_gr_cat_2, dialect_2_default, source_2),
-            )
-
-            ROW_GET_PARAMS = (
-                (ROW_CAPTIONS['spell1'], writing_system_orth_1, WORDFORM_PARAMS[0]),
-                (ROW_CAPTIONS['transcr1'], writing_system_phon_1, WORDFORM_PARAMS[0]),
-                (ROW_CAPTIONS['spell2'], writing_system_orth_2, WORDFORM_PARAMS[1]),
-                (ROW_CAPTIONS['transcr2'], writing_system_phon_2, WORDFORM_PARAMS[1]),
-            )
-
-            for current_row_params in ROW_GET_PARAMS:
-                current_row_wordform = row.get(current_row_params[0])
-                if current_row_wordform:
-                    for current_wordform in current_row_wordform.split(' | '):
-                        current_wordform = current_wordform.split(' (')  # TODO Check whether only 2 parts generated
-                        try:
-                            current_wordform[1] = current_wordform[1].rstrip(')')
-                        except IndexError:
-                            current_wordform.append(None)
-                        wordform = models.Wordform(lexeme=current_row_params[2][0], spelling=current_wordform[0],
-                                                           gramm_category_set=current_row_params[2][1],
-                                                           writing_system=current_row_params[1])
-                        wordform.save()
-                        if current_wordform[1]:
-                            dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
-                                                                 language=current_row_params[2][0].language)
-                        else:
-                            dialect = current_row_params[2][2]
-                        try:
-                            wordform.dialect_multi.add(dialect)
-                        except IntegrityError:
-                            pass  # Nothing to do if dialect isn't specified anywhere
-                        try:
-                            wordform.source.add(current_row_params[2][3])
-                        except IntegrityError:
-                            pass  # Nothing to do if source isn't specified anywhere
-                        # print(models.Wordform.objects.filter(pk=wordform.id).values())
-                        dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
-                                                        object_id=wordform.id)
-                        dict_change.save()
-            if lexeme_1.wordform_set.first():
-                current_wordforms = lexeme_1.wordform_set
-            else:
-                try:
-                    for wordform in current_wordforms.all():
-                        wordform.pk = None
-                        wordform.lexeme = lexeme_1
-                        wordform.save()
-                except UnboundLocalError:
-                    pass  # TODO Handle blank first wordform error
-            # Does it need to be saved after "add"?
-
-        # TODO Add form for commenting and duplicates resolution
-        # TODO Suggest translation constraint if marked in a csv
-
-
-
-        return added_translations
+#     language_1 = models.Language.objects.get(pk=request.POST['language_1'])
+#     language_2 = models.Language.objects.get(pk=request.POST['language_2'])
+#     source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
+#     WORD_SOURCES = {0: None, 1: source_translation}
+#       # TODO Fix field name hardcode
+#     ROW_CAPTIONS = {'spell1': 'Написание 1', 'transcr1': 'Произношение 1', 'synt_cat': 'Часть речи', 'spell2':
+#                     'Написание 2', 'transcr2': 'Произношение 2', 'transl_constr': 'Ограничение перевода'}
+#     source_1 = WORD_SOURCES.get(request.POST['source_1'])
+#     source_2 = WORD_SOURCES.get(request.POST['source_2'])
+#     try:
+#         writing_system_orth_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_1'])
+#     except ValueError:
+#         writing_system_orth_1 = None
+#     try:
+#         writing_system_phon_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_1'])
+#     except ValueError:
+#         writing_system_phon_1 = None
+#     try:
+#         writing_system_orth_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_2'])
+#     except ValueError:
+#         writing_system_orth_2 = None
+#     try:
+#         writing_system_phon_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_2'])
+#     except ValueError:
+#         writing_system_phon_2 = None
+#     try:
+#         dialect_1_default = models.Dialect.objects.get(pk=request.POST['dialect_1_default'])
+#     except ValueError:
+#         dialect_1_default = None
+#     try:
+#         dialect_2_default = models.Dialect.objects.get(pk=request.POST['dialect_2_default'])
+#     except ValueError:
+#         dialect_2_default = None
+#
+#     transaction.set_autocommit(False)
+#
+#     added_translations = []
+#
+#     for row in reader:  # Split larger files by chunks?
+#         if row.get(ROW_CAPTIONS['synt_cat']):
+#             synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get(ROW_CAPTIONS['synt_cat']))
+#
+#             lexeme_1 = models.Lexeme(language=language_1, syntactic_category=synt_cat)
+#             lexeme_1.save()
+#             # print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
+#
+#             try:
+#                 main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_1,
+#                                                                        syntactic_category=synt_cat)\
+#                     .order_by('position').first()
+#             except ObjectDoesNotExist:
+#                 main_gr_cat_1 = None
+#
+#             # print(main_gr_cat_1)
+#
+#         if row.get(ROW_CAPTIONS['spell2']) or row.get(ROW_CAPTIONS['transcr2']):
+#             lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)  # TODO Add import error
+#             lexeme_2.save()
+#             # print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
+#
+#             try:
+#                 main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_2,
+#                                                                        syntactic_category=synt_cat)\
+#                     .order_by('position').first()
+#
+#             except ObjectDoesNotExist:
+#                 main_gr_cat_2 = None
+#
+#             # print(main_gr_cat_2)
+#
+#             # TR REF START
+#             translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
+#             translation.save()
+#             translation.source.add(source_translation)
+#             dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+#                                             object_id=translation.id)
+#             dict_change.save()
+#             # TR REF FINISH
+#             added_translations.append(translation)
+#             # print(models.Translation.objects.filter(pk=translation.id).values())
+#
+#
+#         WORDFORM_PARAMS = (
+#             (lexeme_1, main_gr_cat_1, dialect_1_default, source_1),
+#             (lexeme_2, main_gr_cat_2, dialect_2_default, source_2),
+#         )
+#
+#         ROW_GET_PARAMS = (
+#             (ROW_CAPTIONS['spell1'], writing_system_orth_1, WORDFORM_PARAMS[0]),
+#             (ROW_CAPTIONS['transcr1'], writing_system_phon_1, WORDFORM_PARAMS[0]),
+#             (ROW_CAPTIONS['spell2'], writing_system_orth_2, WORDFORM_PARAMS[1]),
+#             (ROW_CAPTIONS['transcr2'], writing_system_phon_2, WORDFORM_PARAMS[1]),
+#         )
+#
+#         for current_row_params in ROW_GET_PARAMS:
+#             current_row_wordform = row.get(current_row_params[0])
+#             if current_row_wordform:
+#                 for current_wordform in current_row_wordform.split(' | '):
+#                     current_wordform = current_wordform.split(' (')  # TODO Check whether only 2 parts generated
+#                     try:
+#                         current_wordform[1] = current_wordform[1].rstrip(')')
+#                     except IndexError:
+#                         current_wordform.append(None)
+#                     wordform = models.Wordform(lexeme=current_row_params[2][0], spelling=current_wordform[0],
+#                                                        gramm_category_set=current_row_params[2][1],
+#                                                        writing_system=current_row_params[1])
+#                     wordform.save()
+#                     if current_wordform[1]:
+#                         dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
+#                                                              language=current_row_params[2][0].language)
+#                     else:
+#                         dialect = current_row_params[2][2]
+#                     try:
+#                         wordform.dialect_multi.add(dialect)
+#                     except IntegrityError:
+#                         pass  # Nothing to do if dialect isn't specified anywhere
+#                     try:
+#                         wordform.source.add(current_row_params[2][3])
+#                     except IntegrityError:
+#                         pass  # Nothing to do if source isn't specified anywhere
+#                     # print(models.Wordform.objects.filter(pk=wordform.id).values())
+#                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+#                                                     object_id=wordform.id)
+#                     dict_change.save()
+#         if lexeme_1.wordform_set.first():
+#             current_wordforms = lexeme_1.wordform_set
+#         else:
+#             try:
+#                 for wordform in current_wordforms.all():
+#                     wordform.pk = None
+#                     wordform.lexeme = lexeme_1
+#                     wordform.save()
+#             except UnboundLocalError:
+#                 pass  # TODO Handle blank first wordform error
+#         # Does it need to be saved after "add"?
+#
+#     # TODO Add form for commenting and duplicates resolution
+#     # TODO Suggest translation constraint if marked in a csv
+#
+#
+#
+#     return added_translations

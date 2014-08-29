@@ -156,12 +156,8 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class SemanticGroup():
-    # TODO: resolve circular dependency
-    lexeme = models.ForeignKey(Lexeme)
-    comment = models.TextField(blank=True)
+class SemanticGroup(models.Model):
     theme = models.ManyToManyField(Theme, null=True, blank=True)
-    translation_multi = models.ManyToManyField(Translation, null=True, blank=True)
 
 
 class Lexeme(LanguageEntity):
@@ -170,7 +166,6 @@ class Lexeme(LanguageEntity):
 
     syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
-    semantic_group_multi = models.ManyToManyField()  # TODO: Add relation
     # Absence of a dialectical dependency is intentional
 
     @property
@@ -189,9 +184,6 @@ class Lexeme(LanguageEntity):
         else:
             title_wordform = '[No wordform attached]'
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
-
-    class Meta:
-        abstract = True
 
 
 class SpecialRelationType():
@@ -253,17 +245,19 @@ class Translation(DictEntity):
     """Class representing current translations
     """
 
-    lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translationbase_snd_set')
-    usage_constraint_multi_1 = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    usage_constraint_multi_2 = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_multi_1 = models.ManyToManyField(Dialect, null=True, blank=True)
-    dialect_multi_2 = models.ManyToManyField(Dialect, null=True, blank=True)
+    lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translation_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translation_snd_set')
+    semantic_group_1 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_fst_set')
+    semantic_group_2 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_snd_set')
+    usage_constraint_multi_1 = models.ManyToManyField(UsageConstraint, null=True, blank=True,
+                                                      related_name='translation_fst_set')
+    usage_constraint_multi_2 = models.ManyToManyField(UsageConstraint, null=True, blank=True,
+                                                      related_name='translation_snd_set')
+    dialect_multi_1 = models.ManyToManyField(Dialect, null=True, blank=True, related_name='translation_fst_set')
+    dialect_multi_2 = models.ManyToManyField(Dialect, null=True, blank=True, related_name='translation_snd_set')
     comment_1 = models.TextField(blank=True)
     comment_2 = models.TextField(blank=True)
 
-    class Meta:
-        abstract = True
 
 # Dictionary classes
 

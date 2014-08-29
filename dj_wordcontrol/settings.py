@@ -134,7 +134,7 @@ INSTALLED_APPS = (
     'wordengine',
 
     # THIRDPARTY APPS
-    'south',
+    # 'South',
 )
 
 # A sample logging configuration. The only tangible logging
