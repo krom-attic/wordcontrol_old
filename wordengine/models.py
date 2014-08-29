@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib import auth
+from django.db.models import Q
 
 
 class Change(models.Model):
@@ -156,6 +157,23 @@ class LexemeBase(LanguageEntity):
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
     # Absence of a dialectical dependency is intentional
 
+    @property
+    def spellings(self):
+        return self.wordform_set.filter(writing_system__writing_system_type=3)
+
+    @property
+    def transcriptions(self):
+        return self.wordform_set.filter(writing_system__writing_system_type__in=[1, 2])
+
+    def __str__(self):
+        if self.spellings.first():
+            title_wordform = self.spellings.first().formatted
+        elif self.transcriptions.first():
+            title_wordform = self.transcriptions.first().formatted
+        else:
+            title_wordform = '[No wordform attached]'
+        return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
+
     class Meta:
         abstract = True
 
@@ -163,12 +181,7 @@ class LexemeBase(LanguageEntity):
 class Lexeme(LexemeBase):
     """Class representing current lexemes"""
 
-    def __str__(self):
-        try:
-            spelling = self.wordform_set.first().spelling
-        except AttributeError:
-            spelling = '[No wordform attached]'
-        return ' | '.join(str(s) for s in [spelling, self.language, self.syntactic_category])
+    pass
 
 
 class DictEntity(models.Model):
@@ -186,7 +199,26 @@ class WordformBase(DictEntity):
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)
+    writing_system = models.ForeignKey(WritingSystem, blank=True, null=True)  # TODO Make this field mandatory
+
+    TRANSCRIPT_BRACKETS = {  # TODO Unhardcode this
+        1: ('[{}]'),
+        2: ('/{}/')
+    }
+
+    @property
+    def formatted(self):
+        if self.writing_system:
+            try:
+                return self.TRANSCRIPT_BRACKETS[self.writing_system.writing_system_type.id].format(self.spelling)
+            except KeyError:
+                return self.spelling
+        else:
+            return self.spelling
+
+    @property
+    def ws(self):
+        return str(self.writing_system)
 
     class Meta:
         abstract = True
@@ -225,6 +257,11 @@ class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+
+    @property
+    def dialects(self):
+        if self.dialect_multi.first():
+            return ', '.join(str(s) for s in self.dialect_multi.all())
 
     def __str__(self):
         try:

@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # Common functions here
 
-def find_lexeme_wordforms(word_search, exact):
+def find_lexemes_wordforms(word_search, exact):
 
     if word_search.is_valid():
         if exact:
@@ -29,7 +29,7 @@ def find_lexeme_wordforms(word_search, exact):
     return lexeme_result
 
 
-def find_lexeme_translations(lexemes):
+def find_translations(lexemes):
 
     translation_result = dict()
 
@@ -59,29 +59,9 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-# def add_new_word():
-#     transaction.set_autocommit(False)
-#     try:
-#         if lexeme_validated == 2:
-#             lexeme = lexeme_form.save()
-#         wordform_form_initial = models.Wordform(lexeme=lexeme)
-#         self.wordform_form = self.wordform_form_class(request.POST, instance=wordform_form_initial)
-#         if self.wordform_form.is_valid():
-#             wordform = self.wordform_form.save()
-#             dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
-#                                             object_id=wordform.id)
-#             dict_change.save()
-#             messages.success(request, "The word has been added")
-#             is_saved = True
-#     finally:
-#         if not is_saved:
-#             transaction.rollback()
-#         transaction.set_autocommit(True)
+def parse_data_import(request):
 
-
-def parse_data_import(postdata, datafile):
-
-    content = datafile.read()
+    content = request.FILES['file'].read()
     encoding = 'utf-16'    # TODO http://pypi.python.org/pypi/chardet
     # csv_dialect = csv.Sniffer().sniff(content)  # TODO CSV Detect dialect
     content = str(content.decode(encoding, 'replace'))  # Why 'replace'?
@@ -89,37 +69,37 @@ def parse_data_import(postdata, datafile):
 
     with filestream as csvfile:  # TODO Wrap with manual commit
         reader = csv.DictReader(csvfile, delimiter=',')  # quoting=csv.QUOTE_NONE?
-        language_1 = models.Language.objects.get(pk=postdata['language_1'])
-        language_2 = models.Language.objects.get(pk=postdata['language_2'])
-        source_translation = models.Source.objects.get(pk=postdata['source_translation'])
+        language_1 = models.Language.objects.get(pk=request.POST['language_1'])
+        language_2 = models.Language.objects.get(pk=request.POST['language_2'])
+        source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
         WORD_SOURCES = {0: None, 1: source_translation}
           # TODO Fix field name hardcode
         ROW_CAPTIONS = {'spell1': 'Написание 1', 'transcr1': 'Произношение 1', 'synt_cat': 'Часть речи', 'spell2':
                         'Написание 2', 'transcr2': 'Произношение 2', 'transl_constr': 'Ограничение перевода'}
-        source_1 = WORD_SOURCES.get(postdata['source_1'])
-        source_2 = WORD_SOURCES.get(postdata['source_2'])
+        source_1 = WORD_SOURCES.get(request.POST['source_1'])
+        source_2 = WORD_SOURCES.get(request.POST['source_2'])
         try:
-            writing_system_ortho_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_1'])
+            writing_system_orth_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_1'])
         except ValueError:
-            writing_system_ortho_1 = None
+            writing_system_orth_1 = None
         try:
-            writing_system_phon_1 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_1'])
+            writing_system_phon_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_1'])
         except ValueError:
             writing_system_phon_1 = None
         try:
-            writing_system_ortho_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_ortho_2'])
+            writing_system_orth_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_2'])
         except ValueError:
-            writing_system_ortho_2 = None
+            writing_system_orth_2 = None
         try:
-            writing_system_phon_2 = models.WritingSystem.objects.get(pk=postdata['writing_system_phon_2'])
+            writing_system_phon_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_2'])
         except ValueError:
             writing_system_phon_2 = None
         try:
-            dialect_1_default = models.Dialect.objects.get(pk=postdata['dialect_1_default'])
+            dialect_1_default = models.Dialect.objects.get(pk=request.POST['dialect_1_default'])
         except ValueError:
             dialect_1_default = None
         try:
-            dialect_2_default = models.Dialect.objects.get(pk=postdata['dialect_2_default'])
+            dialect_2_default = models.Dialect.objects.get(pk=request.POST['dialect_2_default'])
         except ValueError:
             dialect_2_default = None
 
@@ -159,11 +139,17 @@ def parse_data_import(postdata, datafile):
 
                 # print(main_gr_cat_2)
 
+                # TR REF START
                 translation = models.Translation(lexeme_1=lexeme_1, lexeme_2=lexeme_2)
                 translation.save()
                 translation.source.add(source_translation)
+                dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+                                                object_id=translation.id)
+                dict_change.save()
+                # TR REF FINISH
                 added_translations.append(translation)
                 # print(models.Translation.objects.filter(pk=translation.id).values())
+
 
             WORDFORM_PARAMS = (
                 (lexeme_1, main_gr_cat_1, dialect_1_default, source_1),
@@ -171,9 +157,9 @@ def parse_data_import(postdata, datafile):
             )
 
             ROW_GET_PARAMS = (
-                (ROW_CAPTIONS['spell1'], writing_system_ortho_1, WORDFORM_PARAMS[0]),
+                (ROW_CAPTIONS['spell1'], writing_system_orth_1, WORDFORM_PARAMS[0]),
                 (ROW_CAPTIONS['transcr1'], writing_system_phon_1, WORDFORM_PARAMS[0]),
-                (ROW_CAPTIONS['spell2'], writing_system_ortho_2, WORDFORM_PARAMS[1]),
+                (ROW_CAPTIONS['spell2'], writing_system_orth_2, WORDFORM_PARAMS[1]),
                 (ROW_CAPTIONS['transcr2'], writing_system_phon_2, WORDFORM_PARAMS[1]),
             )
 
@@ -199,16 +185,14 @@ def parse_data_import(postdata, datafile):
                             wordform.dialect_multi.add(dialect)
                         except IntegrityError:
                             pass  # Nothing to do if dialect isn't specified anywhere
-                        # except ValueError:
-                        #     try:
-                        #         wordform.dialect_multi.add()
-                        #     except IntegrityError:
-                        #         pass  # Nothing to do if dialect isn't specified anywhere
                         try:
                             wordform.source.add(current_row_params[2][3])
                         except IntegrityError:
                             pass  # Nothing to do if source isn't specified anywhere
                         # print(models.Wordform.objects.filter(pk=wordform.id).values())
+                        dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+                                                        object_id=wordform.id)
+                        dict_change.save()
             if lexeme_1.wordform_set.first():
                 current_wordforms = lexeme_1.wordform_set
             else:
