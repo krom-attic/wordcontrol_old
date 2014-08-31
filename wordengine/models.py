@@ -186,18 +186,18 @@ class Lexeme(LanguageEntity):
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
 
 
-class SpecialRelationType():
-    """ Class for types of lexemes' special relations
+class RelationType(Term):
+    """ Class for types of lexemes'  relations
     """
     pass
 
 
-class SpecialRelation():
+class LexemeRelation(models.Model):
     """ Class for lexemes' special relations
     """
-    lexeme_1 = models.ForeignKey(Lexeme)
-    lexeme_2 = models.ForeignKey(Lexeme)
-    special_relation_type = models.ForeignKey(Lexeme)
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
+    relation_type = models.ForeignKey(RelationType)
 
 
 class DictEntity(models.Model):
@@ -245,8 +245,8 @@ class Translation(DictEntity):
     """Class representing current translations
     """
 
-    lexeme_1 = models.ForeignKey(Lexeme, editable=False, related_name='translation_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, editable=False, related_name='translation_snd_set')
+    lexeme_relation = models.ForeignKey(LexemeRelation, editable=False)
+    direction = models.PositiveSmallIntegerField()
     semantic_group_1 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_fst_set')
     semantic_group_2 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_snd_set')
     usage_constraint_multi_1 = models.ManyToManyField(UsageConstraint, null=True, blank=True,
@@ -257,6 +257,8 @@ class Translation(DictEntity):
     dialect_multi_2 = models.ManyToManyField(Dialect, null=True, blank=True, related_name='translation_snd_set')
     comment_1 = models.TextField(blank=True)
     comment_2 = models.TextField(blank=True)
+    translation_based = models.ManyToManyField('self', null=True, blank=True)
+    is_visible = models.BooleanField()
 
 
 # Dictionary classes

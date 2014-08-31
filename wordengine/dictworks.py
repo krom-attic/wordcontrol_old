@@ -24,7 +24,7 @@ def find_lexemes_wordforms(word_search, exact):
     temp_lexeme_result = defaultdict(list)
     for word in word_result:
         temp_lexeme_result[word.lexeme].append(word)
-    lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but seems doesn't)
+    lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but it doesn't)
     #TODO Invalid search handling
     return lexeme_result
 
