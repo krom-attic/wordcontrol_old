@@ -386,8 +386,8 @@ class DictionaryDataImportView(TemplateView):
         translation_import_form = self.translation_import_form_class(request.POST)
         upload_form = self.upload_form_class(request.POST, request.FILES)
         if translation_import_form.is_valid() and upload_form.is_valid():
-            added_translations = parse_data_import(request.FILES['file'])
-            # transaction.rollback()
+            added_translations = parse_data_import(request)
+            transaction.rollback()
             transaction.set_autocommit(True)
         else:
             added_translations = None

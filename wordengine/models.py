@@ -193,7 +193,8 @@ class LexemeRelation(models.Model):
     """
     lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
-    relation_type = models.ForeignKey(RelationType)
+    # relation_type = models.ForeignKey(RelationType)
+    #  TODO Uncomment
 
 
 class DictEntity(models.Model):
