@@ -156,10 +156,6 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class SemanticGroup(models.Model):
-    theme = models.ManyToManyField(Theme, null=True, blank=True)
-
-
 class Lexeme(LanguageEntity):
     """Class representing current lexemes
     """
@@ -241,26 +237,6 @@ class WordformBase(DictEntity):
         abstract = True
 
 
-class Translation(DictEntity):
-    """Class representing current translations
-    """
-
-    lexeme_relation = models.ForeignKey(LexemeRelation, editable=False)
-    direction = models.PositiveSmallIntegerField()
-    semantic_group_1 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_fst_set')
-    semantic_group_2 = models.ForeignKey(SemanticGroup, null=True, blank=True, related_name='translation_snd_set')
-    usage_constraint_multi_1 = models.ManyToManyField(UsageConstraint, null=True, blank=True,
-                                                      related_name='translation_fst_set')
-    usage_constraint_multi_2 = models.ManyToManyField(UsageConstraint, null=True, blank=True,
-                                                      related_name='translation_snd_set')
-    dialect_multi_1 = models.ManyToManyField(Dialect, null=True, blank=True, related_name='translation_fst_set')
-    dialect_multi_2 = models.ManyToManyField(Dialect, null=True, blank=True, related_name='translation_snd_set')
-    comment_1 = models.TextField(blank=True)
-    comment_2 = models.TextField(blank=True)
-    translation_based = models.ManyToManyField('self', null=True, blank=True)
-    is_visible = models.BooleanField()
-
-
 # Dictionary classes
 
 
@@ -290,6 +266,28 @@ class Wordform(WordformBase):
             ws = ""
         return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
     #TODO Include dialects into description
+
+
+class SemanticGroup(DictEntity):
+    """ Class representing semantic groups
+    """
+    theme = models.ManyToManyField(Theme, null=True, blank=True)
+    usage_constraint_multi = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+
+
+class Translation(DictEntity):
+    """Class representing current translations
+    """
+
+    lexeme_relation = models.ForeignKey(LexemeRelation, editable=False)
+    direction = models.PositiveSmallIntegerField()
+    semantic_group_1 = models.ForeignKey(SemanticGroup, related_name='translation_fst_set')
+    semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
+    wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
+    wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
+    translation_based = models.ManyToManyField('self', null=True, blank=True)
+    is_visible = models.BooleanField()
 
 
 class WordformSample(WordformBase):

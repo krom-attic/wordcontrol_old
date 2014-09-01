@@ -59,7 +59,7 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(uploaded_file):
+def parse_data_import(request):
     """
     @param uploaded_file:
     @return:
@@ -70,69 +70,62 @@ def parse_data_import(uploaded_file):
 
     # TODO Wrap with manual commit
 
-    csvreader = csv.DictReader(codecs.iterdecode(uploaded_file, 'utf-16'), delimiter=';')
-    for row in csvreader:
-         print(row)
-
-#     language_1 = models.Language.objects.get(pk=request.POST['language_1'])
-#     language_2 = models.Language.objects.get(pk=request.POST['language_2'])
-#     source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
-#     WORD_SOURCES = {0: None, 1: source_translation}
-#       # TODO Fix field name hardcode
-#     ROW_CAPTIONS = {'spell1': 'Написание 1', 'transcr1': 'Произношение 1', 'synt_cat': 'Часть речи', 'spell2':
-#                     'Написание 2', 'transcr2': 'Произношение 2', 'transl_constr': 'Ограничение перевода'}
-#     source_1 = WORD_SOURCES.get(request.POST['source_1'])
-#     source_2 = WORD_SOURCES.get(request.POST['source_2'])
+    language_source = models.Language.objects.get(pk=request.POST['language_1'])
+    language_target = (models.Language.objects.get(pk=request.POST['language_2']),
+                       models.Language.objects.get(pk=request.POST['language_2']),
+                       models.Language.objects.get(pk=request.POST['language_2']))  # TODO Should get real languages
+    source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
+    WORD_SOURCES = {0: None, 1: source_translation}
+    LANG_SRC_COLS = ('lang_src1', 'lang_src2',)  # TODO Unhardcode this
+    LANG_TRGT_COLS = ('lang_trgt1', 'lang_trgt2', 'lang_trgt3',)  # TODO Unhardcode this
+    COLS = ('lex_param',) + LANG_SRC_COLS + LANG_TRGT_COLS + ('comment',)
+    source_1 = WORD_SOURCES.get(request.POST['source_1'])
+    source_2 = WORD_SOURCES.get(request.POST['source_2'])
+    # TODO Здесь нужно получить перечень систем письма и диалектов для каждого столбца
+    # try:
+    #     writing_system = models.WritingSystem.objects.get(pk=request.POST['writing_system_???'])
+    # except ValueError:
+    #     writing_system = None
 #     try:
-#         writing_system_orth_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_1'])
+#         dialect_default = models.Dialect.objects.get(pk=request.POST['dialect_default_???'])
 #     except ValueError:
-#         writing_system_orth_1 = None
-#     try:
-#         writing_system_phon_1 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_1'])
-#     except ValueError:
-#         writing_system_phon_1 = None
-#     try:
-#         writing_system_orth_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_orth_2'])
-#     except ValueError:
-#         writing_system_orth_2 = None
-#     try:
-#         writing_system_phon_2 = models.WritingSystem.objects.get(pk=request.POST['writing_system_phon_2'])
-#     except ValueError:
-#         writing_system_phon_2 = None
-#     try:
-#         dialect_1_default = models.Dialect.objects.get(pk=request.POST['dialect_1_default'])
-#     except ValueError:
-#         dialect_1_default = None
-#     try:
-#         dialect_2_default = models.Dialect.objects.get(pk=request.POST['dialect_2_default'])
-#     except ValueError:
-#         dialect_2_default = None
+#         dialect_default = None
 #
 #     transaction.set_autocommit(False)
 #
 #     added_translations = []
-#
-#     for row in reader:  # Split larger files by chunks?
-#         if row.get(ROW_CAPTIONS['synt_cat']):
-#             synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get(ROW_CAPTIONS['synt_cat']))
-#
-#             lexeme_1 = models.Lexeme(language=language_1, syntactic_category=synt_cat)
-#             lexeme_1.save()
-#             # print(models.Lexeme.objects.filter(pk=lexeme_1.id).values())
-#
-#             try:
-#                 main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_1,
-#                                                                        syntactic_category=synt_cat)\
-#                     .order_by('position').first()
-#             except ObjectDoesNotExist:
-#                 main_gr_cat_1 = None
-#
-#             # print(main_gr_cat_1)
-#
-#         if row.get(ROW_CAPTIONS['spell2']) or row.get(ROW_CAPTIONS['transcr2']):
-#             lexeme_2 = models.Lexeme(language=language_2, syntactic_category=synt_cat)  # TODO Add import error
-#             lexeme_2.save()
-#             # print(models.Lexeme.objects.filter(pk=lexeme_2.id).values())
+
+    csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-16'), fieldnames=COLS, delimiter=';')
+
+    firstrow_skiped = False
+    row_n = 0
+    for row in csvreader:
+        row_n += 1
+        if not firstrow_skiped:
+            firstrow_skiped = True
+            continue
+        if row.get('lex_param'):  # Check if a new lexeme is in the row
+            # synt_cat = models.SyntacticCategory.objects.get(term_abbr=row.get('lex_param'))
+            synt_cat = models.SyntacticCategory.objects.get(pk=1)  # TODO Stub
+            lexeme_src = models.Lexeme(language=language_source, syntactic_category=synt_cat)
+            # lexeme_src.save()
+            print(row_n)
+            print(vars(lexeme_src))
+
+            try:
+                main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
+                                                                       syntactic_category=synt_cat)\
+                    .order_by('position').first()
+            except ObjectDoesNotExist:
+                main_gr_cat_1 = None
+
+        for col in LANG_TRGT_COLS:
+            if row.get(col):
+                lexeme_trg = models.Lexeme(language=language_target[LANG_TRGT_COLS.index(col)],
+                                           syntactic_category=synt_cat)
+                # lexeme_trg.save()
+                print(row_n)
+                print(vars(lexeme_trg))
 #
 #             try:
 #                 main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_2,
@@ -155,6 +148,8 @@ def parse_data_import(uploaded_file):
 #             added_translations.append(translation)
 #             # print(models.Translation.objects.filter(pk=translation.id).values())
 #
+
+#            for col in LANG_SRC_COLS:
 #
 #         WORDFORM_PARAMS = (
 #             (lexeme_1, main_gr_cat_1, dialect_1_default, source_1),
