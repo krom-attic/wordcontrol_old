@@ -156,6 +156,27 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
+class Project(models.Model):
+
+    pass  # TODO Add author, datestamp, state, file...?
+
+
+class ColumnData(models.Model):
+    project = models.ForeignKey(Project)
+    col_num = models.SmallIntegerField()
+    language_lit = models.CharField(max_length=256)
+    language = models.ForeignKey(Language, null=True, blank=True)
+    default_dialect = models.CharField(max_length=256)
+
+
+class ProjectedEntity(models.Model):
+    project = models.ForeignKey(Project)
+    state = models.SmallIntegerField()
+
+    class Meta:
+        abstract = True
+
+
 class Lexeme(LanguageEntity):
     """Class representing current lexemes
     """
@@ -182,6 +203,12 @@ class Lexeme(LanguageEntity):
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
 
 
+class LexemeProject(ProjectedEntity):
+    language = models.CharField(max_length=256)
+    syntactic_category = models.CharField(max_length=256)
+    inflection = models.CharField(max_length=256)
+
+
 class RelationType(Term):
     """ Class for types of lexemes'  relations
     """
@@ -204,6 +231,11 @@ class DictEntity(models.Model):
 
     class Meta:
         abstract = True
+
+
+class DictEntityProject(ProjectedEntity):
+    source = models.CharField(max_length=256)
+    comment = models.TextField
 
 
 class WordformBase(DictEntity):
