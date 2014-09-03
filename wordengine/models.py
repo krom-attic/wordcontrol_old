@@ -235,7 +235,10 @@ class DictEntity(models.Model):
 
 class DictEntityProject(ProjectedEntity):
     source = models.CharField(max_length=256)
-    comment = models.TextField
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
 
 
 class WordformBase(DictEntity):
