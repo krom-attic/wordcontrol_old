@@ -134,7 +134,7 @@ INSTALLED_APPS = (
     'wordengine',
 
     # THIRDPARTY APPS
-#    'south'
+
 )
 
 # A sample logging configuration. The only tangible logging
@@ -165,3 +165,7 @@ LOGGING = {
         },
     }
 }
+
+
+# New TEST_RUNNER in 1.7
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'

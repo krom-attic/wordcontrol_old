@@ -323,7 +323,7 @@ class Translation(DictEntity):
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
     translation_based = models.ManyToManyField('self', null=True, blank=True)
-    is_visible = models.BooleanField()
+    is_visible = models.BooleanField(default=True, editable=False)
 
 
 class WordformSample(WordformBase):
