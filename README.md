@@ -4,6 +4,10 @@ WordControl
 Word Control is an application for a collaboration on documenting endangered languages, especially its lexicon and phonology.
 Detailed documentation is in Russian, since there is no participants in the project who doesn't speak Russian so far. But as this project is intended for international use, documentation will be translated into English when needed.  
 
+Basic information
+-----------------
+WordControl is a Django app. Current Django branch is 1.7.
+
 Development process (v. 2)
 --------------------------
 Any work to be done must be planned against some milestone. This planning is made by @kromkrom.
@@ -30,12 +34,8 @@ Any pending changes caused by CRs to UCs and Fs are made only after the current 
 
 Deployment process
 ------------------
-This project is using South.
-Create migration profile:
-manage.py schemamigration wordengine --auto
-Apply migration profile:
-manage.py migrate wordengine
-
-South will be deprecated with Django 1.7
+Migrations:
+python manage.py makemigrations
+python manage.py migrate
 
 This project will use Fabric as soon as it is update for Python 3 (http://www.fabfile.org/).
