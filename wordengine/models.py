@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib import auth
-from django.db.models import Q
+
+
+# System globals. Abstract
 
 
 class Change(models.Model):
@@ -16,17 +18,48 @@ class Change(models.Model):
         abstract = True
 
 
+# System globals. Concrete
+
+
+class DictChange(Change):
+    """This class extends Change class with fields representing change review and information source for
+     Wordforms and Translations"""
+
+    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
+    timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
+
+
+class FieldChange(Change):
+    """This class extends Change class with fields representing field change"""
+
+    field_name = models.CharField(max_length=256)
+    old_value = models.CharField(max_length=512, blank=True)
+    new_value = models.CharField(max_length=512, blank=True)
+
+
+class Settings(models.Model):
+
+    pass
+
+
+# Global lists. Abstract
+
+
 class Term(models.Model):
     """Abstract base class for all terms in dictionary."""
 
     term_full = models.CharField(max_length=256)
     term_abbr = models.CharField(max_length=64, blank=True)  # TODO May be it should be unique???
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.term_full
 
     class Meta:
         abstract = True
+
+
+# Global lists. Concrete
 
 
 class SyntacticCategory(Term):
@@ -68,62 +101,18 @@ class Language(Term):
     """Class represents languages present in the system"""
 
     syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
+    iso_code = models.CharField(max_length=8)
 
 
-class SourceType(Term):
-
-    pass
+# Language-dependant classes. Abstract
 
 
-class Source(Term):
-    """Class representing sources of language information"""
+class LanguageRelated(models.Model):
 
     language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-    description = models.TextField(blank=True)
-    source_type = models.ForeignKey(SourceType)
 
-
-class DictChange(Change):
-    """This class extends Change class with fields representing change review and information source for
-     Wordforms and Translations"""
-
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
-    timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
-
-
-class FieldChange(Change):
-    """This class extends Change class with fields representing field change"""
-
-    field_name = models.CharField(max_length=256)
-    old_value = models.CharField(max_length=512, blank=True)
-    new_value = models.CharField(max_length=512, blank=True)
-
-
-class Dialect(Term):
-    """Class represents dialect present in the system"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-    parent_dialect = models.ForeignKey('self', null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.language)])
-
-
-class WritingSystemType(Term):
-    """Class for constant writing system types list"""
-
-    pass
-
-
-class WritingSystem(Term):
-    """Class represents a writing systems used to spell a word form"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-    writing_system_type = models.ForeignKey(WritingSystemType)
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.term_full
+    class Meta:
+        abstract = True
 
 
 class LanguageEntity(models.Model):
@@ -133,6 +122,33 @@ class LanguageEntity(models.Model):
 
     class Meta:
         abstract = True
+
+
+# Language-dependant classes. Concrete
+
+
+class Dialect(Term, LanguageRelated):
+    """Class represents dialect present in the system"""
+
+    parent_dialect = models.ForeignKey('self', null=True, blank=True)
+
+    def __str__(self):
+        return ' '.join([self.term_full, str(self.language)])
+
+
+class WritingSystem(Term, LanguageRelated):
+    """Class represents a writing systems used to spell a word form"""
+
+    writing_system_type = models.SmallIntegerField()
+
+    def __str__(self):
+        return self.term_full
+
+
+class Source(Term, LanguageRelated):
+    """Class representing sources of language information"""
+
+    source_type = models.SmallIntegerField()
 
 
 class GrammCategorySet(LanguageEntity):
@@ -156,32 +172,11 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class Project(models.Model):
-
-    pass  # TODO Add author, datestamp, state, file...?
-
-
-class ColumnData(models.Model):
-    project = models.ForeignKey(Project)
-    col_num = models.SmallIntegerField()
-    language_lit = models.CharField(max_length=256)
-    language = models.ForeignKey(Language, null=True, blank=True)
-    default_dialect = models.CharField(max_length=256)
-
-
-class ProjectedEntity(models.Model):
-    project = models.ForeignKey(Project)
-    state = models.SmallIntegerField()
-
-    class Meta:
-        abstract = True
-
-
 class Lexeme(LanguageEntity):
     """Class representing current lexemes
     """
 
-    syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
     # Absence of a dialectical dependency is intentional
 
@@ -203,39 +198,30 @@ class Lexeme(LanguageEntity):
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
 
 
-class LexemeProject(ProjectedEntity):
-    language = models.CharField(max_length=256)
-    syntactic_category = models.CharField(max_length=256)
-    inflection = models.CharField(max_length=256)
-
-
-class RelationType(Term):
-    """ Class for types of lexemes'  relations
-    """
-    pass
-
-
 class LexemeRelation(models.Model):
     """ Class for lexemes' special relations
     """
     lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
-    # relation_type = models.ForeignKey(RelationType)
-    #  TODO Uncomment
+    relation_type = models.SmallIntegerField()
+
+
+class TranslatedTerm(LanguageEntity):
+    """Class representing term translation for the given language"""
+
+    table = models.CharField(max_length=256)
+    term_id = models.IntegerField()
+    term_full_translation = models.CharField(max_length=256)
+    term_abbr_translation = models.CharField(max_length=64, blank=True)
+
+
+# Dictionary classes. Abstract
 
 
 class DictEntity(models.Model):
-    source = models.ManyToManyField(Source, null=True, blank=True)
+    source_multi = models.ManyToManyField(Source, null=True, blank=True)
     comment = models.TextField(blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
-
-    class Meta:
-        abstract = True
-
-
-class DictEntityProject(ProjectedEntity):
-    source = models.CharField(max_length=256)
-    comment = models.TextField(blank=True)
 
     class Meta:
         abstract = True
@@ -273,16 +259,7 @@ class WordformBase(DictEntity):
         abstract = True
 
 
-# Dictionary classes
-
-
-class TranslatedTerm(LanguageEntity):
-    """Class representing term translation for the given language"""
-
-    table = models.CharField(max_length=256)
-    term_id = models.IntegerField()
-    term_full_translation = models.CharField(max_length=256)
-    term_abbr_translation = models.CharField(max_length=64, blank=True)
+# Dictionary classes. Concrete
 
 
 class Wordform(WordformBase):
@@ -304,6 +281,17 @@ class Wordform(WordformBase):
     #TODO Include dialects into description
 
 
+class WordformSample(WordformBase):
+    """Class representing current wordform samples"""
+
+    informant = models.CharField(max_length=256)
+
+
+class WordformOrder:
+
+    pass
+
+
 class SemanticGroup(DictEntity):
     """ Class representing semantic groups
     """
@@ -322,16 +310,84 @@ class Translation(DictEntity):
     semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
-    translation_based = models.ManyToManyField('self', null=True, blank=True)
+    translation_based_multi = models.ManyToManyField('self', null=True, blank=True)
     is_visible = models.BooleanField(default=True, editable=False)
 
 
-class WordformSample(WordformBase):
-    """Class representing current wordform samples"""
-
-    informant = models.CharField(max_length=256)
+# Project classes
 
 
-class WordformOrder:
+class Project(models.Model):
 
-    pass
+    pass  # TODO Add author, datestamp, state, file...?
+
+
+class ProjectedEntity(models.Model):
+    project = models.ForeignKey(Project)
+    state = models.SmallIntegerField()
+    col_num = models.SmallIntegerField()
+
+    class Meta:
+        abstract = True
+
+
+class ProjectColumnLiteral(ProjectedEntity):
+    language = models.CharField(max_length=256, blank=True)
+    default_dialect = models.CharField(max_length=256, blank=True)
+    writing_system = models.CharField(max_length=256, blank=True)
+    source = models.CharField(max_length=256, blank=True)
+
+
+class ProjectColumn(ProjectedEntity):
+    language = models.ForeignKey(Language)
+    default_dialect = models.ForeignKey(Dialect, null=True, blank=True)
+    writing_system = models.ForeignKey(WritingSystem)
+    source = models.ForeignKey(Source, null=True, blank=True)
+
+
+class ProjectLexemeLiteral(ProjectedEntity):
+    syntactic_category = models.CharField(max_length=256)
+    inflection = models.CharField(max_length=256, blank=True)
+
+
+class ProjectLexeme(ProjectedEntity):
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    inflection = models.ForeignKey(Inflection, null=True, blank=True)
+
+
+class ProjectWordformLiteral(ProjectedEntity):
+    lexeme = models.ForeignKey(ProjectLexemeLiteral)
+    wordform = models.CharField(max_length=256)
+    comment = models.TextField(blank=True)
+    gramm_category_set = models.CharField(max_length=256, blank=True)
+    dialect = models.CharField(max_length=256, blank=True)
+    informant = models.CharField(max_length=256, blank=True)
+
+
+class ProjectWordform(ProjectedEntity):
+    lexeme = models.ForeignKey(ProjectLexeme)
+    wordform = models.CharField(max_length=256)
+    comment = models.TextField(blank=True)
+    gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
+    dialect = models.ForeignKey(Dialect, null=True, blank=True)
+    informant = models.CharField(max_length=256, blank=True)
+
+
+class ProjectTranslationLiteral(ProjectedEntity):
+    lexeme_1 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_fst_set')
+    lexeme_2 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_snd_set')
+    theme = models.CharField(max_length=256, blank=True)
+    dialect_1 = models.CharField(max_length=256, blank=True)
+    dialect_2 = models.CharField(max_length=256, blank=True)
+    comment_1 = models.TextField(blank=True)
+    comment_2 = models.TextField(blank=True)
+
+
+class ProjectTranslation(ProjectedEntity):
+    lexeme_1 = models.ForeignKey(ProjectLexeme, related_name='translation_fst_set')
+    lexeme_2 = models.ForeignKey(ProjectLexeme, related_name='translation_snd_set')
+    theme = models.ForeignKey(Theme, null=True, blank=True)
+    dialect_1 = models.ForeignKey(Dialect, null=True, blank=True, related_name='translation_fst_set')
+    dialect_2 = models.ForeignKey(Dialect, null=True, blank=True, related_name='translation_snd_set')
+    comment_1 = models.TextField(blank=True)
+    comment_2 = models.TextField(blank=True)
