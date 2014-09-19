@@ -347,7 +347,7 @@ class ProjectColumn(ProjectedEntity):
 
 class ProjectLexemeLiteral(ProjectedEntity):
     syntactic_category = models.CharField(max_length=256)
-    inflection = models.CharField(max_length=256, blank=True)
+    params = models.CharField(max_length=512, blank=True)
 
 
 class ProjectLexeme(ProjectedEntity):

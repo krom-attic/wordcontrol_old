@@ -373,25 +373,28 @@ class DictionaryDataImportView(TemplateView):
     """
 
     template_name = 'wordengine/translation_import.html'
-    translation_import_form_class = forms.TranslationImportForm
+    # translation_import_form_class = forms.TranslationImportForm
     upload_form_class = forms.UploadFileForm
 
     def get(self, request, *args, **kwargs):
-        translation_import_form = self.translation_import_form_class()
+        # translation_import_form = self.translation_import_form_class()
         upload_form = self.upload_form_class()
-        return render(request, self.template_name, {'translation_import_form': translation_import_form,
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
+        return render(request, self.template_name, {
                                                     'upload_form': upload_form})
 
     def post(self, request, *args, **kwargs):
-        translation_import_form = self.translation_import_form_class(request.POST)
+        # translation_import_form = self.translation_import_form_class(request.POST)
         upload_form = self.upload_form_class(request.POST, request.FILES)
-        if translation_import_form.is_valid() and upload_form.is_valid():
-            added_translations = parse_data_import(request)
+        # if translation_import_form.is_valid() and upload_form.is_valid():
+        if upload_form.is_valid():
+            added_translations = parse_upload(request)
             transaction.rollback()
             transaction.set_autocommit(True)
         else:
             added_translations = None
             # TODO Upload form file not saved on fail
-        return render(request, self.template_name, {'translation_import_form': translation_import_form,
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
+        return render(request, self.template_name, {
                                                     'upload_form': upload_form,
                                                     'added_translations': added_translations})

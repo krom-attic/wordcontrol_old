@@ -1,7 +1,6 @@
 from wordengine import models
 from collections import defaultdict
 import csv
-import re
 import codecs
 from django.db import transaction, IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
@@ -59,7 +58,7 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].save()
 
 
-def parse_data_import(request):
+def parse_upload(request):
     """
     @param uploaded_file:
     @return:
@@ -70,52 +69,42 @@ def parse_data_import(request):
 
     # TODO Wrap with manual commit
 
-    language_source = models.Language.objects.get(pk=request.POST['language_1'])
-    language_target = (models.Language.objects.get(pk=request.POST['language_2']),
-                       models.Language.objects.get(pk=request.POST['language_2']),
-                       models.Language.objects.get(pk=request.POST['language_2']))  # TODO Should get real languages
-    source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
-    WORD_SOURCES = {0: None, 1: source_translation}
-    LANG_SRC_COLS = ('lang_src1', 'lang_src2',)  # TODO Unhardcode this
-    LANG_TRGT_COLS = ('lang_trgt1', 'lang_trgt2',)  # TODO Unhardcode this
-    COLS = ('lex_param',) + LANG_SRC_COLS + LANG_TRGT_COLS + ('comment',)
-    source_1 = WORD_SOURCES.get(request.POST['source_1'])
-    source_2 = WORD_SOURCES.get(request.POST['source_2'])
-    # TODO Здесь нужно получить перечень систем письма и диалектов для каждого столбца
-    # try:
-    #     writing_system = models.WritingSystem.objects.get(pk=request.POST['writing_system_???'])
-    # except ValueError:
-    #     writing_system = None
-    writing_system_stub = models.WritingSystem.objects.get(pk=1)
-#     try:
-#         dialect_default = models.Dialect.objects.get(pk=request.POST['dialect_default_???'])
-#     except ValueError:
-#         dialect_default = None
+    project = models.Project()
+    project.save()
 
-    transaction.set_autocommit(False)
+    lang_src_cols = []
+    for i in range(1, int(request.POST['num_src']) + 1):
+        lang_src_cols.append('lang_src' + str(i))
+
+    lang_trg_cols = []
+    for i in range(1, int(request.POST['num_trg']) + 1):
+        lang_trg_cols.append('lang_trg' + str(i))
+
+    cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']
 
     added_translations = []
 
-    csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-8'), fieldnames=COLS,
+    csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-8'), fieldnames=cols,
                                dialect=csv.excel_tab, delimiter='\t')
 
     for n, row in enumerate(csvreader):
         if n == 0:
             continue
         if row.get('lex_param'):  # Check if a new lexeme is in the row
-            lex_param = row.get('lex_param').split('[')
-            # synt_cat = models.SyntacticCategory.objects.get(term_abbr=lex_param[0])
-            synt_cat = models.SyntacticCategory.objects.get(pk=1)  # TODO Stub
-            if len(lex_param) == 2:
-                # inflection = models.Inflection.objects.get(value=lex_param[1])  # TODO Trim right bracket
-                inflection = None
-                print(lex_param[1])
-            # TODO: if lex_param splits into more pieces -> smth went wrong
-            lexeme_src = models.Lexeme(language=language_source, syntactic_category=synt_cat)
-            # lexeme_src.save()
-            print('row' + str(n))
-            print(lex_param[0])
+            lex_param = row.get('lex_param').split('[', 1)
+            if lex_param[0]:
+                synt_cat = lex_param.pop(0)
+            # TODO Check if the first part of the string is correct
+            if len(lex_param) == 1:
+                params = lex_param.pop(0)
+            # TODO Check if the rest of the string is correct
+            else:
+                params = ''
+            lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
+                                                     state=0, col_num=2)
+            print('row ' + str(n), ',col 2')
             print(lexeme_src)
+            lexeme_src.save()
 
             try:
                 main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
@@ -124,10 +113,10 @@ def parse_data_import(request):
             except ObjectDoesNotExist:
                 main_gr_cat_1 = None
 
-            for i, col in enumerate(LANG_SRC_COLS):
+            for i, col in enumerate(lang_src_cols):
                 lexeme_wordforms = row.get(col)
                 for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
-                    # TODO Here must split futher
+                    # TODO Here must split further
                     wordform = models.Wordform(lexeme=lexeme_src, spelling=current_wordform, gramm_category_set=None,
                                                writing_system=writing_system_stub)
                     print('col: ' + col)
@@ -165,7 +154,7 @@ def parse_data_import(request):
 #                 pass  # TODO Handle blank first wordform error
 #         # Does it need to be saved after "add"?
 
-        for i, col in enumerate(LANG_TRGT_COLS):  # Iterate through multiple target languages
+        for i, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
             if row.get(col):
                 print('col: ' + col)
 
@@ -209,3 +198,29 @@ def parse_data_import(request):
 #
 #
 #     return added_translations
+
+
+def import_data():
+    transaction.set_autocommit(False)
+    language_source = models.Language.objects.get(pk=request.POST['language_1'])
+    language_target = (models.Language.objects.get(pk=request.POST['language_2']),
+                       models.Language.objects.get(pk=request.POST['language_2']),
+                       models.Language.objects.get(pk=request.POST['language_2']))  # TODO Should get real languages
+    source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
+    WORD_SOURCES = {0: None, 1: source_translation}
+
+    source_1 = WORD_SOURCES.get(request.POST['source_1'])
+    source_2 = WORD_SOURCES.get(request.POST['source_2'])
+    # TODO Здесь нужно получить перечень систем письма и диалектов для каждого столбца
+    # try:
+    #     writing_system = models.WritingSystem.objects.get(pk=request.POST['writing_system_???'])
+    # except ValueError:
+    #     writing_system = None
+    writing_system_stub = models.WritingSystem.objects.get(pk=1)
+#     try:
+#         dialect_default = models.Dialect.objects.get(pk=request.POST['dialect_default_???'])
+#     except ValueError:
+#         dialect_default = None
+
+    # synt_cat = models.SyntacticCategory.objects.get(term_abbr=lex_param[0])
+                    # inflection = models.Inflection.objects.get(value=lex_param[1])  # TODO Trim right bracket

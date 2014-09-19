@@ -12,3 +12,6 @@ SRC_TYPE = (('Own knowledge', ),
 
 # Types of lexemes' relations
 REL_TYPE = (('Translation', ), )
+
+# Projected entity states
+PRJ_STATE = (('New', ), )
