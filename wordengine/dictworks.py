@@ -102,20 +102,13 @@ def parse_upload(request):
                 params = ''
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
                                                      state=0, col_num=2)
-            print('row ' + str(n), ',col 2')
+            print('row ' + str(n), ', col 1')
             print(lexeme_src)
             lexeme_src.save()
 
-            try:
-                main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
-                                                                       syntactic_category=synt_cat)\
-                    .order_by('position').first()
-            except ObjectDoesNotExist:
-                main_gr_cat_1 = None
-
-            for i, col in enumerate(lang_src_cols):
-                lexeme_wordforms = row.get(col)
-                for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
+        for i, col in enumerate(lang_src_cols):
+            lexeme_wordforms = row.get(col)
+            for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
                     # TODO Here must split further
                     wordform = models.Wordform(lexeme=lexeme_src, spelling=current_wordform, gramm_category_set=None,
                                                writing_system=writing_system_stub)
@@ -224,3 +217,11 @@ def import_data():
 
     # synt_cat = models.SyntacticCategory.objects.get(term_abbr=lex_param[0])
                     # inflection = models.Inflection.objects.get(value=lex_param[1])  # TODO Trim right bracket
+
+
+            try:
+                main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
+                                                                       syntactic_category=synt_cat)\
+                    .order_by('position').first()
+            except ObjectDoesNotExist:
+                main_gr_cat_1 = None
