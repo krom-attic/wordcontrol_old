@@ -93,59 +93,40 @@ def parse_upload(request):
         if row.get('lex_param'):  # Check if a new lexeme is in the row
             lex_param = row.get('lex_param').split('[', 1)
             if lex_param[0]:
-                synt_cat = lex_param.pop(0)
-            # TODO Check if the first part of the string is correct
-            if len(lex_param) == 1:
-                params = lex_param.pop(0)
-            # TODO Check if the rest of the string is correct
+                synt_cat = lex_param.pop(0).strip()
+                if len(lex_param) == 1:
+                    # TODO Check if the rest of the string is correct
+                    params = [s.strip('] ') for s in lex_param.pop(0).strip().split('[')]
             else:
-                params = ''
+                pass  # TODO Handle incorrect lex_param
+
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
-                                                     state=0, col_num=2)
-            print('row ' + str(n), ', col 1')
+                                                     state=0, col_num=1)
+            print('row: ' + str(n), ', col 1')
             print(lexeme_src)
             lexeme_src.save()
 
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
             for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
-                    # TODO Here must split further
-                    wordform = models.Wordform(lexeme=lexeme_src, spelling=current_wordform, gramm_category_set=None,
-                                               writing_system=writing_system_stub)
-                    print('col: ' + col)
+                    wordform_split = current_wordform.split('[', 1)
+                    if wordform_split[0]:
+                        spelling_comm = wordform_split.pop(0).strip().split('"', 1)
+                        if spelling_comm[0]:
+                            spelling = spelling_comm.pop(0).strip()
+                            if len(spelling_comm) == 1:
+                                # TODO Check if the rest of the string is correct
+                                comment = spelling_comm.pop(0).strip('" ')
+                        if len(wordform_split) == 1:
+                            # TODO Check if the rest of the string is correct
+                            params = [s.strip('] ') for s in wordform_split.pop(0).strip().split('[')]
+
+                    wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
+                                                             params=params, project=project, state=0, col_num=i+1)
+                    print('row: ' + str(n), ', col: ' + col)
                     print(wordform)
-                    # wordform.save()
-                    # TODO Here add dialect and source
-#                     if current_wordform[1]:
-#                         dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
-#                                                              language=current_row_params[2][0].language)
-#                     else:
-#                         dialect = current_row_params[2][2]
-#                     try:
-#                         wordform.dialect_multi.add(dialect)
-#                     except IntegrityError:
-#                         pass  # Nothing to do if dialect isn't specified anywhere
-#                     try:
-#                         wordform.source.add(current_row_params[2][3])
-#                     except IntegrityError:
-#                         pass  # Nothing to do if source isn't specified anywhere
-#                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
-#                                                     object_id=wordform.id)
-#                     dict_change.save()
+                    wordform.save()
 
-
-#  TODO  WTF vvvvv ?????
-#         if lexeme_1.wordform_set.first():
-#             current_wordforms = lexeme_1.wordform_set
-#         else:
-#             try:
-#                 for wordform in current_wordforms.all():
-#                     wordform.pk = None
-#                     wordform.lexeme = lexeme_1
-#                     wordform.save()
-#             except UnboundLocalError:
-#                 pass  # TODO Handle blank first wordform error
-#         # Does it need to be saved after "add"?
 
         for i, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
             if row.get(col):
@@ -225,3 +206,33 @@ def import_data():
                     .order_by('position').first()
             except ObjectDoesNotExist:
                 main_gr_cat_1 = None
+                    # TODO Here add dialect and source
+#                     if current_wordform[1]:
+#                         dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
+#                                                              language=current_row_params[2][0].language)
+#                     else:
+#                         dialect = current_row_params[2][2]
+#                     try:
+#                         wordform.dialect_multi.add(dialect)
+#                     except IntegrityError:
+#                         pass  # Nothing to do if dialect isn't specified anywhere
+#                     try:
+#                         wordform.source.add(current_row_params[2][3])
+#                     except IntegrityError:
+#                         pass  # Nothing to do if source isn't specified anywhere
+#                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+#                                                     object_id=wordform.id)
+#                     dict_change.save()
+
+#  TODO  WTF vvvvv ?????
+#         if lexeme_1.wordform_set.first():
+#             current_wordforms = lexeme_1.wordform_set
+#         else:
+#             try:
+#                 for wordform in current_wordforms.all():
+#                     wordform.pk = None
+#                     wordform.lexeme = lexeme_1
+#                     wordform.save()
+#             except UnboundLocalError:
+#                 pass  # TODO Handle blank first wordform error
+#         # Does it need to be saved after "add"?

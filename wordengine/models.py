@@ -357,16 +357,14 @@ class ProjectLexeme(ProjectedEntity):
 
 class ProjectWordformLiteral(ProjectedEntity):
     lexeme = models.ForeignKey(ProjectLexemeLiteral)
-    wordform = models.CharField(max_length=256)
+    spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
-    gramm_category_set = models.CharField(max_length=256, blank=True)
-    dialect = models.CharField(max_length=256, blank=True)
-    informant = models.CharField(max_length=256, blank=True)
+    params = models.CharField(max_length=512, blank=True)
 
 
 class ProjectWordform(ProjectedEntity):
     lexeme = models.ForeignKey(ProjectLexeme)
-    wordform = models.CharField(max_length=256)
+    spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
