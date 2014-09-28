@@ -109,17 +109,19 @@ def parse_upload(request):
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
             for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
-                    wordform_split = current_wordform.split('[', 1)
+                    wordform_split = current_wordform.split('"', 1)
                     if wordform_split[0]:
-                        spelling_comm = wordform_split.pop(0).strip().split('"', 1)
-                        if spelling_comm[0]:
-                            spelling = spelling_comm.pop(0).strip()
-                            if len(spelling_comm) == 1:
+                        spelling_params = wordform_split.pop(0).strip().split('[', 1)
+                        if spelling_params[0]:  # TODO Must not be empty - check
+                            spelling = spelling_params.pop(0).strip()
+                            if len(spelling_params) == 1:
                                 # TODO Check if the rest of the string is correct
-                                comment = spelling_comm.pop(0).strip('" ')
+                                params = [s.strip('] ') for s in spelling_params.pop(0).strip().split('[')]
+                            else:
+                                params = ''
                         if len(wordform_split) == 1:
                             # TODO Check if the rest of the string is correct
-                            params = [s.strip('] ') for s in wordform_split.pop(0).strip().split('[')]
+                            comment = wordform_split.pop(0).strip('" ')
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                              params=params, project=project, state=0, col_num=i+1)
@@ -127,23 +129,26 @@ def parse_upload(request):
                     print(wordform)
                     wordform.save()
 
-
         for i, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
-            if row.get(col):
-                print('col: ' + col)
+            translations = row.get(col)
+            if translations:
+                transl_split = translations.split('@', 1)
+                if len(transl_split) == 2:
+                    transl_words = transl_split.pop(1)
+                else:
+                    transl_words = transl_split.pop(0)
+                if transl_words:   # TODO Must not be empty - check
+                    for current_transl in transl_words.split('|'):
+                        cur_transl_split = current_transl.split('"', 1)
+                        if cur_transl_split[0]:
 
-                # TODO Split lexemes!!
 
-                lexeme_trg = models.Lexeme(language=language_target[i],
-                                           syntactic_category=synt_cat)
-                # lexeme_trg.save()
-                print(lexeme_trg)
-                # try:
-                #     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_target[i],
-                #                                                            syntactic_category=synt_cat)\
-                #         .order_by('position').first()
-                # except ObjectDoesNotExist:
-                #     main_gr_cat_2 = None
+
+                if transl_split[0]:
+                    pass  # TODO Add param split
+
+
+
 
                 relation = models.LexemeRelation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg)
                 # relation.save()
@@ -236,3 +241,14 @@ def import_data():
 #             except UnboundLocalError:
 #                 pass  # TODO Handle blank first wordform error
 #         # Does it need to be saved after "add"?
+
+                lexeme_trg = models.Lexeme(language=language_target[i],
+                                           syntactic_category=synt_cat)
+                # lexeme_trg.save()
+                print(lexeme_trg)
+                # try:
+                #     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_target[i],
+                #                                                            syntactic_category=synt_cat)\
+                #         .order_by('position').first()
+                # except ObjectDoesNotExist:
+                #     main_gr_cat_2 = None
