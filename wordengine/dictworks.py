@@ -108,20 +108,21 @@ def parse_upload(request):
 
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
-            for current_wordform in lexeme_wordforms.split('|'):  # TODO Handle empty line correctly
-                    wordform_split = current_wordform.split('"', 1)
-                    if wordform_split[0]:
-                        spelling_params = wordform_split.pop(0).strip().split('[', 1)
-                        if spelling_params[0]:  # TODO Must not be empty - check
-                            spelling = spelling_params.pop(0).strip()
-                            if len(spelling_params) == 1:
-                                # TODO Check if the rest of the string is correct
-                                params = [s.strip('] ') for s in spelling_params.pop(0).strip().split('[')]
-                            else:
-                                params = ''
-                        if len(wordform_split) == 1:
+            for current_wordform in lexeme_wordforms.split('|'):
+                    wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
+                    params = ''
+                    comment = ''
+                    spelling_params = wordform_split.pop(0).strip().split('[', 1)  # ( spelling ), (params])
+                    if spelling_params[0]:
+                        spelling = spelling_params.pop(0).strip()  # (spelling)
+                        if len(spelling_params) == 1:
                             # TODO Check if the rest of the string is correct
-                            comment = wordform_split.pop(0).strip('" ')
+                            params = [s.strip('] ') for s in spelling_params.pop(0).strip().split('[')]  # (params, ...)
+                    else:
+                        pass  # TODO Error: Must not be empty
+                    if len(wordform_split) == 1:
+                        # TODO Check if the rest of the string is correct
+                        comment = wordform_split.pop(0).strip('" ')  # (comment)
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                              params=params, project=project, state=0, col_num=i+1)
@@ -130,17 +131,22 @@ def parse_upload(request):
                     wordform.save()
 
         for i, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
-            translations = row.get(col)
-            if translations:
-                transl_split = translations.split('@', 1)
-                if len(transl_split) == 2:
-                    transl_words = transl_split.pop(1)
+            lexeme_translations = row.get(col)
+            if lexeme_translations:  # TODO if not - just skip
+                lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
+                if len(lex_transl_split) == 2:
+                    transl_words = lex_transl_split.pop(1)
                 else:
-                    transl_words = transl_split.pop(0)
-                if transl_words:   # TODO Must not be empty - check
-                    for current_transl in transl_words.split('|'):
-                        cur_transl_split = current_transl.split('"', 1)
-                        if cur_transl_split[0]:
+                    transl_words = lex_transl_split.pop(0)
+
+                for current_transl in transl_words.split('|'):
+                    cur_transl_split = current_transl.split('"', 1)  # (
+                    if cur_transl_split[0]:
+
+
+                # TODO Error: Must not be empty
+
+
 
 
 
