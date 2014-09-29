@@ -92,13 +92,12 @@ def parse_upload(request):
             continue
         if row.get('lex_param'):  # Check if a new lexeme is in the row
             lex_param = row.get('lex_param').split('[', 1)
-            if lex_param[0]:
-                synt_cat = lex_param.pop(0).strip()
-                if len(lex_param) == 1:
-                    # TODO Check if the rest of the string is correct
-                    params = [s.strip('] ') for s in lex_param.pop(0).strip().split('[')]
+            synt_cat = lex_param.pop(0).strip()
+            if len(lex_param) == 1:
+                # TODO Check if the rest of the string is correct
+                params = [s.strip('] ') for s in lex_param.pop(0).strip().split('[')]
             else:
-                pass  # TODO Handle incorrect lex_param
+                params = ''
 
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
                                                      state=0, col_num=1)
@@ -106,23 +105,24 @@ def parse_upload(request):
             print(lexeme_src)
             lexeme_src.save()
 
+        # TODO Save unparsed cell
+
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
             for current_wordform in lexeme_wordforms.split('|'):
                     wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
-                    params = ''
-                    comment = ''
-                    spelling_params = wordform_split.pop(0).strip().split('[', 1)  # ( spelling ), (params])
-                    if spelling_params[0]:
-                        spelling = spelling_params.pop(0).strip()  # (spelling)
-                        if len(spelling_params) == 1:
-                            # TODO Check if the rest of the string is correct
-                            params = [s.strip('] ') for s in spelling_params.pop(0).strip().split('[')]  # (params, ...)
+                    spelling_params = wordform_split.pop(0).strip().split('[', 1)  # (spelling ), (params])
+                    spelling = spelling_params.pop(0).strip()  # (spelling)
+                    if len(spelling_params) == 1:
+                        # TODO Check if the rest of the string is correct
+                        params = [s.strip('] ') for s in spelling_params.pop().strip().split('[')]  # (param), ...
                     else:
-                        pass  # TODO Error: Must not be empty
+                        params = ''
                     if len(wordform_split) == 1:
                         # TODO Check if the rest of the string is correct
-                        comment = wordform_split.pop(0).strip('" ')  # (comment)
+                        comment = wordform_split.pop().strip('" ')  # (comment)
+                    else:
+                        comment = ''
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                              params=params, project=project, state=0, col_num=i+1)
@@ -134,24 +134,33 @@ def parse_upload(request):
             lexeme_translations = row.get(col)
             if lexeme_translations:  # TODO if not - just skip
                 lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
-                if len(lex_transl_split) == 2:
-                    transl_words = lex_transl_split.pop(1)
-                else:
-                    transl_words = lex_transl_split.pop(0)
 
-                for current_transl in transl_words.split('|'):
-                    cur_transl_split = current_transl.split('"', 1)  # (
-                    if cur_transl_split[0]:
+                for current_transl in lex_transl_split.pop().split('|'):
+                    cur_transl_split = current_transl.split('"', 1)  # ([params] word [dialect] ), (comment")
+                    word_dialect = cur_transl_split.pop(0).strip().split('[', 1)  # ([params], word ), (dialect])
+                    word = word_dialect.pop(0).strip()  # (word)
+                    if len(word_dialect) == 1:
+                        # TODO Check if the rest of the string is correct
+                        dialect = word_dialect.pop().strip(']')
+                    else:
+                        dialect = ''
+                    if len(cur_transl_split) == 1:
+                        # TODO Check if the rest of the string is correct
+                        comment = cur_transl_split.pop().strip('" ')  # (comment)
+                    else:
+                        comment = ''
 
+                    lexeme = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=pa)
 
-                # TODO Error: Must not be empty
+                group_params = ''
+                group_comment = ''
+                if lex_transl_split[0]:
+                    group_params_comment = lex_transl_split[0].split('"', 1)  # ([params] ), (comment")
+                    if group_params_comment[0]:
+                        group_params = [s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('[')]
+                    if len(group_params_comment) == 1:
+                        group_comment = group_params_comment.pop().strip('" ')
 
-
-
-
-
-                if transl_split[0]:
-                    pass  # TODO Add param split
 
 
 
