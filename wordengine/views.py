@@ -368,7 +368,7 @@ class LanguageSetupView(TemplateView):
 
 
 
-class DictionaryDataImportView(TemplateView):
+class DictionaryDataUploadView(TemplateView):
     """ Class view for importing dictionary data via file upload
     """
 
@@ -388,13 +388,19 @@ class DictionaryDataImportView(TemplateView):
         upload_form = self.upload_form_class(request.POST, request.FILES)
         # if translation_import_form.is_valid() and upload_form.is_valid():
         if upload_form.is_valid():
-            added_translations = parse_upload(request)
-            transaction.rollback()
-            transaction.set_autocommit(True)
+            # added_translations = parse_upload(request)
+            # transaction.rollback()
+            # transaction.set_autocommit(True)
+            project = parse_upload(request)
         else:
-            added_translations = None
+            # added_translations = None
+            project = 'Upload failed'
             # TODO Upload form file not saved on fail
         # return render(request, self.template_name, {'translation_import_form': translation_import_form,
         return render(request, self.template_name, {
                                                     'upload_form': upload_form,
-                                                    'added_translations': added_translations})
+                                                    'project': project})
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(DictionaryDataUploadView, self).dispatch(*args, **kwargs)

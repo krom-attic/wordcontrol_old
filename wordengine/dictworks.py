@@ -4,6 +4,7 @@ import csv
 import codecs
 from django.db import transaction, IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
+import datetime
 
 
 # Common functions here
@@ -69,7 +70,7 @@ def parse_upload(request):
 
     # TODO Wrap with manual commit
 
-    project = models.Project()
+    project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now())  # TODO: Timezone!
     project.save()
 
     lang_src_cols = []
@@ -82,33 +83,40 @@ def parse_upload(request):
 
     cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']
 
-    added_translations = []
-
     csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-8'), fieldnames=cols,
                                dialect=csv.excel_tab, delimiter='\t')
 
     for n, row in enumerate(csvreader):
         if n == 0:
             continue
-        if row.get('lex_param'):  # Check if a new lexeme is in the row
-            lex_param = row.get('lex_param').split('[', 1)
+            # TODO Save header
+
+        lexeme_literal = row.get('lex_param')  # TODO: First row after header MUST contain a lexeme
+        csvcell = models.CSVCell(row=n+1, col=1, value=lexeme_literal)
+        csvcell.save()
+
+        if lexeme_literal:  # Check if a new lexeme is in the row
+            lex_param = lexeme_literal.split('[', 1)
             synt_cat = lex_param.pop(0).strip()
             if len(lex_param) == 1:
                 # TODO Check if the rest of the string is correct
                 params = [s.strip('] ') for s in lex_param.pop(0).strip().split('[')]
             else:
-                params = ''
+                params = []
 
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
-                                                     state=0, col_num=1)
-            print('row: ' + str(n), ', col 1')
+                                                     state=0, csvcell=csvcell)
+            print('row: ' + str(n) + ', col 1' + ' (Lexeme)')
             print(lexeme_src)
             lexeme_src.save()
 
-        # TODO Save unparsed cell
+            first_wordform = None
 
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
+            csvcell = models.CSVCell(row=n+1, col=i+1, value=lexeme_wordforms)
+            csvcell.save()
+
             for current_wordform in lexeme_wordforms.split('|'):
                     wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
                     spelling_params = wordform_split.pop(0).strip().split('[', 1)  # (spelling ), (params])
@@ -117,7 +125,7 @@ def parse_upload(request):
                         # TODO Check if the rest of the string is correct
                         params = [s.strip('] ') for s in spelling_params.pop().strip().split('[')]  # (param), ...
                     else:
-                        params = ''
+                        params = []
                     if len(wordform_split) == 1:
                         # TODO Check if the rest of the string is correct
                         comment = wordform_split.pop().strip('" ')  # (comment)
@@ -125,76 +133,81 @@ def parse_upload(request):
                         comment = ''
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
-                                                             params=params, project=project, state=0, col_num=i+1)
-                    print('row: ' + str(n), ', col: ' + col)
+                                                             params=params, project=project, state=0, csvcell=csvcell)
+                    print('row: ' + str(n) + ', col: ' + col + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
-        for i, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
+                    if not first_wordform:
+                        first_wordform = wordform
+
+        for j, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
             lexeme_translations = row.get(col)
+            csvcell = models.CSVCell(row=n+1, col=i+j+2, value=lexeme_translations)
+            csvcell.save()
+
             if lexeme_translations:  # TODO if not - just skip
                 lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
 
-                for current_transl in lex_transl_split.pop().split('|'):
-                    cur_transl_split = current_transl.split('"', 1)  # ([params] word [dialect] ), (comment")
-                    word_dialect = cur_transl_split.pop(0).strip().split('[', 1)  # ([params], word ), (dialect])
-                    word = word_dialect.pop(0).strip()  # (word)
-                    if len(word_dialect) == 1:
-                        # TODO Check if the rest of the string is correct
-                        dialect = word_dialect.pop().strip(']')
-                    else:
-                        dialect = ''
-                    if len(cur_transl_split) == 1:
-                        # TODO Check if the rest of the string is correct
-                        comment = cur_transl_split.pop().strip('" ')  # (comment)
-                    else:
-                        comment = ''
-
-                    lexeme = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=pa)
-
                 group_params = ''
                 group_comment = ''
-                if lex_transl_split[0]:
-                    group_params_comment = lex_transl_split[0].split('"', 1)  # ([params] ), (comment")
+                if len(lex_transl_split) == 2:
+                    group_params_comment = lex_transl_split.pop(0).split('"', 1)  # ([params] ), (comment")
                     if group_params_comment[0]:
                         group_params = [s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('[')]
                     if len(group_params_comment) == 1:
                         group_comment = group_params_comment.pop().strip('" ')
 
+                for current_transl in lex_transl_split.pop().split('|'):
+                    cur_transl_split = current_transl.split('"', 1)  # ( [params] word [dialect] ), (comment")
+                    param_word_dialect = cur_transl_split.pop(0)
+                    params = []
+                    while param_word_dialect.strip()[0] == '[':
+                        temp_split = param_word_dialect.split(']', 1)
+                        params.append(temp_split.pop(0).strip('[ '))  # (param), ...
+                        param_word_dialect = temp_split.pop(0)
+                    word_dialect = param_word_dialect.strip().split('[', 1)  # (word ), (dialect])
+                    spelling = word_dialect.pop(0).strip()  # (word)
+                    if len(word_dialect) == 1:
+                        # TODO Check if the rest of the string is correct
+                        transl_dialect = word_dialect.pop().strip(']')
+                    else:
+                        transl_dialect = ''
+                    if len(cur_transl_split) == 1:
+                        # TODO Check if the rest of the string is correct
+                        transl_comment = cur_transl_split.pop().strip('" ')  # (comment)
+                    else:
+                        transl_comment = ''
 
+                    lexeme_trg = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params,
+                                                             project=project, state=0, csvcell=csvcell)
+                    print('row: ' + str(n) + ', col: ' + col + ' (Lexeme)')
+                    print(lexeme_trg)
+                    lexeme_trg.save()
 
+                    wordform = models.ProjectWordformLiteral(lexeme=lexeme_trg, spelling=spelling, project=project,
+                                                             state=0, csvcell=csvcell)
 
+                    print('row: ' + str(n) + ', col: ' + col + ' (Wordform)')
+                    print(wordform)
+                    wordform.save()
 
-                relation = models.LexemeRelation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg)
-                # relation.save()
+                    translation = models.ProjectTranslationLiteral(lexeme_1=lexeme_src, lexeme_2=lexeme_trg,
+                                                                   params=group_params, dialect_2=transl_dialect,
+                                                                   comment_1=group_comment, comment_2=transl_comment,
+                                                                   bind_wf_1=first_wordform, bind_wf_2=wordform,
+                                                                   project=project, state=0, csvcell=csvcell)
 
-                semantic_group_src = models.SemanticGroup()  # TODO Here should split input
-                semantic_group_trg = models.SemanticGroup()  # TODO Also add sources??
+                    print('row: ' + str(n) + ', col: ' + col + ' (Translation)')
+                    print(translation)
+                    translation.save()
 
-                # TODO Add persisent wordform link
-                translation = models.Translation(lexeme_relation=relation, direction=1, semantic_group_1=semantic_group_src,
-                                                 semantic_group_2=semantic_group_trg, is_visible=True)
-                # translation.save()
+    return project
 
-                # translation.source.add(source_translation)
-
-                # TODO Log every change - overload save() method?
-                # dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
-                #                                 object_id=translation.id)
-                # dict_change.save()
-                added_translations.append(translation)
-                print(translation)
-                # TODO Suggest translation constraint if marked in a csv
-#
-#     # TODO Add form for commenting and duplicates resolution
-#
-#
-#
-#
-#     return added_translations
 
 
 def import_data():
+    added_translations = []
     transaction.set_autocommit(False)
     language_source = models.Language.objects.get(pk=request.POST['language_1'])
     language_target = (models.Language.objects.get(pk=request.POST['language_2']),
@@ -220,12 +233,12 @@ def import_data():
                     # inflection = models.Inflection.objects.get(value=lex_param[1])  # TODO Trim right bracket
 
 
-            try:
-                main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
-                                                                       syntactic_category=synt_cat)\
-                    .order_by('position').first()
-            except ObjectDoesNotExist:
-                main_gr_cat_1 = None
+    try:
+        main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
+                                                               syntactic_category=synt_cat)\
+            .order_by('position').first()
+    except ObjectDoesNotExist:
+        main_gr_cat_1 = None
                     # TODO Here add dialect and source
 #                     if current_wordform[1]:
 #                         dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
@@ -257,13 +270,36 @@ def import_data():
 #                 pass  # TODO Handle blank first wordform error
 #         # Does it need to be saved after "add"?
 
-                lexeme_trg = models.Lexeme(language=language_target[i],
-                                           syntactic_category=synt_cat)
-                # lexeme_trg.save()
-                print(lexeme_trg)
-                # try:
-                #     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_target[i],
-                #                                                            syntactic_category=synt_cat)\
-                #         .order_by('position').first()
-                # except ObjectDoesNotExist:
-                #     main_gr_cat_2 = None
+    lexeme_trg = models.Lexeme(language=language_target[i],
+                               syntactic_category=synt_cat)
+    # lexeme_trg.save()
+    print(lexeme_trg)
+    # try:
+    #     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_target[i],
+    #                                                            syntactic_category=synt_cat)\
+    #         .order_by('position').first()
+    # except ObjectDoesNotExist:
+    #     main_gr_cat_2 = None
+
+    relation = models.LexemeRelation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg)
+    # relation.save()
+
+    semantic_group_src = models.SemanticGroup()  # TODO Here should split input
+    semantic_group_trg = models.SemanticGroup()  # TODO Also add sources??
+
+    # TODO Add persisent wordform link
+    translation = models.Translation(lexeme_relation=relation, direction=1, semantic_group_1=semantic_group_src,
+                                     semantic_group_2=semantic_group_trg, is_visible=True)
+    # translation.save()
+
+    # translation.source.add(source_translation)
+
+    # TODO Log every change - overload save() method?
+    # dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+    #                                 object_id=translation.id)
+    # dict_change.save()
+    added_translations.append(translation)
+    print(translation)
+
+#     # TODO Add form for commenting and duplicates resolution
+#     return added_translations

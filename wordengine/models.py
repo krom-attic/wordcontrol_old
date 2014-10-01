@@ -317,15 +317,24 @@ class Translation(DictEntity):
 # Project classes
 
 
+class CSVCell(models.Model):
+    row = models.IntegerField()
+    col = models.IntegerField()
+    value = models.TextField(blank=True)
+
+
 class Project(models.Model):
 
-    pass  # TODO Add author, datestamp, state, file...?
+    user_uploader = models.ForeignKey(auth.models.User, editable=False)
+    timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
 
+    def __str__(self):
+        return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
 
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
     state = models.SmallIntegerField()
-    col_num = models.SmallIntegerField()
+    csvcell = models.ForeignKey(CSVCell)
 
     class Meta:
         abstract = True
@@ -349,6 +358,9 @@ class ProjectLexemeLiteral(ProjectedEntity):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
 
+    def __str__(self):
+        return ' | '.join([self.syntactic_category, str(self.params)])
+
 
 class ProjectLexeme(ProjectedEntity):
     syntactic_category = models.ForeignKey(SyntacticCategory)
@@ -360,6 +372,9 @@ class ProjectWordformLiteral(ProjectedEntity):
     spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
+
+    def __str__(self):
+        return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
 
 
 class ProjectWordform(ProjectedEntity):
@@ -374,11 +389,16 @@ class ProjectWordform(ProjectedEntity):
 class ProjectTranslationLiteral(ProjectedEntity):
     lexeme_1 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_fst_set')
     lexeme_2 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_snd_set')
-    theme = models.CharField(max_length=256, blank=True)
-    dialect_1 = models.CharField(max_length=256, blank=True)
+    params = models.CharField(max_length=256, blank=True)
     dialect_2 = models.CharField(max_length=256, blank=True)
     comment_1 = models.TextField(blank=True)
     comment_2 = models.TextField(blank=True)
+    bind_wf_1 = models.ForeignKey(ProjectWordformLiteral, related_name='translation_fst_set')
+    bind_wf_2 = models.ForeignKey(ProjectWordformLiteral, related_name='translation_snd_set')
+
+    def __str__(self):
+        return ' | '.join([str(self.lexeme_1), str(self.lexeme_2), str(self.params), self.dialect_2, self.comment_1,
+                           self.comment_2])
 
 
 class ProjectTranslation(ProjectedEntity):
