@@ -81,15 +81,17 @@ def parse_upload(request):
     for i in range(1, int(request.POST['num_trg']) + 1):
         lang_trg_cols.append('lang_trg' + str(i))
 
-    cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']
+    cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']  # TODO Add extended comment support
 
     csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-8'), fieldnames=cols,
                                dialect=csv.excel_tab, delimiter='\t')
 
     for n, row in enumerate(csvreader):
         if n == 0:
+            for col in cols[1:]:
+                row.get(col)
+ # TODO  !!!
             continue
-            # TODO Save header
 
         lexeme_literal = row.get('lex_param')  # TODO: First row after header MUST contain a lexeme
         csvcell = models.CSVCell(row=n+1, col=1, value=lexeme_literal)
@@ -158,6 +160,14 @@ def parse_upload(request):
                     if len(group_params_comment) == 1:
                         group_comment = group_params_comment.pop().strip('" ')
 
+
+                semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
+                                                                     project=project, state=0, csvcell=csvcell)
+                print('row: ' + str(n) + ', col: ' + col + ' (Semantic group)')
+                print(semantic_gr_src)
+                semantic_gr_src.save()
+
+
                 for current_transl in lex_transl_split.pop().split('|'):
                     cur_transl_split = current_transl.split('"', 1)  # ( [params] word [dialect] ), (comment")
                     param_word_dialect = cur_transl_split.pop(0)
@@ -192,9 +202,16 @@ def parse_upload(request):
                     print(wordform)
                     wordform.save()
 
+                    semantic_gr_trg = models.ProjectSemanticGroupLiteral(dialect=transl_dialect, comment=transl_comment,
+                                                                         project=project, state=0, csvcell=csvcell)
+
+                    print('row: ' + str(n) + ', col: ' + col + ' (Semantic group)')
+                    print(semantic_gr_trg)
+                    semantic_gr_trg.save()
+
                     translation = models.ProjectTranslationLiteral(lexeme_1=lexeme_src, lexeme_2=lexeme_trg,
-                                                                   params=group_params, dialect_2=transl_dialect,
-                                                                   comment_1=group_comment, comment_2=transl_comment,
+                                                                   direction=1, semantic_group_1=semantic_gr_src,
+                                                                   semantic_group_2=semantic_gr_trg,
                                                                    bind_wf_1=first_wordform, bind_wf_2=wordform,
                                                                    project=project, state=0, csvcell=csvcell)
 
