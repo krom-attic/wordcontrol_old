@@ -83,14 +83,36 @@ def parse_upload(request):
 
     cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']  # TODO Add extended comment support
 
-    csvreader = csv.DictReader(codecs.iterdecode(request.FILES['file'], 'utf-8'), fieldnames=cols,
-                               dialect=csv.excel_tab, delimiter='\t')
+    csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
+
+    source_language = None
 
     for n, row in enumerate(csvreader):
         if n == 0:
-            for col in cols[1:]:
-                row.get(col)
- # TODO  !!!
+            for col in row[1:]:  # TODO Last column should be trimmed too (it's a comment)
+                col_split = col.strip().split('(', 1)
+                language = col_split.pop(0).strip()
+                if not source_language:
+                    source_language = language
+                    col_type = 0  # 0 = source language
+                else:
+                    if source_language == language:
+                        col_type = 0
+                    else:
+                        col_type = 1  # 1 = target language
+
+                dialect_ws_source = col_split[1].split('[', 1)
+                dialect = dialect_ws_source.pop(0).strip(') ')
+                ws_source = dialect_ws_source.pop().strip('] ').split('@')
+                source = ws_source.pop().strip()
+                writing_system = ws_source.pop().strip()
+
+                column_literal = models.ProjectColumnLiteral(col_type=col_type, language=language, dialect=dialect,
+                                                             writing_system=writing_system, source=source)
+                print('Column header: ')
+                print(column_literal)
+                column_literal.save()
+
             continue
 
         lexeme_literal = row.get('lex_param')  # TODO: First row after header MUST contain a lexeme
