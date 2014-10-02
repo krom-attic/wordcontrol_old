@@ -73,23 +73,24 @@ def parse_upload(request):
     project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now())  # TODO: Timezone!
     project.save()
 
-    lang_src_cols = []
-    for i in range(1, int(request.POST['num_src']) + 1):
-        lang_src_cols.append('lang_src' + str(i))
+    # lang_src_cols = []
+    # for i in range(1, int(request.POST['num_src']) + 1):
+    #     lang_src_cols.append('lang_src' + str(i))
+    #
+    # lang_trg_cols = []
+    # for i in range(1, int(request.POST['num_trg']) + 1):
+    #     lang_trg_cols.append('lang_trg' + str(i))
 
-    lang_trg_cols = []
-    for i in range(1, int(request.POST['num_trg']) + 1):
-        lang_trg_cols.append('lang_trg' + str(i))
-
-    cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']  # TODO Add extended comment support
+    # cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']
 
     csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
 
     source_language = None
+    columns = [(0, 'lex_param')]  # TODO Add extended comment support
 
-    for n, row in enumerate(csvreader):
-        if n == 0:
-            for col in row[1:]:  # TODO Last column should be trimmed too (it's a comment)
+    for rownum, row in enumerate(csvreader):
+        if rownum == 0:
+            for colnum, col in enumerate(row[1:]):  # TODO Last column should be trimmed too (it's a comment)
                 col_split = col.strip().split('(', 1)
                 language = col_split.pop(0).strip()
                 if not source_language:
@@ -113,10 +114,12 @@ def parse_upload(request):
                 print(column_literal)
                 column_literal.save()
 
+                columns.extend((colnum+1, column_literal))
+
             continue
 
-        lexeme_literal = row.get('lex_param')  # TODO: First row after header MUST contain a lexeme
-        csvcell = models.CSVCell(row=n+1, col=1, value=lexeme_literal)
+        lexeme_literal = row[0]  # TODO: First row after header MUST contain a lexeme
+        csvcell = models.CSVCell(row=rownum+1, col=1, value=lexeme_literal)
         csvcell.save()
 
         if lexeme_literal:  # Check if a new lexeme is in the row
@@ -130,7 +133,7 @@ def parse_upload(request):
 
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
                                                      state=0, csvcell=csvcell)
-            print('row: ' + str(n) + ', col 1' + ' (Lexeme)')
+            print('row: ' + str(rownum) + ', col 1' + ' (Lexeme)')
             print(lexeme_src)
             lexeme_src.save()
 
@@ -138,7 +141,7 @@ def parse_upload(request):
 
         for i, col in enumerate(lang_src_cols):
             lexeme_wordforms = row.get(col)
-            csvcell = models.CSVCell(row=n+1, col=i+1, value=lexeme_wordforms)
+            csvcell = models.CSVCell(row=rownum+1, col=i+1, value=lexeme_wordforms)
             csvcell.save()
 
             for current_wordform in lexeme_wordforms.split('|'):
@@ -158,7 +161,7 @@ def parse_upload(request):
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                              params=params, project=project, state=0, csvcell=csvcell)
-                    print('row: ' + str(n) + ', col: ' + col + ' (Wordform)')
+                    print('row: ' + str(rownum) + ', col: ' + col + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
@@ -167,7 +170,7 @@ def parse_upload(request):
 
         for j, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
             lexeme_translations = row.get(col)
-            csvcell = models.CSVCell(row=n+1, col=i+j+2, value=lexeme_translations)
+            csvcell = models.CSVCell(row=rownum+1, col=i+j+2, value=lexeme_translations)
             csvcell.save()
 
             if lexeme_translations:  # TODO if not - just skip
@@ -185,7 +188,7 @@ def parse_upload(request):
 
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
                                                                      project=project, state=0, csvcell=csvcell)
-                print('row: ' + str(n) + ', col: ' + col + ' (Semantic group)')
+                print('row: ' + str(rownum) + ', col: ' + col + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
 
@@ -213,21 +216,21 @@ def parse_upload(request):
 
                     lexeme_trg = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params,
                                                              project=project, state=0, csvcell=csvcell)
-                    print('row: ' + str(n) + ', col: ' + col + ' (Lexeme)')
+                    print('row: ' + str(rownum) + ', col: ' + col + ' (Lexeme)')
                     print(lexeme_trg)
                     lexeme_trg.save()
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_trg, spelling=spelling, project=project,
                                                              state=0, csvcell=csvcell)
 
-                    print('row: ' + str(n) + ', col: ' + col + ' (Wordform)')
+                    print('row: ' + str(rownum) + ', col: ' + col + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroupLiteral(dialect=transl_dialect, comment=transl_comment,
                                                                          project=project, state=0, csvcell=csvcell)
 
-                    print('row: ' + str(n) + ', col: ' + col + ' (Semantic group)')
+                    print('row: ' + str(rownum) + ', col: ' + col + ' (Semantic group)')
                     print(semantic_gr_trg)
                     semantic_gr_trg.save()
 
@@ -237,7 +240,7 @@ def parse_upload(request):
                                                                    bind_wf_1=first_wordform, bind_wf_2=wordform,
                                                                    project=project, state=0, csvcell=csvcell)
 
-                    print('row: ' + str(n) + ', col: ' + col + ' (Translation)')
+                    print('row: ' + str(rownum) + ', col: ' + col + ' (Translation)')
                     print(translation)
                     translation.save()
 
