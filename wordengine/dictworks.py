@@ -5,6 +5,7 @@ import codecs
 from django.db import transaction, IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 import datetime
+import re
 
 
 # Common functions here
@@ -77,13 +78,15 @@ def parse_upload(request):
     lang_src_cols = []
     lang_trg_cols = []
 
+    ext_comm_re = re.compile(r'\*\d+:')
+
     csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
 
     source_language = None
 
     for rownum, row in enumerate(csvreader):
         if rownum == 0:
-            for colnum, col in enumerate(row[1:]):  # TODO Last column should be trimmed too (it's a comment)
+            for colnum, col in enumerate(row[1:-1]):
                 # TODO Header must present
                 csvcell = models.CSVCell(row=1, col=colnum+1, value=col, project=project)
                 csvcell.save()
@@ -121,6 +124,11 @@ def parse_upload(request):
 
             continue
 
+        if row[-1]:
+            ext_comment = True
+        else:
+            ext_comment = False
+
         lexeme_literal = row[0]
         # TODO: First row after header MUST contain a lexeme
         if lexeme_literal:  # Check if a new lexeme is in the row
@@ -149,6 +157,12 @@ def parse_upload(request):
             if lexeme_wordforms:  # TODO At least one wordform in any src column must present
                 csvcell = models.CSVCell(row=rownum+1, col=colnum+1, value=lexeme_wordforms, project=project)
                 csvcell.save()
+
+                if ext_comment:
+                    ext_comm_split = ext_comm_re.split(row[-1])
+                    for n_comm in range(1, len(ext_comm_split)):
+                        comment.replace('*'+str(n_comm)+':', ext_comm_split[n_comm].strip())
+                        # TODO: распространить это на остальные места, сохранять столбец с комментом!
 
                 for current_wordform in lexeme_wordforms.split('|'):
                         wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
@@ -192,6 +206,8 @@ def parse_upload(request):
                         group_params = [s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('[')]
                     if len(group_params_comment) == 1:
                         group_comment = group_params_comment.pop().strip('" ')
+                        if ext_comment:
+                            pass  # TODO Replace *N
 
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
                                                                      project=project, state=0, csvcell=csvcell)
@@ -217,6 +233,8 @@ def parse_upload(request):
                     if len(cur_transl_split) == 1:
                         # TODO Check if the rest of the string is correct
                         transl_comment = cur_transl_split.pop().strip('" ')  # (comment)
+                        if ext_comment:
+                            pass  # TODO Replace *N
                     else:
                         transl_comment = ''
 
@@ -250,8 +268,6 @@ def parse_upload(request):
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Translation)')
                     print(translation)
                     translation.save()
-
-    # TODO Add extended comment support
 
     return project
 
