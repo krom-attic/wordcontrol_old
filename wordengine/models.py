@@ -316,33 +316,38 @@ class Translation(DictEntity):
 
 # Project classes
 
-
-class CSVCell(models.Model):
-    row = models.IntegerField()
-    col = models.SmallIntegerField()
-    value = models.TextField(blank=True)
-
-
 class Project(models.Model):
 
     user_uploader = models.ForeignKey(auth.models.User, editable=False)
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
+    filename = models.CharField(max_length=512)
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
 
 
+class CSVCell(models.Model):
+    row = models.IntegerField()
+    col = models.SmallIntegerField()
+    value = models.TextField(blank=True)
+    project = models.ForeignKey(Project)
+
+
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
     state = models.SmallIntegerField()
-    csvcell = models.ForeignKey(CSVCell)
 
     class Meta:
         abstract = True
 
 
 class ProjectColumnLiteral(ProjectedEntity):
-    literal = models.TextField()
+    language = models.CharField(max_length=256)
+    dialect = models.CharField(max_length=256, null=True, blank=True)
+    source = models.CharField(max_length=256, null=True, blank=True)
+    writing_system = models.CharField(max_length=256, null=True, blank=True)
+    num = models.SmallIntegerField()
+    csvcell = models.ForeignKey(CSVCell)
 
 
 class ProjectColumn(ProjectedEntity):
@@ -355,6 +360,8 @@ class ProjectColumn(ProjectedEntity):
 class ProjectLexemeLiteral(ProjectedEntity):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
+    col = models.ForeignKey(ProjectColumnLiteral, null=True, blank=True)
+    csvcell = models.ForeignKey(CSVCell)
 
     def __str__(self):
         return ' | '.join([self.syntactic_category, str(self.params)])
@@ -370,6 +377,8 @@ class ProjectWordformLiteral(ProjectedEntity):
     spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
+    col = models.ForeignKey(ProjectColumnLiteral, null=True, blank=True)
+    csvcell = models.ForeignKey(CSVCell)
 
     def __str__(self):
         return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
@@ -388,6 +397,7 @@ class ProjectSemanticGroupLiteral(ProjectedEntity):
     params = models.CharField(max_length=256, blank=True)
     dialect = models.CharField(max_length=256, blank=True)
     comment = models.TextField(blank=True)
+    csvcell = models.ForeignKey(CSVCell)
 
     def __str__(self):
         return ' | '.join([str(self.params), self.dialect, self.comment])

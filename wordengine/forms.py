@@ -89,6 +89,4 @@ class TranslationImportForm(forms.Form):
 
 
 class UploadFileForm(forms.Form):
-    num_src = forms.IntegerField()
-    num_trg = forms.IntegerField()
     file = forms.FileField()

@@ -70,110 +70,118 @@ def parse_upload(request):
 
     # TODO Wrap with manual commit
 
-    project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now())  # TODO: Timezone!
+    project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now(),
+                             filename=request.FILES['file'].name)  # All timestamps are in UTC
     project.save()
 
-    # lang_src_cols = []
-    # for i in range(1, int(request.POST['num_src']) + 1):
-    #     lang_src_cols.append('lang_src' + str(i))
-    #
-    # lang_trg_cols = []
-    # for i in range(1, int(request.POST['num_trg']) + 1):
-    #     lang_trg_cols.append('lang_trg' + str(i))
-
-    # cols = ['lex_param'] + lang_src_cols + lang_trg_cols + ['comment']
+    lang_src_cols = []
+    lang_trg_cols = []
 
     csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
 
     source_language = None
-    columns = [(0, 'lex_param')]  # TODO Add extended comment support
 
     for rownum, row in enumerate(csvreader):
         if rownum == 0:
             for colnum, col in enumerate(row[1:]):  # TODO Last column should be trimmed too (it's a comment)
+                # TODO Header must present
+                csvcell = models.CSVCell(row=1, col=colnum+1, value=col, project=project)
+                csvcell.save()
+
                 col_split = col.strip().split('(', 1)
                 language = col_split.pop(0).strip()
-                if not source_language:
-                    source_language = language
-                    col_type = 0  # 0 = source language
-                else:
-                    if source_language == language:
-                        col_type = 0
-                    else:
-                        col_type = 1  # 1 = target language
 
-                dialect_ws_source = col_split[1].split('[', 1)
-                dialect = dialect_ws_source.pop(0).strip(') ')
-                ws_source = dialect_ws_source.pop().strip('] ').split('@')
-                source = ws_source.pop().strip()
-                writing_system = ws_source.pop().strip()
+                dialect = None
+                source = None
+                writing_system = None
 
-                column_literal = models.ProjectColumnLiteral(col_type=col_type, language=language, dialect=dialect,
-                                                             writing_system=writing_system, source=source)
+                if len(col_split) == 1:
+                    dialect_ws_source = col_split[0].split('[', 1)
+                    dialect = dialect_ws_source.pop(0).strip(') ')
+                    if len(dialect_ws_source) == 1:
+                        ws_source = dialect_ws_source.pop().strip('] ').split('@')
+                        source = ws_source.pop().strip()
+                        if len(ws_source) == 1:
+                            writing_system = ws_source.pop().strip()
+
+                column_literal = models.ProjectColumnLiteral(language=language, dialect=dialect, source=source,
+                                                             num=colnum+1, writing_system=writing_system, state=0,
+                                                             project=project, csvcell=csvcell)
                 print('Column header: ')
                 print(column_literal)
                 column_literal.save()
 
-                columns.extend((colnum+1, column_literal))
+                if not source_language:
+                    source_language = language
+
+                if source_language == language:
+                    lang_src_cols.extend([(colnum+1, column_literal)])  # 0 = source language
+                else:
+                    lang_trg_cols.extend([(colnum+1, column_literal)])  # 1 = target language
 
             continue
 
-        lexeme_literal = row[0]  # TODO: First row after header MUST contain a lexeme
-        csvcell = models.CSVCell(row=rownum+1, col=1, value=lexeme_literal)
-        csvcell.save()
-
+        lexeme_literal = row[0]
+        # TODO: First row after header MUST contain a lexeme
         if lexeme_literal:  # Check if a new lexeme is in the row
+            csvcell = models.CSVCell(row=rownum+1, col=1, value=lexeme_literal, project=project)
+            csvcell.save()
+
             lex_param = lexeme_literal.split('[', 1)
             synt_cat = lex_param.pop(0).strip()
             if len(lex_param) == 1:
                 # TODO Check if the rest of the string is correct
                 params = [s.strip('] ') for s in lex_param.pop(0).strip().split('[')]
             else:
-                params = []
+                params = ''
 
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
-                                                     state=0, csvcell=csvcell)
+                                                     state=0, col=lang_src_cols[0][1], csvcell=csvcell)
             print('row: ' + str(rownum) + ', col 1' + ' (Lexeme)')
             print(lexeme_src)
             lexeme_src.save()
 
             first_wordform = None
 
-        for i, col in enumerate(lang_src_cols):
-            lexeme_wordforms = row.get(col)
-            csvcell = models.CSVCell(row=rownum+1, col=i+1, value=lexeme_wordforms)
-            csvcell.save()
+        for colnum, column_literal in lang_src_cols:
+            lexeme_wordforms = row[colnum]
 
-            for current_wordform in lexeme_wordforms.split('|'):
-                    wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
-                    spelling_params = wordform_split.pop(0).strip().split('[', 1)  # (spelling ), (params])
-                    spelling = spelling_params.pop(0).strip()  # (spelling)
-                    if len(spelling_params) == 1:
-                        # TODO Check if the rest of the string is correct
-                        params = [s.strip('] ') for s in spelling_params.pop().strip().split('[')]  # (param), ...
-                    else:
-                        params = []
-                    if len(wordform_split) == 1:
-                        # TODO Check if the rest of the string is correct
-                        comment = wordform_split.pop().strip('" ')  # (comment)
-                    else:
-                        comment = ''
+            if lexeme_wordforms:  # TODO At least one wordform in any src column must present
+                csvcell = models.CSVCell(row=rownum+1, col=colnum+1, value=lexeme_wordforms, project=project)
+                csvcell.save()
 
-                    wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
-                                                             params=params, project=project, state=0, csvcell=csvcell)
-                    print('row: ' + str(rownum) + ', col: ' + col + ' (Wordform)')
-                    print(wordform)
-                    wordform.save()
+                for current_wordform in lexeme_wordforms.split('|'):
+                        wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
+                        spelling_params = wordform_split.pop(0).strip().split('[', 1)  # (spelling ), (params])
+                        spelling = spelling_params.pop(0).strip()  # (spelling)
+                        if len(spelling_params) == 1:
+                            # TODO Check if the rest of the string is correct
+                            params = [s.strip('] ') for s in spelling_params.pop().strip().split('[')]  # (param), ...
+                        else:
+                            params = ''
+                        if len(wordform_split) == 1:
+                            # TODO Check if the rest of the string is correct
+                            comment = wordform_split.pop().strip('" ')  # (comment)
+                        else:
+                            comment = ''
 
-                    if not first_wordform:
-                        first_wordform = wordform
+                        wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
+                                                                 params=params, project=project, state=0,
+                                                                 col=column_literal, csvcell=csvcell)
+                        print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Wordform)')
+                        print(wordform)
+                        wordform.save()
 
-        for j, col in enumerate(lang_trg_cols):  # Iterate through multiple target languages
-            lexeme_translations = row.get(col)
-            csvcell = models.CSVCell(row=rownum+1, col=i+j+2, value=lexeme_translations)
-            csvcell.save()
+                        if not first_wordform:
+                            first_wordform = wordform
 
-            if lexeme_translations:  # TODO if not - just skip
+        for colnum, column_literal in lang_trg_cols:  # Iterate through multiple target languages
+            lexeme_translations = row[colnum]
+
+            if lexeme_translations:  # TODO If not - skip and warn about absent translation
+                csvcell = models.CSVCell(row=rownum+1, col=colnum+1, value=lexeme_translations, project=project)
+                csvcell.save()
+
                 lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
 
                 group_params = ''
@@ -185,18 +193,16 @@ def parse_upload(request):
                     if len(group_params_comment) == 1:
                         group_comment = group_params_comment.pop().strip('" ')
 
-
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
                                                                      project=project, state=0, csvcell=csvcell)
-                print('row: ' + str(rownum) + ', col: ' + col + ' (Semantic group)')
+                print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
-
 
                 for current_transl in lex_transl_split.pop().split('|'):
                     cur_transl_split = current_transl.split('"', 1)  # ( [params] word [dialect] ), (comment")
                     param_word_dialect = cur_transl_split.pop(0)
-                    params = []
+                    params = ''
                     while param_word_dialect.strip()[0] == '[':
                         temp_split = param_word_dialect.split(']', 1)
                         params.append(temp_split.pop(0).strip('[ '))  # (param), ...
@@ -215,22 +221,23 @@ def parse_upload(request):
                         transl_comment = ''
 
                     lexeme_trg = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params,
-                                                             project=project, state=0, csvcell=csvcell)
-                    print('row: ' + str(rownum) + ', col: ' + col + ' (Lexeme)')
+                                                             project=project, state=0, col=column_literal,
+                                                             csvcell=csvcell)
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Lexeme)')
                     print(lexeme_trg)
                     lexeme_trg.save()
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_trg, spelling=spelling, project=project,
-                                                             state=0, csvcell=csvcell)
+                                                             state=0, col=column_literal, csvcell=csvcell)
 
-                    print('row: ' + str(rownum) + ', col: ' + col + ' (Wordform)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroupLiteral(dialect=transl_dialect, comment=transl_comment,
                                                                          project=project, state=0, csvcell=csvcell)
 
-                    print('row: ' + str(rownum) + ', col: ' + col + ' (Semantic group)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Semantic group)')
                     print(semantic_gr_trg)
                     semantic_gr_trg.save()
 
@@ -238,11 +245,13 @@ def parse_upload(request):
                                                                    direction=1, semantic_group_1=semantic_gr_src,
                                                                    semantic_group_2=semantic_gr_trg,
                                                                    bind_wf_1=first_wordform, bind_wf_2=wordform,
-                                                                   project=project, state=0, csvcell=csvcell)
+                                                                   project=project, state=0)
 
-                    print('row: ' + str(rownum) + ', col: ' + col + ' (Translation)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Translation)')
                     print(translation)
                     translation.save()
+
+    # TODO Add extended comment support
 
     return project
 
