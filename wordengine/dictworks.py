@@ -126,6 +126,9 @@ def parse_upload(request):
 
         if row[-1]:
             ext_comment = True
+            csvcell = models.CSVCell(row=rownum+1, col=len(row), value=row[-1], project=project)
+            csvcell.save()
+            ext_comm_split = ext_comm_re.split(row[-1])
         else:
             ext_comment = False
 
@@ -159,10 +162,8 @@ def parse_upload(request):
                 csvcell.save()
 
                 if ext_comment:
-                    ext_comm_split = ext_comm_re.split(row[-1])
                     for n_comm in range(1, len(ext_comm_split)):
-                        comment.replace('*'+str(n_comm)+':', ext_comm_split[n_comm].strip())
-                        # TODO: распространить это на остальные места, сохранять столбец с комментом!
+                        comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
                 for current_wordform in lexeme_wordforms.split('|'):
                         wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
@@ -207,7 +208,8 @@ def parse_upload(request):
                     if len(group_params_comment) == 1:
                         group_comment = group_params_comment.pop().strip('" ')
                         if ext_comment:
-                            pass  # TODO Replace *N
+                            for n_comm in range(1, len(ext_comm_split)):
+                                comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
                                                                      project=project, state=0, csvcell=csvcell)
@@ -234,7 +236,8 @@ def parse_upload(request):
                         # TODO Check if the rest of the string is correct
                         transl_comment = cur_transl_split.pop().strip('" ')  # (comment)
                         if ext_comment:
-                            pass  # TODO Replace *N
+                            for n_comm in range(1, len(ext_comm_split)):
+                                comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
                     else:
                         transl_comment = ''
 
