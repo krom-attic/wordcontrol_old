@@ -88,28 +88,31 @@ def parse_upload(request):
         if rownum == 0:
             for colnum, col in enumerate(row[1:-1]):
                 # TODO Header must present
-                csvcell = models.CSVCell(row=1, col=colnum+1, value=col, project=project)
+                csvcell = models.CSVCell(row=1, col=colnum+2, value=col, project=project)
                 csvcell.save()
 
-                col_split = col.strip().split('(', 1)
-                language = col_split.pop(0).strip()
-
-                dialect = None
                 source = None
                 writing_system = None
+                dialect = None
+                processing = None
 
-                if len(col_split) == 1:
-                    dialect_ws_source = col_split[0].split('[', 1)
-                    dialect = dialect_ws_source.pop(0).strip(') ')
-                    if len(dialect_ws_source) == 1:
-                        ws_source = dialect_ws_source.pop().strip('] ').split('@')
-                        source = ws_source.pop().strip()
-                        if len(ws_source) == 1:
-                            writing_system = ws_source.pop().strip()
+                col_split = col.strip().split('@', 1)
+                if len(col_split) == 2:
+                    source_proc = col_split.pop().split('|', 1)
+                    if len(source_proc) == 2:
+                        processing = source_proc.pop().strip()
+                    source = source_proc.pop().strip()
+                lang_dialect_ws = col_split.pop().split('[', 1)
+                if len(lang_dialect_ws) == 2:
+                    writing_system = lang_dialect_ws.pop().strip('] ')
+                lang_dialect = lang_dialect_ws.pop().split('(', 1)
+                if len(lang_dialect) == 2:
+                    dialect = lang_dialect.pop().strip(') ')
+                language = lang_dialect.pop().strip()
 
                 column_literal = models.ProjectColumnLiteral(language=language, dialect=dialect, source=source,
-                                                             num=colnum+1, writing_system=writing_system, state=0,
-                                                             project=project, csvcell=csvcell)
+                                                             num=colnum+2, writing_system=writing_system, state=0,
+                                                             project=project, csvcell=csvcell, processing=processing)
                 print('Column header: ')
                 print(column_literal)
                 column_literal.save()
@@ -158,12 +161,12 @@ def parse_upload(request):
             lexeme_wordforms = row[colnum]
 
             if lexeme_wordforms:  # TODO At least one wordform in any src column must present
-                csvcell = models.CSVCell(row=rownum+1, col=colnum+1, value=lexeme_wordforms, project=project)
+                csvcell = models.CSVCell(row=rownum+1, col=colnum+2, value=lexeme_wordforms, project=project)
                 csvcell.save()
 
                 if ext_comment:
                     for n_comm in range(1, len(ext_comm_split)):
-                        comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
+                        comment.replace('*'+str(n_comm), '"'+ext_comm_split[n_comm].strip()+'"')
 
                 for current_wordform in lexeme_wordforms.split('|'):
                         wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
@@ -183,7 +186,7 @@ def parse_upload(request):
                         wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                                  params=params, project=project, state=0,
                                                                  col=column_literal, csvcell=csvcell)
-                        print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Wordform)')
+                        print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                         print(wordform)
                         wordform.save()
 
@@ -194,7 +197,7 @@ def parse_upload(request):
             lexeme_translations = row[colnum]
 
             if lexeme_translations:  # TODO If not - skip and warn about absent translation
-                csvcell = models.CSVCell(row=rownum+1, col=colnum+1, value=lexeme_translations, project=project)
+                csvcell = models.CSVCell(row=rownum+1, col=colnum+2, value=lexeme_translations, project=project)
                 csvcell.save()
 
                 lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
@@ -213,7 +216,7 @@ def parse_upload(request):
 
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
                                                                      project=project, state=0, csvcell=csvcell)
-                print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Semantic group)')
+                print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
 
@@ -244,21 +247,21 @@ def parse_upload(request):
                     lexeme_trg = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params,
                                                              project=project, state=0, col=column_literal,
                                                              csvcell=csvcell)
-                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Lexeme)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Lexeme)')
                     print(lexeme_trg)
                     lexeme_trg.save()
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_trg, spelling=spelling, project=project,
                                                              state=0, col=column_literal, csvcell=csvcell)
 
-                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Wordform)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroupLiteral(dialect=transl_dialect, comment=transl_comment,
                                                                          project=project, state=0, csvcell=csvcell)
 
-                    print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Semantic group)')
+                    print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                     print(semantic_gr_trg)
                     semantic_gr_trg.save()
 

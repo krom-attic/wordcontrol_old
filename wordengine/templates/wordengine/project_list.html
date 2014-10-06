@@ -1,0 +1,12 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Projects list{% endblock %}
+{% block pagebody %}
+<h1>Project setup</h1>
+    <h2>Choose a project</h2>
+    <form action="" method="get">
+        {{ project_list_form.as_p }}
+        <input type="submit" value="Setup" name="_setup" />
+    </form>
+
+
+{% endblock %}

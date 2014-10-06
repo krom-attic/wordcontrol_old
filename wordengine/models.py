@@ -100,8 +100,8 @@ class GrammCategory(Term):
 class Language(Term):
     """Class represents languages present in the system"""
 
-    syntactic_category_multi = models.ManyToManyField(SyntacticCategory)
-    iso_code = models.CharField(max_length=8)
+    syntactic_category_multi = models.ManyToManyField(SyntacticCategory, null=True, blank=True)
+    iso_code = models.CharField(max_length=8)  # ISO 639-3
 
 
 # Language-dependant classes. Abstract
@@ -149,6 +149,9 @@ class Source(Term, LanguageRelated):
     """Class representing sources of language information"""
 
     source_type = models.SmallIntegerField()
+    source_parent = models.ForeignKey('self', null=True, blank=True)
+    processing_type = models.SmallIntegerField(null=True, blank=True)
+    processing_comment = models.TextField(blank=True)
 
 
 class GrammCategorySet(LanguageEntity):
@@ -346,15 +349,19 @@ class ProjectColumnLiteral(ProjectedEntity):
     dialect = models.CharField(max_length=256, null=True, blank=True)
     source = models.CharField(max_length=256, null=True, blank=True)
     writing_system = models.CharField(max_length=256, null=True, blank=True)
+    processing = models.CharField(max_length=256, null=True, blank=True)
     num = models.SmallIntegerField()
     csvcell = models.ForeignKey(CSVCell)
 
 
 class ProjectColumn(ProjectedEntity):
     language = models.ForeignKey(Language)
-    default_dialect = models.ForeignKey(Dialect, null=True, blank=True)
-    writing_system = models.ForeignKey(WritingSystem)
+    dialect = models.ForeignKey(Dialect, null=True, blank=True)
     source = models.ForeignKey(Source, null=True, blank=True)
+    writing_system = models.ForeignKey(WritingSystem)
+    processing_type = models.SmallIntegerField(null=True, blank=True)
+    processing_comment = models.TextField(blank=True)
+    literal = models.ForeignKey(ProjectColumnLiteral)
 
 
 class ProjectLexemeLiteral(ProjectedEntity):

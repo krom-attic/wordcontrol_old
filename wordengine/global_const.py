@@ -1,17 +1,21 @@
 # Writing system types
-WS_TYPE = (('Phonetic strict', ),
-           ('Phonetic loose', ),
-           ('Orthographic', ))
+WS_TYPE = ((0, 'Phonetic strict'),
+           (1, 'Phonetic loose'),
+           (2, 'Orthographic'))
 
 # Source types
-SRC_TYPE = (('Own knowledge', ),
-            ('Dictionary/Textbook', ),
-            ('Scientific publication', ),
-            ('Field archive', ),
-            ('Other trustworthy source', ))  # e.g. lesson notes
+SRC_TYPE = ((0, 'Own knowledge'),
+            (1, 'Dictionary/Textbook'),
+            (2, 'Scientific publication'),
+            (3, 'Field archive'),
+            (4, 'Other trustworthy source'))  # e.g. lesson notes
 
 # Types of lexemes' relations
-REL_TYPE = (('Translation', ), )
+REL_TYPE = ((0, 'Translation'), )
 
 # Projected entity states
-PRJ_STATE = (('New', ), )
+PRJ_STATE = ((0, 'New'), )
+
+# Processing types
+PROC_TYPE = ((0, 'No processing'),
+             (1, 'Writing system changed'), )

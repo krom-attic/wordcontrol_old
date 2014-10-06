@@ -1,5 +1,5 @@
 from django import forms
-from wordengine import models
+from wordengine import models, global_const
 
 
 class DoSmthWithIdForm(forms.Form):
@@ -66,27 +66,29 @@ class GrammCategorySetForm(forms.ModelForm):
         exclude = ['language']
 
 
-class TranslationImportForm(forms.Form):
-    """ Form for setting up initial parameters for quick translation addition
-    """
-
-    WORD_SOURCE_CHOICES = (
-        (0, 'Not needed'),
-        (1, 'As for translation'),
-    )
-
-    language_1 = forms.ModelChoiceField(queryset=models.Language.objects.all())
-    language_2 = forms.ModelChoiceField(queryset=models.Language.objects.all())
-    source_translation = forms.ModelChoiceField(queryset=models.Source.objects.all())
-    source_1 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
-    source_2 = forms.ChoiceField(choices=WORD_SOURCE_CHOICES)
-    dialect_1_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
-    dialect_2_default = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
-    writing_system_ortho_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
-    writing_system_phon_1 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
-    writing_system_ortho_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
-    writing_system_phon_2 = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
-
-
 class UploadFileForm(forms.Form):
     file = forms.FileField()
+
+
+class ProjectListForm(forms.Form):
+    project = forms.ModelChoiceField(queryset=models.Project.objects.all())
+
+
+class ProjectColumnSetupForm(forms.Form):
+    language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
+    dialect = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
+#     WORD_SOURCE_CHOICES = (
+#         (0, 'Not needed'),
+#         (1, 'As for translation'),
+#     )
+    source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
+    writing_system = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
+    processing_type = forms.ChoiceField(choices=global_const.PROC_TYPE, required=False)
+    processing_comment = forms.CharField(required=False)
+
+    class Meta:
+        model = models.ProjectColumn
+
+
+class ProjectEnumeratorSetupForm(forms.Form):
+    pass

@@ -1,0 +1,22 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Project setup{% endblock %}
+{% block pagebody %}
+<h1>Project setup</h1>
+    <h2>Column setup</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        {% for pr_col_setup_form, column in pr_col_setup_forms %}
+            <h3>Column {{ column.num }}</h3>
+            <ul>
+                <li>Language: {{ column.language }}</li>
+                <li>Dialect: {{ column.dialect }}</li>
+                <li>Source: {{ column.source }}</li>
+                <li>Wr. system: {{ column.writing_system }}</li>
+            </ul>
+            {{ pr_col_setup_form.as_p }}
+        {% endfor %}
+        <input type="submit" value="Save" name="_save" />
+    </form>
+
+
+{% endblock %}

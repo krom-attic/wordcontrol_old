@@ -276,8 +276,6 @@ class AddTranslationView(TemplateView):
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'word_search_form': word_search_form})
 
-
-
     def post(self, request, *args, **kwargs):
         is_saved = False
         lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
@@ -372,35 +370,70 @@ class DictionaryDataUploadView(TemplateView):
     """ Class view for importing dictionary data via file upload
     """
 
-    template_name = 'wordengine/translation_import.html'
-    # translation_import_form_class = forms.TranslationImportForm
+    template_name = 'wordengine/upload_data.html'
     upload_form_class = forms.UploadFileForm
 
     def get(self, request, *args, **kwargs):
-        # translation_import_form = self.translation_import_form_class()
         upload_form = self.upload_form_class()
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
-        return render(request, self.template_name, {
-                                                    'upload_form': upload_form})
+        return render(request, self.template_name, {'upload_form': upload_form})
 
     def post(self, request, *args, **kwargs):
-        # translation_import_form = self.translation_import_form_class(request.POST)
         upload_form = self.upload_form_class(request.POST, request.FILES)
-        # if translation_import_form.is_valid() and upload_form.is_valid():
         if upload_form.is_valid():
-            # added_translations = parse_upload(request)
-            # transaction.rollback()
-            # transaction.set_autocommit(True)
             project = parse_upload(request)
+            return redirect('wordengine:project_setup', project)
         else:
-            # added_translations = None
-            project = 'Upload failed'
-            # TODO Upload form file not saved on fail
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
-        return render(request, self.template_name, {
-                                                    'upload_form': upload_form,
-                                                    'project': project})
+            # TODO Add error message
+            # TODO Upload form not saved on fail
+            return render(request, self.template_name, {'upload_form': upload_form})
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(DictionaryDataUploadView, self).dispatch(*args, **kwargs)
+
+
+class ProjectListView(TemplateView):
+    template_name = 'wordengine/project_list.html'
+    project_list_form_class = forms.ProjectListForm
+
+    def get(self, request, *args, **kwargs):
+        project_list_form = self.project_list_form_class(request.GET)
+        if project_list_form.is_valid():
+            project_id = request.GET['project']
+            return redirect('wordengine:project_setup', project_id)
+        else:
+            # TODO Add error message
+            return render(request, self.template_name, {'project_list_form': project_list_form})
+
+
+class ProjectSetupView(TemplateView):
+    template_name = 'wordengine/project_setup.html'
+    pr_col_setup_form_class = forms.ProjectColumnSetupForm
+    # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
+
+    def get(self, request, *args, **kwargs):
+        project_id = kwargs.pop('project_id')
+        pr_col_setup_forms = []
+        for column in models.ProjectColumnLiteral.objects.filter(project=project_id):
+            pr_col_setup_forms.append([self.pr_col_setup_form_class(initial={'project': project_id, 'literal': column}),
+                                       column])
+        return render(request, self.template_name, {'pr_col_setup_forms': pr_col_setup_forms})
+
+
+class TranslationImportView(TemplateView):
+    # translation_import_form_class = forms.TranslationImportForm
+    def get(self, request, *args, **kwargs):
+        pass
+        # translation_import_form = self.translation_import_form_class()
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
+
+    def post(self, request, *args, **kwargs):
+        pass
+        # translation_import_form = self.translation_import_form_class(request.POST)
+        # if translation_import_form.is_valid() and upload_form.is_valid():
+            # added_translations = parse_upload(request)
+            # transaction.rollback()
+            # transaction.set_autocommit(True)
+        #else:
+            # added_translations = None
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,

@@ -1,0 +1,13 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Mass translation addition{% endblock %}
+{% block pagebody %}
+<h1>Add translations from file</h1>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ upload_form.as_p }}
+        <input type="submit" value="Upload" name="_upload_data" />
+    </form>
+
+
+{% endblock %}
