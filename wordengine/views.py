@@ -371,11 +371,28 @@ class DictionaryDataUploadView(TemplateView):
     """
 
     template_name = 'wordengine/upload_data.html'
+
+
+    def get(self, request, *args, **kwargs):
+
+
+
+
+class ProjectListView(TemplateView):
+    template_name = 'wordengine/project_list.html'
+    project_list_form_class = forms.ProjectListForm
     upload_form_class = forms.UploadFileForm
 
     def get(self, request, *args, **kwargs):
+        project_list_form = self.project_list_form_class(request.GET)
         upload_form = self.upload_form_class()
-        return render(request, self.template_name, {'upload_form': upload_form})
+        if project_list_form.is_valid():
+            project_id = request.GET['project']
+            return redirect('wordengine:project_setup', project_id)
+        else:
+            # TODO Add error message
+            return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                        'upload_form': upload_form})
 
     def post(self, request, *args, **kwargs):
         upload_form = self.upload_form_class(request.POST, request.FILES)
@@ -385,25 +402,12 @@ class DictionaryDataUploadView(TemplateView):
         else:
             # TODO Add error message
             # TODO Upload form not saved on fail
-            return render(request, self.template_name, {'upload_form': upload_form})
+            return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                        'upload_form': upload_form})
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(DictionaryDataUploadView, self).dispatch(*args, **kwargs)
-
-
-class ProjectListView(TemplateView):
-    template_name = 'wordengine/project_list.html'
-    project_list_form_class = forms.ProjectListForm
-
-    def get(self, request, *args, **kwargs):
-        project_list_form = self.project_list_form_class(request.GET)
-        if project_list_form.is_valid():
-            project_id = request.GET['project']
-            return redirect('wordengine:project_setup', project_id)
-        else:
-            # TODO Add error message
-            return render(request, self.template_name, {'project_list_form': project_list_form})
 
 
 class ProjectSetupView(TemplateView):
@@ -412,10 +416,10 @@ class ProjectSetupView(TemplateView):
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
     def get(self, request, *args, **kwargs):
-        project_id = kwargs.pop('project_id')
+        project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
         pr_col_setup_forms = []
-        for column in models.ProjectColumnLiteral.objects.filter(project=project_id):
-            pr_col_setup_forms.append([self.pr_col_setup_form_class(initial={'project': project_id, 'literal': column}),
+        for column in models.ProjectColumnLiteral.objects.filter(project=project):
+            pr_col_setup_forms.append([self.pr_col_setup_form_class(initial={'project': project, 'literal': column}),
                                        column])
         return render(request, self.template_name, {'pr_col_setup_forms': pr_col_setup_forms})
 
