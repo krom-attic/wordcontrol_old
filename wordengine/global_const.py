@@ -14,8 +14,13 @@ SRC_TYPE = ((0, 'Own knowledge'),
 REL_TYPE = ((0, 'Translation'), )
 
 # Projected entity states
-PRJ_STATE = ((0, 'New'), )
+PRJ_STATE = ((0, 'New'),
+             (1, 'Processed'))
 
 # Processing types
 PROC_TYPE = ((0, 'No processing'),
              (1, 'Writing system changed'), )
+
+#
+WORD_SOURCE_CHOICES = ((0, 'Not needed'),
+                       (1, 'As for translation'),)

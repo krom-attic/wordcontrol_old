@@ -74,13 +74,9 @@ class ProjectListForm(forms.Form):
     project = forms.ModelChoiceField(queryset=models.Project.objects.all())
 
 
-class ProjectColumnSetupForm(forms.Form):
+class ProjectColumnSetupForm(forms.ModelForm):
     language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
     dialect = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
-#     WORD_SOURCE_CHOICES = (
-#         (0, 'Not needed'),
-#         (1, 'As for translation'),
-#     )
     source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
     writing_system = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
     processing_type = forms.ChoiceField(choices=global_const.PROC_TYPE, required=False)
@@ -88,6 +84,11 @@ class ProjectColumnSetupForm(forms.Form):
 
     class Meta:
         model = models.ProjectColumn
+        exclude = ['literal']
+
+
+class ProjectSetupForm(forms.Form):
+    pass
 
 
 class ProjectEnumeratorSetupForm(forms.Form):

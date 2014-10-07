@@ -1,12 +1,18 @@
 {% extends "wordengine/base.html" %}
-{% block pagetitle %}Projects list{% endblock %}
+{% block pagetitle %}Import projects{% endblock %}
 {% block pagebody %}
-<h1>Project setup</h1>
+<h1>Import projects</h1>
     <h2>Choose a project</h2>
     <form action="" method="get">
         {{ project_list_form.as_p }}
         <input type="submit" value="Setup" name="_setup" />
     </form>
 
+    <h2>Start new import project</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ upload_form.as_p }}
+        <input type="submit" value="Upload" name="_upload_data" />
+    </form>
 
 {% endblock %}

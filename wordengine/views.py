@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.contrib import messages
 from wordengine import forms
 from wordengine.dictworks import *
+from django.forms.formsets import formset_factory
 
 # Actual views here
 
@@ -365,19 +366,6 @@ class LanguageSetupView(TemplateView):
         return super(LanguageSetupView, self).dispatch(*args, **kwargs)
 
 
-
-class DictionaryDataUploadView(TemplateView):
-    """ Class view for importing dictionary data via file upload
-    """
-
-    template_name = 'wordengine/upload_data.html'
-
-
-    def get(self, request, *args, **kwargs):
-
-
-
-
 class ProjectListView(TemplateView):
     template_name = 'wordengine/project_list.html'
     project_list_form_class = forms.ProjectListForm
@@ -395,6 +383,7 @@ class ProjectListView(TemplateView):
                                                         'upload_form': upload_form})
 
     def post(self, request, *args, **kwargs):
+        project_list_form = self.project_list_form_class()
         upload_form = self.upload_form_class(request.POST, request.FILES)
         if upload_form.is_valid():
             project = parse_upload(request)
@@ -407,21 +396,24 @@ class ProjectListView(TemplateView):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(DictionaryDataUploadView, self).dispatch(*args, **kwargs)
+        return super(ProjectListView, self).dispatch(*args, **kwargs)
 
 
 class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
-    pr_col_setup_form_class = forms.ProjectColumnSetupForm
+    PrColSetupFormSet = formset_factory(forms.ProjectColumnSetupForm)
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
-        pr_col_setup_forms = []
+        column_initial = []
+        colcount=0
         for column in models.ProjectColumnLiteral.objects.filter(project=project):
-            pr_col_setup_forms.append([self.pr_col_setup_form_class(initial={'project': project, 'literal': column}),
-                                       column])
-        return render(request, self.template_name, {'pr_col_setup_forms': pr_col_setup_forms})
+            colcount += 1
+            column_initial.append({'project': project, 'literal': column})
+        project_columns = self.PrColSetupFormSet(initial=column_initial)
+
+        return render(request, self.template_name, {'pr_col_setup_form_set': project_columns})
 
 
 class TranslationImportView(TemplateView):

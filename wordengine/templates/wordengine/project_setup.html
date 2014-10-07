@@ -5,7 +5,7 @@
     <h2>Column setup</h2>
     <form action="" method="post">
         {% csrf_token %}
-        {% for pr_col_setup_form, column in pr_col_setup_forms %}
+        {% for pr_col_setup_form in pr_col_setup_form_set %}
             <h3>Column {{ column.num }}</h3>
             <ul>
                 <li>Language: {{ column.language }}</li>
