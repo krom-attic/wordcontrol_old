@@ -26,6 +26,7 @@ class LexemeForm(forms.ModelForm):
 
     class Meta:
         model = models.Lexeme
+        exclude = []
 
 
 
@@ -75,16 +76,12 @@ class ProjectListForm(forms.Form):
 
 
 class ProjectColumnSetupForm(forms.ModelForm):
-    language = forms.ModelChoiceField(queryset=models.Language.objects.all(), required=False)
-    dialect = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
-    source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
-    writing_system = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
     processing_type = forms.ChoiceField(choices=global_const.PROC_TYPE, required=False)
-    processing_comment = forms.CharField(required=False)
 
     class Meta:
         model = models.ProjectColumn
-        exclude = ['literal']
+        widgets = {'project': forms.HiddenInput, 'state': forms.HiddenInput, 'literal': forms.HiddenInput}
+        # exclude = ['literal', 'project', 'state']
 
 
 class ProjectSetupForm(forms.Form):

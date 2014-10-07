@@ -386,8 +386,8 @@ class ProjectListView(TemplateView):
         project_list_form = self.project_list_form_class()
         upload_form = self.upload_form_class(request.POST, request.FILES)
         if upload_form.is_valid():
-            project = parse_upload(request)
-            return redirect('wordengine:project_setup', project)
+            project_id = parse_upload(request)
+            return redirect('wordengine:project_setup', project_id)
         else:
             # TODO Add error message
             # TODO Upload form not saved on fail
@@ -407,11 +407,13 @@ class ProjectSetupView(TemplateView):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
         column_initial = []
-        colcount=0
+        colcount = 0
         for column in models.ProjectColumnLiteral.objects.filter(project=project):
             colcount += 1
-            column_initial.append({'project': project, 'literal': column})
+            column_initial.append({'project': project, 'literal': column, 'column': column})
         project_columns = self.PrColSetupFormSet(initial=column_initial)
+
+        print(project_columns)
 
         return render(request, self.template_name, {'pr_col_setup_form_set': project_columns})
 

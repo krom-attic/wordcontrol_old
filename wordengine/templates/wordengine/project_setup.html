@@ -6,7 +6,7 @@
     <form action="" method="post">
         {% csrf_token %}
         {% for pr_col_setup_form in pr_col_setup_form_set %}
-            <h3>Column {{ column.num }}</h3>
+            <h3>Column {{ pr_col_setup_form.literal }}</h3>
             <ul>
                 <li>Language: {{ column.language }}</li>
                 <li>Dialect: {{ column.dialect }}</li>
