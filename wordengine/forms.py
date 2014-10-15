@@ -80,7 +80,7 @@ class ProjectColumnSetupForm(forms.ModelForm):
 
     class Meta:
         model = models.ProjectColumn
-        widgets = {'project': forms.HiddenInput, 'state': forms.HiddenInput, 'literal': forms.HiddenInput}
+        widgets = {'project': forms.MultipleHiddenInput, 'state': forms.HiddenInput, 'literal': forms.HiddenInput}
         # exclude = ['literal', 'project', 'state']
 
 
