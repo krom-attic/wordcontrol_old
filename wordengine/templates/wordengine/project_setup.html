@@ -5,15 +5,16 @@
     <h2>Column setup</h2>
     <form action="" method="post">
         {% csrf_token %}
-        {% for pr_col_setup_form in pr_col_setup_form_set %}
-            <h3>Column {{ pr_col_setup_form.literal }}</h3>
+        {% for literal_value, pr_col_setup_form in pr_col_setup_form_set %}
+            <h3>Column</h3>
             <ul>
-                <li>Language: {{ column.language }}</li>
-                <li>Dialect: {{ column.dialect }}</li>
-                <li>Source: {{ column.source }}</li>
-                <li>Wr. system: {{ column.writing_system }}</li>
+                <li>Language: {{ literal_value.language }}</li>
+                <li>Dialect: {{ literal_value.dialect }}</li>
+                <li>Source: {{ literal_value.source }}</li>
+                <li>Wr. system: {{ literal_value.writing_system }}</li>
+                <li>Processing type: {{ literal_value.processing }}</li>
             </ul>
-            {{ pr_col_setup_form.as_p }}
+        {{ pr_col_setup_form.as_p }}
         {% endfor %}
         <input type="submit" value="Save" name="_save" />
     </form>

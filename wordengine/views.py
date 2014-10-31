@@ -407,16 +407,21 @@ class ProjectSetupView(TemplateView):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
         column_initial = []
-        colcount = 0
+        literal_values = []
         for column in models.ProjectColumnLiteral.objects.filter(project=project):
-            colcount += 1
-            column_initial.append({'project': project, 'literal': column, 'column': column})
+            column_initial.append({'project': project, 'literal': column})
+            literal_values.append({'language': column.language, 'dialect': column.dialect, 'source': column.source,
+                                   'writing_system': column.writing_system, 'processing': column.processing,
+                                   'num': column.num})
         project_columns = self.PrColSetupFormSet(initial=column_initial)
+        pr_col_setup_set = zip(literal_values, project_columns)
 
-        print(project_columns)
+        return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set})
 
-        return render(request, self.template_name, {'pr_col_setup_form_set': project_columns})
+    def post(self, request, *args, **kwargs):
 
+        project_columns = request.POST
+        project_columns.save()
 
 class TranslationImportView(TemplateView):
     # translation_import_form_class = forms.TranslationImportForm

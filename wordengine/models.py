@@ -320,7 +320,6 @@ class Translation(DictEntity):
 # Project classes
 
 class Project(models.Model):
-
     user_uploader = models.ForeignKey(auth.models.User, editable=False)
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
@@ -342,6 +341,24 @@ class ProjectedEntity(models.Model):
 
     class Meta:
         abstract = True
+
+
+class SrcImg(ProjectedEntity):
+    # img = models.ImageField()
+    filename = models.CharField(max_length=256)
+
+
+class RawTextData(ProjectedEntity):
+    text = models.TextField(blank=True)
+
+
+class ImgData(ProjectedEntity):
+    img = models.ForeignKey(SrcImg)
+    text = models.ForeignKey(RawTextData)
+    x = models.SmallIntegerField()
+    y = models.SmallIntegerField()
+    h = models.SmallIntegerField()
+    w = models.SmallIntegerField()
 
 
 class ProjectColumnLiteral(ProjectedEntity):

@@ -101,7 +101,7 @@ def parse_upload(request):
                     source_proc = col_split.pop().split('|', 1)
                     if len(source_proc) == 2:
                         processing = source_proc.pop().strip()
-                    source = source_proc.pop().strip()
+                    source = source_proc.pop().strip('] ')
                 lang_dialect_ws = col_split.pop().split('[', 1)
                 if len(lang_dialect_ws) == 2:
                     writing_system = lang_dialect_ws.pop().strip('] ')
