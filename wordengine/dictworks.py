@@ -3,9 +3,11 @@ from collections import defaultdict
 import csv
 import codecs
 from django.db import transaction, IntegrityError
-from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.loading import get_model
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 import datetime
 import re
+import ast
 
 
 # Common functions here
@@ -59,10 +61,32 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].new_value = getattr(upd_object, upd_field)
         field_change[upd_field].save()
 
+    return None
+
+
+def to_project_dict(project, model, field):
+    src_type = '.'.join([model, field])
+    for value in get_model('wordengine', model).objects.all().values(field).distinct():
+        if value[field]:
+            real_value = ast.literal_eval(value[field])
+            if isinstance(real_value, list):
+                for sg_value in real_value:
+                    pd = models.ProjectDictionary(value=sg_value, src_type=src_type, project=project, state=0)
+                    try:
+                        pd.save()
+                    except IntegrityError:
+                        pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
+            elif isinstance(real_value, str):
+                pd = models.ProjectDictionary(value=real_value, src_type=src_type, project=project, state=0)
+                pd.save()
+            else:
+                raise Exception('ERROR: Only lists and strings are expected here')
+    return None
+
 
 def parse_upload(request):
     """
-    @param uploaded_file:
+    @param request:
     @return:
 
     It's probably impossible to detect (sniff) dialect and encoding correctly, because MS Excel prepares CSV files

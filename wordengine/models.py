@@ -344,7 +344,7 @@ class ProjectedEntity(models.Model):
 
 
 class SrcImg(ProjectedEntity):
-    # img = models.ImageField()
+    # img = models.ImageField()  # import pillow!
     filename = models.CharField(max_length=256)
 
 
@@ -359,6 +359,16 @@ class ImgData(ProjectedEntity):
     y = models.SmallIntegerField()
     h = models.SmallIntegerField()
     w = models.SmallIntegerField()
+
+
+class ProjectDictionary(ProjectedEntity):
+    value = models.CharField(max_length=256)
+    src_type = models.CharField(max_length=256)
+    term_type = models.CharField(max_length=128)
+    term_id = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('value', 'src_type')
 
 
 class ProjectColumnLiteral(ProjectedEntity):
