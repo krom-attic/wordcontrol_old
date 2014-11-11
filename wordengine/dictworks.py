@@ -1,4 +1,5 @@
 from wordengine import models
+from wordengine.global_const import *
 from collections import defaultdict
 import csv
 import codecs
@@ -61,31 +62,21 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].new_value = getattr(upd_object, upd_field)
         field_change[upd_field].save()
 
-    return None
 
-
-def to_project_dict(project, model, field):
-    src_type = '.'.join([model, field])
-    for value in get_model('wordengine', model).objects.all().values(field).distinct():
-        if value[field]:
-            real_value = ast.literal_eval(value[field])
-            if isinstance(real_value, list):
-                for sg_value in real_value:
-                    pd = models.ProjectDictionary(value=sg_value, src_type=src_type, project=project, state=0)
-                    try:
-                        pd.save()
-                    except IntegrityError:
-                        pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
-            elif isinstance(real_value, str):
-                pd = models.ProjectDictionary(value=real_value, src_type=src_type, project=project, state=0)
-                pd.save()
-            else:
-                raise Exception('ERROR: Only lists and strings are expected here')
+    # TODO: Modsave should record a DictChange, write to log and display action result
 
     return None
 
 
 def parse_upload(request):
+
+    project = parse_csv(request)
+    fill_project_dict(project)
+
+    return project
+
+
+def parse_csv(request):
     """
     @param request:
     @return:
@@ -136,7 +127,7 @@ def parse_upload(request):
                 language = lang_dialect.pop().strip()
 
                 column_literal = models.ProjectColumnLiteral(language=language, dialect=dialect, source=source,
-                                                             num=colnum+2, writing_system=writing_system, state=0,
+                                                             num=colnum+2, writing_system=writing_system, state='N',
                                                              project=project, csvcell=csvcell, processing=processing)
                 print('Column header: ')
                 print(column_literal)
@@ -175,7 +166,7 @@ def parse_upload(request):
                 params = ''
 
             lexeme_src = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params, project=project,
-                                                     state=0, col=lang_src_cols[0][1], csvcell=csvcell)
+                                                     state='N', col=lang_src_cols[0][1], csvcell=csvcell)
             print('row: ' + str(rownum) + ', col 1' + ' (Lexeme)')
             print(lexeme_src)
             lexeme_src.save()
@@ -209,7 +200,7 @@ def parse_upload(request):
                             comment = ''
 
                         wordform = models.ProjectWordformLiteral(lexeme=lexeme_src, spelling=spelling, comment=comment,
-                                                                 params=params, project=project, state=0,
+                                                                 params=params, project=project, state='N',
                                                                  col=column_literal, csvcell=csvcell)
                         print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                         print(wordform)
@@ -240,7 +231,7 @@ def parse_upload(request):
                                 comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
                 semantic_gr_src = models.ProjectSemanticGroupLiteral(params=group_params, comment=group_comment,
-                                                                     project=project, state=0, csvcell=csvcell)
+                                                                     project=project, state='N', csvcell=csvcell)
                 print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
@@ -270,21 +261,21 @@ def parse_upload(request):
                         transl_comment = ''
 
                     lexeme_trg = models.ProjectLexemeLiteral(syntactic_category=synt_cat, params=params,
-                                                             project=project, state=0, col=column_literal,
+                                                             project=project, state='N', col=column_literal,
                                                              csvcell=csvcell)
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Lexeme)')
                     print(lexeme_trg)
                     lexeme_trg.save()
 
                     wordform = models.ProjectWordformLiteral(lexeme=lexeme_trg, spelling=spelling, project=project,
-                                                             state=0, col=column_literal, csvcell=csvcell)
+                                                             state='N', col=column_literal, csvcell=csvcell)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroupLiteral(dialect=transl_dialect, comment=transl_comment,
-                                                                         project=project, state=0, csvcell=csvcell)
+                                                                         project=project, state='N', csvcell=csvcell)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                     print(semantic_gr_trg)
@@ -294,14 +285,43 @@ def parse_upload(request):
                                                                    direction=1, semantic_group_1=semantic_gr_src,
                                                                    semantic_group_2=semantic_gr_trg,
                                                                    bind_wf_1=first_wordform, bind_wf_2=wordform,
-                                                                   project=project, state=0)
+                                                                   project=project, state='N')
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Translation)')
                     print(translation)
                     translation.save()
-
     return project
 
+
+def to_project_dict(project, model, field):
+    src_obj = PRJ_TO_REAL[model]
+    term_type = TERM_TYPES[(src_obj, field)]
+    if isinstance(term_type, tuple):
+        term_type = ''
+
+    for value in get_model('wordengine', model).objects.all().values(field).distinct():
+        if value[field]:
+            try:
+                real_value = ast.literal_eval(value[field])
+            except ValueError:  # If not evaluable than it should be a string
+                real_value = [value[field]]
+            for sg_value in real_value:
+                pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, src_field=field, project=project,
+                                              state='N', term_type=term_type)
+                try:
+                    pd.save()
+                except IntegrityError:
+                    pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
+
+    return None
+
+
+def fill_project_dict(project):
+    to_project_dict(project, 'ProjectLexemeLiteral', 'syntactic_category')
+    to_project_dict(project, 'ProjectLexemeLiteral', 'params')
+    to_project_dict(project, 'ProjectWordformLiteral', 'params')
+    to_project_dict(project, 'ProjectSemanticGroupLiteral', 'params')
+    return None
 
 
 def import_data():

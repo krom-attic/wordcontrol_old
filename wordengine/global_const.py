@@ -25,18 +25,20 @@ PROC_TYPE = (('NP', 'No processing'),
 WORD_SOURCE_CHOICES = (('NN', 'Not needed'),
                        ('AT', 'As for translation'))
 
-# Literal-to-real object correspondence
-LITERAL_TO_REAL = {'ProjectLexemeLiteral': 'Lexeme',
-                   'ProjectWordformLiteral': 'Wordform',
-                   'ProjectSemanticGroupLiteral': 'SemanticGroup',
-                   'ProjectTranslationLiteral': '[TRANSLATION_PLACEHOLDER]'}
+#
+PRJ_TO_REAL = {'ProjectLexemeLiteral': 'Lexeme',
+               'ProjectWordformLiteral': 'Wordform',
+               'ProjectSemanticGroupLiteral': 'Semantic Group'}
 
-LEX_PARAMS = (('param', 'Parameter'),
-              ('inflection', 'Inflection'))
-
-WF_PARAMS = (('gramm_category_set', 'Grammatical category'),
-             ('dialect', 'Dialect'),
-             ('informant', 'Informant'))
-
-SEM_GR_PARAMS = (('dialect', 'Dialect'),
-                 ('theme', 'Theme'))
+# Variants of terms available for different projected fields
+TERM_TYPES = {('Lexeme', 'syntactic_category'): 'SyntacticCategory',
+              ('Lexeme', 'params'): (('', '<not selected>'),
+                                     ('Parameter', 'Lexeme parameter'),
+                                     ('Inflection', 'Inflection')),
+              ('Wordform', 'params'): (('', '<not selected>'),
+                                       ('Dialect', 'Dialect'),
+                                       ('GrammCategorySet', 'Grammatical Category'),
+                                       ('Informant', 'Informant')),
+              ('Semantic Group', 'params'): (('', '<not selected>'),
+                                             ('Dialect', 'Dialect'),
+                                             ('Theme', 'Theme'))}

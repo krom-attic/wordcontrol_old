@@ -4,6 +4,7 @@
 <h1>Project setup</h1>
     <h2>Column setup</h2>
     <form action="" method="post">
+        {{ pr_col_setup_form_set.management_form }}
         {% csrf_token %}
         {% for literal_value, pr_col_setup_form in pr_col_setup_form_set %}
             <h3>Column</h3>
@@ -16,21 +17,25 @@
             </ul>
         {{ pr_col_setup_form.as_p }}
         {% endfor %}
-        <input type="submit" value="Save" name="_save" />
+        <input type="submit" value="Save" name="_column_save" />
     </form>
 
     <h2>Project dictionary</h2>
     <form action="" method="post">
+        {{ untyped_param_form_set.management_form }}
         {% csrf_token %}
         <h3>Untyped parameters</h3>
         {% for untyped_param_form in untyped_param_form_set %}
             <p>Parameter: {{ untyped_param_form.instance.value }}<br/>
-               From: {{ literal_value.instance.src_type }}
+               From: {{ untyped_param_form.instance.src_obj }}
             </p>
             {{ untyped_param_form.as_p }}
         {% endfor %}
+        <input type="submit" value="Save" name="_types_save" />
+    </form>
 
     <form action="" method="post">
+        {{ lex_param_setup_form_set.management_form }}
         {% csrf_token %}
         <h3>Lexeme parameters</h3>
         {% for literal_value, lex_param_setup_form in lex_param_setup_form_set %}

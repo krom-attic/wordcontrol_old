@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
+from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -419,15 +420,21 @@ class ProjectSetupView(TemplateView):
         project_columns = self.PrColSetupFormSet(initial=column_initial)
         pr_col_setup_set = zip(literal_values, project_columns)
 
-        untyped_param_form_set = self.PrDictFormSet(queryset=models.ProjectDictionary.objects.filter(src_field='params'))
+        untyped_param_form_set = self.PrDictFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
 
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set})
 
     def post(self, request, *args, **kwargs):
+        if '_types_save' in request.POST:
+            untyped_param_form_set = self.PrDictFormSet(request.POST)
+            if untyped_param_form_set.is_valid():
+                untyped_param_form_set.save()
+        if '_column_save' in request.POST:
+            project_columns = request.POST  # TODO Seems unfinished
+            project_columns.save()
+        return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
 
-        project_columns = request.POST
-        project_columns.save()
 
 class TranslationImportView(TemplateView):
     # translation_import_form_class = forms.TranslationImportForm

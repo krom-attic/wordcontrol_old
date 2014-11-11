@@ -1,5 +1,6 @@
 from django import forms
-from wordengine import models, global_const
+from wordengine import models
+from wordengine.global_const import *
 
 
 class DoSmthWithIdForm(forms.Form):
@@ -91,9 +92,14 @@ class ProjectSetupForm(forms.Form):
 class ProjectEnumeratorSetupForm(forms.Form):
     pass
 
+
 class UntypedParamForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(UntypedParamForm, self).__init__(*args, **kwargs)
+        self.fields['term_type'] = forms.ChoiceField(choices=TERM_TYPES[(self.initial['src_obj'],
+                                                                         self.initial['src_field'])])
 
     class Meta:
         model = models.ProjectDictionary
-        exclude = ['src_field', 'term_id', 'state', 'project']
-        widgets = {'term_type': forms.Select, 'value': forms.HiddenInput}
+        exclude = ['term_id', 'state', 'project']
+        widgets = {'value': forms.HiddenInput, 'src_field': forms.HiddenInput, 'src_obj': forms.HiddenInput}
