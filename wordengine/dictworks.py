@@ -81,6 +81,7 @@ def to_project_dict(project, model, field):
                 pd.save()
             else:
                 raise Exception('ERROR: Only lists and strings are expected here')
+
     return None
 
 

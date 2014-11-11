@@ -19,5 +19,28 @@
         <input type="submit" value="Save" name="_save" />
     </form>
 
+    <h2>Project dictionary</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        <h3>Untyped parameters</h3>
+        {% for untyped_param_form in untyped_param_form_set %}
+            <p>Parameter: {{ untyped_param_form.instance.value }}<br/>
+               From: {{ literal_value.instance.src_type }}
+            </p>
+            {{ untyped_param_form.as_p }}
+        {% endfor %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <h3>Lexeme parameters</h3>
+        {% for literal_value, lex_param_setup_form in lex_param_setup_form_set %}
+
+        {% endfor %}
+        <h3>Wordform parameters (grammatical categories, source dialects & informants)</h3>
+
+
+        <h3>Semantic group parameters (themes, </h3>
+
+    </form>
 
 {% endblock %}

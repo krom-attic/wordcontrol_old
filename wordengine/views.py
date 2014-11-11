@@ -8,6 +8,7 @@ from django.contrib import messages
 from wordengine import forms
 from wordengine.dictworks import *
 from django.forms.formsets import formset_factory
+from django.forms.models import modelformset_factory
 
 # Actual views here
 
@@ -402,6 +403,8 @@ class ProjectListView(TemplateView):
 class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
     PrColSetupFormSet = formset_factory(forms.ProjectColumnSetupForm)
+    PrDictFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
+
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
     def get(self, request, *args, **kwargs):
@@ -416,7 +419,10 @@ class ProjectSetupView(TemplateView):
         project_columns = self.PrColSetupFormSet(initial=column_initial)
         pr_col_setup_set = zip(literal_values, project_columns)
 
-        return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set})
+        untyped_param_form_set = self.PrDictFormSet(queryset=models.ProjectDictionary.objects.filter(src_field='params'))
+
+        return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
+                                                    'untyped_param_form_set': untyped_param_form_set})
 
     def post(self, request, *args, **kwargs):
 

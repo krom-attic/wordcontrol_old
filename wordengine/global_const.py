@@ -1,26 +1,32 @@
 # Writing system types
-WS_TYPE = ((0, 'Phonetic strict'),
-           (1, 'Phonetic loose'),
-           (2, 'Orthographic'))
+WS_TYPE = (('PS', 'Phonetic strict'),
+           ('PL', 'Phonetic loose'),
+           ('O', 'Orthographic'))
 
 # Source types
-SRC_TYPE = ((0, 'Own knowledge'),
-            (1, 'Dictionary/Textbook'),
-            (2, 'Scientific publication'),
-            (3, 'Field archive'),
-            (4, 'Other trustworthy source'))  # e.g. lesson notes
+SRC_TYPE = (('OK', 'Own knowledge'),
+            ('DT', 'Dictionary/Textbook'),
+            ('SP', 'Scientific publication'),
+            ('FA', 'Field archive'),
+            ('OT', 'Other trustworthy source'))  # e.g. lesson notes
 
 # Types of lexemes' relations
-REL_TYPE = ((0, 'Translation'), )
+REL_TYPE = (('TR', 'Translation'), )
 
 # Projected entity states
-PRJ_STATE = ((0, 'New'),
-             (1, 'Processed'))
+PRJ_STATE = (('N', 'New'),
+             ('P', 'Processed'))
 
 # Processing types
-PROC_TYPE = ((0, 'No processing'),
-             (1, 'Writing system changed'), )
+PROC_TYPE = (('NP', 'No processing'),
+             ('WS', 'Writing system changed'), )
 
-#
-WORD_SOURCE_CHOICES = ((0, 'Not needed'),
-                       (1, 'As for translation'),)
+#  TODO Obsolete???
+WORD_SOURCE_CHOICES = (('NN', 'Not needed'),
+                       ('AT', 'As for translation'),)
+
+# Literal-to-real object correspondence
+LITERAL_TO_REAL = {'ProjectLexemeLiteral': 'Lexeme',
+                   'ProjectWordformLiteral': 'Wordform',
+                   'ProjectSemanticGroupLiteral': 'SemanticGroup',
+                   'ProjectTranslationLiteral': '[TRANSLATION_PLACEHOLDER]'}

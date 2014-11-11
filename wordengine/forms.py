@@ -76,7 +76,8 @@ class ProjectListForm(forms.Form):
 
 
 class ProjectColumnSetupForm(forms.ModelForm):
-    processing_type = forms.ChoiceField(choices=global_const.PROC_TYPE, required=False)
+    # processing_type = forms.ChoiceField(choices=global_const.PROC_TYPE, required=False)
+    #  TODO Here should be processing type w/choices from model
 
     class Meta:
         model = models.ProjectColumn
@@ -89,3 +90,10 @@ class ProjectSetupForm(forms.Form):
 
 class ProjectEnumeratorSetupForm(forms.Form):
     pass
+
+class UntypedParamForm(forms.ModelForm):
+
+    class Meta:
+        model = models.ProjectDictionary
+        exclude = ['src_field', 'term_id', 'state', 'project']
+        widgets = {'term_type': forms.Select, 'value': forms.HiddenInput}

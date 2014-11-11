@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib import auth
+from wordengine.global_const import *
 
 
 # System globals. Abstract
@@ -139,7 +140,7 @@ class Dialect(Term, LanguageRelated):
 class WritingSystem(Term, LanguageRelated):
     """Class represents a writing systems used to spell a word form"""
 
-    writing_system_type = models.SmallIntegerField()
+    writing_system_type = models.CharField(choices=WS_TYPE, max_length=2)
 
     def __str__(self):
         return self.term_full
@@ -148,9 +149,9 @@ class WritingSystem(Term, LanguageRelated):
 class Source(Term, LanguageRelated):
     """Class representing sources of language information"""
 
-    source_type = models.SmallIntegerField()
+    source_type = models.CharField(choices=SRC_TYPE, max_length=2)
     source_parent = models.ForeignKey('self', null=True, blank=True)
-    processing_type = models.SmallIntegerField(null=True, blank=True)
+    processing_type = models.CharField(choices=PROC_TYPE, max_length=2)
     processing_comment = models.TextField(blank=True)
 
 
@@ -206,7 +207,7 @@ class LexemeRelation(models.Model):
     """
     lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
-    relation_type = models.SmallIntegerField()
+    relation_type = models.CharField(choices=REL_TYPE, max_length=2)
 
 
 class TranslatedTerm(LanguageEntity):
@@ -337,7 +338,7 @@ class CSVCell(models.Model):
 
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
-    state = models.SmallIntegerField()
+    state = models.CharField(choices=PRJ_STATE, max_length=2)
 
     class Meta:
         abstract = True
@@ -363,12 +364,13 @@ class ImgData(ProjectedEntity):
 
 class ProjectDictionary(ProjectedEntity):
     value = models.CharField(max_length=256)
-    src_type = models.CharField(max_length=256)
+    src_obj = models.CharField(max_length=256)
+    src_field = models.CharField(max_length=256)
     term_type = models.CharField(max_length=128)
     term_id = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('value', 'src_type')
+        unique_together = ('value', 'src_obj', 'src_field')
 
 
 class ProjectColumnLiteral(ProjectedEntity):
@@ -429,7 +431,6 @@ class ProjectWordform(ProjectedEntity):
 
 class ProjectSemanticGroupLiteral(ProjectedEntity):
     params = models.CharField(max_length=256, blank=True)
-    dialect = models.CharField(max_length=256, blank=True)
     comment = models.TextField(blank=True)
     csvcell = models.ForeignKey(CSVCell)
 
