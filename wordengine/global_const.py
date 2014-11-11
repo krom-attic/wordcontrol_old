@@ -23,10 +23,20 @@ PROC_TYPE = (('NP', 'No processing'),
 
 #  TODO Obsolete???
 WORD_SOURCE_CHOICES = (('NN', 'Not needed'),
-                       ('AT', 'As for translation'),)
+                       ('AT', 'As for translation'))
 
 # Literal-to-real object correspondence
 LITERAL_TO_REAL = {'ProjectLexemeLiteral': 'Lexeme',
                    'ProjectWordformLiteral': 'Wordform',
                    'ProjectSemanticGroupLiteral': 'SemanticGroup',
                    'ProjectTranslationLiteral': '[TRANSLATION_PLACEHOLDER]'}
+
+LEX_PARAMS = (('param', 'Parameter'),
+              ('inflection', 'Inflection'))
+
+WF_PARAMS = (('gramm_category_set', 'Grammatical category'),
+             ('dialect', 'Dialect'),
+             ('informant', 'Informant'))
+
+SEM_GR_PARAMS = (('dialect', 'Dialect'),
+                 ('theme', 'Theme'))
