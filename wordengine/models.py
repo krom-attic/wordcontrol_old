@@ -101,7 +101,7 @@ class GrammCategory(Term):
 class Language(Term):
     """Class represents languages present in the system"""
 
-    syntactic_category_multi = models.ManyToManyField(SyntacticCategory, null=True, blank=True)
+    syntactic_category_m = models.ManyToManyField(SyntacticCategory, null=True, blank=True)
     iso_code = models.CharField(max_length=8)  # ISO 639-3
 
 
@@ -160,7 +160,7 @@ class GrammCategorySet(LanguageEntity):
     """
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_multi = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
+    gramm_category_m = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
     position = models.SmallIntegerField(null=True, blank=True)
 
     def __str__(self):
@@ -182,6 +182,7 @@ class Lexeme(LanguageEntity):
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
+    lexeme_related = models.ManyToManyField('self', symmetrical=False, through='LexemeRelation', null=True, blank=True)
     # Absence of a dialectical dependency is intentional
 
     @property
@@ -208,6 +209,7 @@ class LexemeRelation(models.Model):
     lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
     lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
     relation_type = models.CharField(choices=REL_TYPE, max_length=2)
+    direction = models.CharField(choices=REL_DIRECTION, max_length=1)
 
 
 class TranslatedTerm(LanguageEntity):
@@ -223,7 +225,7 @@ class TranslatedTerm(LanguageEntity):
 
 
 class DictEntity(models.Model):
-    source_multi = models.ManyToManyField(Source, null=True, blank=True)
+    source_m = models.ManyToManyField(Source, null=True, blank=True)
     comment = models.TextField(blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
 
@@ -269,7 +271,7 @@ class WordformBase(DictEntity):
 class Wordform(WordformBase):
     """Class representing current wordforms"""
 
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
 
     @property
     def dialects(self):
@@ -299,9 +301,9 @@ class WordformOrder:
 class SemanticGroup(DictEntity):
     """ Class representing semantic groups
     """
-    theme = models.ManyToManyField(Theme, null=True, blank=True)
-    usage_constraint_multi = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    theme_m = models.ManyToManyField(Theme, null=True, blank=True)
+    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
 
 
 class Translation(DictEntity):
@@ -309,12 +311,11 @@ class Translation(DictEntity):
     """
 
     lexeme_relation = models.ForeignKey(LexemeRelation, editable=False)
-    direction = models.PositiveSmallIntegerField()
     semantic_group_1 = models.ForeignKey(SemanticGroup, related_name='translation_fst_set')
     semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
-    translation_based_multi = models.ManyToManyField('self', null=True, blank=True)
+    translation_based_m = models.ManyToManyField('self', null=True, blank=True)
     is_visible = models.BooleanField(default=True, editable=False)
 
 
@@ -373,92 +374,75 @@ class ProjectDictionary(ProjectedEntity):
         unique_together = ('value', 'src_obj', 'src_field')
 
 
-class ProjectColumnLiteral(ProjectedEntity):
-    language = models.CharField(max_length=256)
-    dialect = models.CharField(max_length=256, null=True, blank=True)
-    source = models.CharField(max_length=256, null=True, blank=True)
-    writing_system = models.CharField(max_length=256, null=True, blank=True)
-    processing = models.CharField(max_length=256, null=True, blank=True)
+class ProjectColumn(ProjectedEntity):
+    language_l = models.CharField(max_length=256)
+    dialect_l = models.CharField(max_length=256, null=True, blank=True)
+    source_l = models.CharField(max_length=256, null=True, blank=True)
+    writing_system_l = models.CharField(max_length=256, null=True, blank=True)
+    processing_l = models.CharField(max_length=256, null=True, blank=True)
     num = models.SmallIntegerField()
     csvcell = models.ForeignKey(CSVCell)
 
-
-class ProjectColumn(ProjectedEntity):
-    language = models.ForeignKey(Language)
+    language = models.ForeignKey(Language, null=True, blank=True)
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
     source = models.ForeignKey(Source, null=True, blank=True)
-    writing_system = models.ForeignKey(WritingSystem)
-    processing_type = models.SmallIntegerField(null=True, blank=True)
+    writing_system = models.ForeignKey(WritingSystem, null=True, blank=True)
+    processing_type = models.CharField(choices=PROC_TYPE, max_length=2, null=True, blank=True)
     processing_comment = models.TextField(blank=True)
-    literal = models.ForeignKey(ProjectColumnLiteral)
-
-
-class ProjectLexemeLiteral(ProjectedEntity):
-    syntactic_category = models.CharField(max_length=256)
-    params = models.CharField(max_length=512, blank=True)
-    col = models.ForeignKey(ProjectColumnLiteral, null=True, blank=True)
-    csvcell = models.ForeignKey(CSVCell)
-
-    def __str__(self):
-        return ' | '.join([self.syntactic_category, str(self.params)])
 
 
 class ProjectLexeme(ProjectedEntity):
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    inflection = models.ForeignKey(Inflection, null=True, blank=True)
-
-
-class ProjectWordformLiteral(ProjectedEntity):
-    lexeme = models.ForeignKey(ProjectLexemeLiteral)
-    spelling = models.CharField(max_length=256)
-    comment = models.TextField(blank=True)
-    params = models.CharField(max_length=512, blank=True)
-    col = models.ForeignKey(ProjectColumnLiteral, null=True, blank=True)
+    syntactic_category_l = models.CharField(max_length=256)
+    params_l = models.CharField(max_length=512, blank=True)
+    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
     csvcell = models.ForeignKey(CSVCell)
 
-    def __str__(self):
-        return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
+    syntactic_category = models.ForeignKey(SyntacticCategory, null=True, blank=True)
+    inflection = models.ForeignKey(Inflection, null=True, blank=True)
+
+    # def __str__(self):
+    #     return ' | '.join([self.syntactic_category, str(self.params)])
 
 
 class ProjectWordform(ProjectedEntity):
-    lexeme = models.ForeignKey(ProjectLexeme)
+    lexeme_l = models.ForeignKey(ProjectLexeme)
     spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
+    params_l = models.CharField(max_length=512, blank=True)
+    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
+    csvcell = models.ForeignKey(CSVCell)
+
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
     informant = models.CharField(max_length=256, blank=True)
 
-
-class ProjectSemanticGroupLiteral(ProjectedEntity):
-    params = models.CharField(max_length=256, blank=True)
-    comment = models.TextField(blank=True)
-    csvcell = models.ForeignKey(CSVCell)
-
-    def __str__(self):
-        return ' | '.join([str(self.params), self.dialect, self.comment])
+    # def __str__(self):
+    #     return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
 
 
 class ProjectSemanticGroup(ProjectedEntity):
-    theme = models.ForeignKey(Theme, null=True, blank=True)
-    usage_constraint_multi = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_multi = models.ManyToManyField(Dialect, null=True, blank=True)
+    params_l = models.CharField(max_length=256, blank=True)  # For the source side there can be a dialect or a theme
+    dialect_l = models.CharField(max_length=256, blank=True)  # For the target side it is only a dialect possible
     comment = models.TextField(blank=True)
+    csvcell = models.ForeignKey(CSVCell)
 
+    theme = models.ForeignKey(Theme, null=True, blank=True)
+    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
 
-class ProjectTranslationLiteral(ProjectedEntity):
-    lexeme_1 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_fst_set')
-    lexeme_2 = models.ForeignKey(ProjectLexemeLiteral, related_name='translation_snd_set')
-    direction = models.SmallIntegerField()
-    semantic_group_1 = models.ForeignKey(ProjectSemanticGroupLiteral,  related_name='translation_fst_set')
-    semantic_group_2 = models.ForeignKey(ProjectSemanticGroupLiteral,  related_name='translation_snd_set')
-    bind_wf_1 = models.ForeignKey(ProjectWordformLiteral, related_name='translation_fst_set')
-    bind_wf_2 = models.ForeignKey(ProjectWordformLiteral, related_name='translation_snd_set')
-
-    def __str__(self):
-        return ' | '.join([str(self.lexeme_1), str(self.lexeme_2), str(self.direction), str(self.semantic_group_1),
-                           str(self.semantic_group_2), str(self.bind_wf_1), str(self.bind_wf_2)])
+    # def __str__(self):
+    #     return ' | '.join([str(self.params), self.dialect, self.comment])
 
 
 class ProjectRelation(ProjectedEntity):
     lexeme_1 = models.ForeignKey(ProjectLexeme, related_name='translation_fst_set')
     lexeme_2 = models.ForeignKey(ProjectLexeme, related_name='translation_snd_set')
+    direction = models.SmallIntegerField()
+    semantic_group_1 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_fst_set')
+    semantic_group_2 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_snd_set')
+    bind_wf_1 = models.ForeignKey(ProjectWordform, related_name='translation_fst_set')
+    bind_wf_2 = models.ForeignKey(ProjectWordform, related_name='translation_snd_set')
+
+    # def __str__(self):
+    #     return ' | '.join([str(self.lexeme_1), str(self.lexeme_2), str(self.direction), str(self.semantic_group_1),
+    #                        str(self.semantic_group_2), str(self.bind_wf_1), str(self.bind_wf_2)])

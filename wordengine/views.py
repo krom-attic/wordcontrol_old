@@ -403,24 +403,27 @@ class ProjectListView(TemplateView):
 
 class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
-    PrColSetupFormSet = formset_factory(forms.ProjectColumnSetupForm)
+    PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
     PrDictFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
 
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
-        column_initial = []
-        literal_values = []
-        for column in models.ProjectColumnLiteral.objects.filter(project=project):
-            column_initial.append({'project': project, 'literal': column})
-            literal_values.append({'language': column.language, 'dialect': column.dialect, 'source': column.source,
-                                   'writing_system': column.writing_system, 'processing': column.processing,
-                                   'num': column.num})
-        project_columns = self.PrColSetupFormSet(initial=column_initial)
-        pr_col_setup_set = zip(literal_values, project_columns)
+        # Obsolete version of column setup. Must be deleted.
+        # column_initial = []
+        # literal_values = []
+        # for column in models.ProjectColumn.objects.filter(project=project):
+        #     column_initial.append({'project': project, 'literal': column})
+        #     literal_values.append({'language': column.language_l, 'dialect': column.dialect_l, 'source': column.source_l,
+        #                            'writing_system': column.writing_system_l, 'processing': column.processing_l,
+        #                            'num': column.num})
+        # pr_col_setup_set = self.PrColSetupFormSet(initial=column_initial)
+        # project_columns = zip(literal_values, pr_col_setup_set)
 
+        pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.PrDictFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
+        # TODO: allow modification of untyped parameters if project stage allows
 
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set})
@@ -431,8 +434,11 @@ class ProjectSetupView(TemplateView):
             if untyped_param_form_set.is_valid():
                 untyped_param_form_set.save()
         if '_column_save' in request.POST:
-            project_columns = request.POST  # TODO Seems unfinished
-            project_columns.save()
+            # project_columns = request.POST  # WTF???
+            # project_columns.save()
+            pr_col_setup_set = self.PrColSetupFormSet(request.POST)
+            if pr_col_setup_set.is_valid():
+                pr_col_setup_set.save()
         return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
 
 

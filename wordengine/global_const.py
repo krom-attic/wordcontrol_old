@@ -25,20 +25,24 @@ PROC_TYPE = (('NP', 'No processing'),
 WORD_SOURCE_CHOICES = (('NN', 'Not needed'),
                        ('AT', 'As for translation'))
 
-#
-PRJ_TO_REAL = {'ProjectLexemeLiteral': 'Lexeme',
-               'ProjectWordformLiteral': 'Wordform',
-               'ProjectSemanticGroupLiteral': 'Semantic Group'}
+# Projected objects to real objects correspondence
+PRJ_TO_REAL = {'ProjectLexeme': 'Lexeme',
+               'ProjectWordform': 'Wordform',
+               'ProjectSemanticGroup': 'Semantic Group'}
 
 # Variants of terms available for different projected fields
-TERM_TYPES = {('Lexeme', 'syntactic_category'): 'SyntacticCategory',
-              ('Lexeme', 'params'): (('', '<not selected>'),
-                                     ('Parameter', 'Lexeme parameter'),
-                                     ('Inflection', 'Inflection')),
-              ('Wordform', 'params'): (('', '<not selected>'),
-                                       ('Dialect', 'Dialect'),
-                                       ('GrammCategorySet', 'Grammatical Category'),
-                                       ('Informant', 'Informant')),
-              ('Semantic Group', 'params'): (('', '<not selected>'),
-                                             ('Dialect', 'Dialect'),
-                                             ('Theme', 'Theme'))}
+TERM_TYPES = {('Lexeme', 'syntactic_category_l'): 'SyntacticCategory',
+              ('Lexeme', 'params_l'): (('', '<not selected>'),
+                                       ('Parameter', 'Lexeme parameter'),
+                                       ('Inflection', 'Inflection')),
+              ('Wordform', 'params_l'): (('', '<not selected>'),
+                                         ('Dialect', 'Dialect'),
+                                         ('GrammCategorySet', 'Grammatical Category'),
+                                         ('Informant', 'Informant')),
+              ('Semantic Group', 'params_l'): (('', '<not selected>'),
+                                               ('Dialect', 'Dialect'),
+                                               ('Theme', 'Theme'))}
+
+REL_DIRECTION = (('F', 'Forward'),
+                 ('B', 'Backward'),
+                 ('D', 'Duplex'))

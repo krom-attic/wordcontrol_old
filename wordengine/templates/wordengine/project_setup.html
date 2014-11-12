@@ -6,14 +6,14 @@
     <form action="" method="post">
         {{ pr_col_setup_form_set.management_form }}
         {% csrf_token %}
-        {% for literal_value, pr_col_setup_form in pr_col_setup_form_set %}
-            <h3>Column</h3>
+        {% for pr_col_setup_form in pr_col_setup_form_set %}
+            <h3>Column {{ pr_col_setup_form.instance.num }}</h3>
             <ul>
-                <li>Language: {{ literal_value.language }}</li>
-                <li>Dialect: {{ literal_value.dialect }}</li>
-                <li>Source: {{ literal_value.source }}</li>
-                <li>Wr. system: {{ literal_value.writing_system }}</li>
-                <li>Processing type: {{ literal_value.processing }}</li>
+                <li>Language: {{ pr_col_setup_form.instance.language_l }}</li>
+                <li>Dialect: {{ pr_col_setup_form.instance.dialect_l }}</li>
+                <li>Source: {{ pr_col_setup_form.instance.source_l }}</li>
+                <li>Wr. system: {{ pr_col_setup_form.instance.writing_system_l }}</li>
+                <li>Processing type: {{ pr_col_setup_form.instance.processing_l }}</li>
             </ul>
         {{ pr_col_setup_form.as_p }}
         {% endfor %}
