@@ -35,17 +35,26 @@
     </form>
 
     <form action="" method="post">
-        {{ lex_param_setup_form_set.management_form }}
+        {{ param_setup_form_set.management_form }}
         {% csrf_token %}
+        <h3>Parameter values</h3>
+        {% for param_setup_form in param_setup_form_set %}
+            {{ param_setup_form.instance.value }} ( {{ param_setup_form.instance.term_type }} )
+            {{ param_setup_form.as_p }}
+        {% endfor %}
         <h3>Lexeme parameters</h3>
-        {% for literal_value, lex_param_setup_form in lex_param_setup_form_set %}
+        {% for lex_param_setup_form in lex_param_setup_form_set %}
 
         {% endfor %}
         <h3>Wordform parameters (grammatical categories, source dialects & informants)</h3>
+        {% for wf_param_setup_form in wf_param_setup_form_set %}
 
+        {% endfor %}
+        <h3>Semantic group parameters (themes, source & target dialects)</h3>
+        {% for sg_param_setup_form in sg_param_setup_form_set %}
 
-        <h3>Semantic group parameters (themes, </h3>
-
+        {% endfor %}
+        <input type="submit" value="Save" name="_terms_save" />
     </form>
 
 {% endblock %}

@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib import auth
 from wordengine.global_const import *
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 # System globals. Abstract
@@ -12,8 +14,11 @@ class Change(models.Model):
     user_changer = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_changer")
     timestamp_change = models.DateTimeField(auto_now_add=True, editable=False)
     comment = models.TextField(blank=True)
-    object_type = models.TextField(max_length=256, editable=False)
-    object_id = models.IntegerField(editable=False)
+    # TODO Check change generating code - it wasn't changed
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
 
     class Meta:
         abstract = True
@@ -61,6 +66,12 @@ class Term(models.Model):
 
 
 # Global lists. Concrete
+
+
+class LexemeParameter(Term):
+    """Temporary class for lexeme parameters"""
+
+    pass
 
 
 class SyntacticCategory(Term):
@@ -182,7 +193,11 @@ class Lexeme(LanguageEntity):
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
-    lexeme_related = models.ManyToManyField('self', symmetrical=False, through='LexemeRelation', null=True, blank=True)
+    translations = models.ManyToManyField('self', symmetrical=False, through='Translation', null=True, blank=True,
+                                          related_name='translation_set')
+    relations = models.ManyToManyField('self', symmetrical=False, through='Relation', null=True, blank=True,
+                                       related_name='relation_set')
+    # TODO Add field for a dictionary wordform
     # Absence of a dialectical dependency is intentional
 
     @property
@@ -203,15 +218,6 @@ class Lexeme(LanguageEntity):
         return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
 
 
-class LexemeRelation(models.Model):
-    """ Class for lexemes' special relations
-    """
-    lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
-    relation_type = models.CharField(choices=REL_TYPE, max_length=2)
-    direction = models.CharField(choices=REL_DIRECTION, max_length=1)
-
-
 class TranslatedTerm(LanguageEntity):
     """Class representing term translation for the given language"""
 
@@ -228,6 +234,16 @@ class DictEntity(models.Model):
     source_m = models.ManyToManyField(Source, null=True, blank=True)
     comment = models.TextField(blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class LexemeRelation(DictEntity):
+    """ Class for lexemes' special relations
+    """
+
+    direction = models.CharField(choices=REL_DIRECTION, max_length=1)
 
     class Meta:
         abstract = True
@@ -298,6 +314,17 @@ class WordformOrder:
     pass
 
 
+class Relation(LexemeRelation):
+    """Class representing lexeme relations
+    """
+
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='relation_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='relation_snd_set')
+    wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='relation_fst_set')
+    wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='relation_snd_set')
+    relation_type = models.CharField(max_length=32)
+
+
 class SemanticGroup(DictEntity):
     """ Class representing semantic groups
     """
@@ -306,17 +333,19 @@ class SemanticGroup(DictEntity):
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
 
 
-class Translation(DictEntity):
+class Translation(LexemeRelation):
     """Class representing current translations
     """
 
-    lexeme_relation = models.ForeignKey(LexemeRelation, editable=False)
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='translation_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='translation_snd_set')
     semantic_group_1 = models.ForeignKey(SemanticGroup, related_name='translation_fst_set')
     semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
-    translation_based_m = models.ManyToManyField('self', null=True, blank=True)
-    is_visible = models.BooleanField(default=True, editable=False)
+    #  TODO: may be these fields should be moved to another class, deliberately made for overlying dictionary
+    # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
+    # is_visible = models.BooleanField(default=True, editable=False)
 
 
 # Project classes

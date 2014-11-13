@@ -404,7 +404,9 @@ class ProjectListView(TemplateView):
 class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
     PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
-    PrDictFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
+    UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
+    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
+    Test = forms.ParamSetupForm
 
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
@@ -422,23 +424,31 @@ class ProjectSetupView(TemplateView):
         # project_columns = zip(literal_values, pr_col_setup_set)
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
-        untyped_param_form_set = self.PrDictFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
+        untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
+        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.exclude(term_type='').
+                                                      filter(term_id=None))
         # TODO: allow modification of untyped parameters if project stage allows
 
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
-                                                    'untyped_param_form_set': untyped_param_form_set})
+                                                    'untyped_param_form_set': untyped_param_form_set,
+                                                    'param_setup_form_set': param_setup_form_set})
 
     def post(self, request, *args, **kwargs):
-        if '_types_save' in request.POST:
-            untyped_param_form_set = self.PrDictFormSet(request.POST)
-            if untyped_param_form_set.is_valid():
-                untyped_param_form_set.save()
         if '_column_save' in request.POST:
             # project_columns = request.POST  # WTF???
             # project_columns.save()
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
                 pr_col_setup_set.save()
+        if '_types_save' in request.POST:
+            untyped_param_form_set = self.UntypedParamFormSet(request.POST)
+            if untyped_param_form_set.is_valid():
+                untyped_param_form_set.save()
+        if '_terms_save' in request.POST:
+            param_setup_form_set = self.ParamSetupFormSet(request.POST)
+            print(param_setup_form_set.errors)
+            if param_setup_form_set.is_valid():
+                param_setup_form_set.save()
         return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
 
 

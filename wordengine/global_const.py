@@ -10,9 +10,6 @@ SRC_TYPE = (('OK', 'Own knowledge'),
             ('FA', 'Field archive'),
             ('OT', 'Other trustworthy source'))  # e.g. lesson notes
 
-# Types of lexemes' relations
-REL_TYPE = (('TR', 'Translation'), )
-
 # Projected entity states
 PRJ_STATE = (('N', 'New'),
              ('P', 'Processed'))

@@ -1,6 +1,7 @@
 from django import forms
 from wordengine import models
 from wordengine.global_const import *
+from django.db.models.loading import get_model
 
 
 class DoSmthWithIdForm(forms.Form):
@@ -86,10 +87,6 @@ class ProjectColumnSetupForm(forms.ModelForm):
                    'processing_l': forms.HiddenInput, 'num': forms.HiddenInput, 'csvcell': forms.HiddenInput}
 
 
-class ProjectDictionaryForm(forms.Form):
-    pass
-
-
 class UntypedParamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
@@ -100,3 +97,19 @@ class UntypedParamForm(forms.ModelForm):
         model = models.ProjectDictionary
         exclude = ['term_id', 'state', 'project']
         widgets = {'value': forms.HiddenInput, 'src_field': forms.HiddenInput, 'src_obj': forms.HiddenInput}
+
+
+class ParamSetupForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ParamSetupForm, self).__init__(*args, **kwargs)
+        if self.initial:
+            choices = []
+            for term in get_model('wordengine', self.initial['term_type']).objects.all():
+                choices.append((term.id, term.__str__()), )
+            self.fields['term_id'] = forms.ChoiceField(choices=choices)
+    # It may be a good idea to cache choices at a formset level, so it is loaded only once per model
+
+    class Meta:
+        model = models.ProjectDictionary
+        exclude = ['state', 'project', 'src_field', 'src_obj']
+        widgets = {'term_type': forms.HiddenInput, 'value': forms.HiddenInput}
