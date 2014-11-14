@@ -2,6 +2,7 @@ from django import forms
 from wordengine import models
 from wordengine.global_const import *
 from django.db.models.loading import get_model
+from django.db.models import Q
 
 
 class DoSmthWithIdForm(forms.Form):
@@ -88,14 +89,25 @@ class ProjectColumnSetupForm(forms.ModelForm):
 
 
 class UntypedParamForm(forms.ModelForm):
+    term = forms.ChoiceField()
+
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
-        self.fields['term_type'] = forms.ChoiceField(choices=TERM_TYPES[(self.initial['src_obj'],
-                                                                         self.initial['src_field'])])
+
+            # = forms.ChoiceField(choices=(('a', 'a'), ))
+        # print(vars(self.fields['term']))
+        # self.fields['content_type']._queryset
+        # self.fields['content_type']._queryset
+        # print(vars(self.fields['content_type']))
+        # print(TERM_TYPES[(self.initial['src_obj'], self.initial['src_field'])])
+        # TODO Here will be "ValueError: need more than 1 value to unpack" if non-tuple param leaks in
+        available_terms = [kv[0] for kv in TERM_TYPES[(self.initial['src_obj'], self.initial['src_field'])]]
+        self.fields['content_type'].queryset = models.ContentType.objects.filter(name__in=available_terms)
+        # self.fields['term_type'] = forms.ChoiceField(choices=TERM_TYPES[(self.initial['src_obj'], self.initial['src_field'])])
 
     class Meta:
         model = models.ProjectDictionary
-        exclude = ['term_id', 'state', 'project']
+        exclude = ['term_id', 'state', 'project', 'object_id']
         widgets = {'value': forms.HiddenInput, 'src_field': forms.HiddenInput, 'src_obj': forms.HiddenInput}
 
 
@@ -109,7 +121,9 @@ class ParamSetupForm(forms.ModelForm):
             self.fields['term_id'] = forms.ChoiceField(choices=choices)
     # It may be a good idea to cache choices at a formset level, so it is loaded only once per model
 
+    # TODO Update state 'N' -> 'P' if valid (custom validation?)
+
     class Meta:
         model = models.ProjectDictionary
-        exclude = ['state', 'project', 'src_field', 'src_obj']
-        widgets = {'term_type': forms.HiddenInput, 'value': forms.HiddenInput}
+        exclude = ['project', 'src_field', 'src_obj']
+        widgets = {'term_type': forms.HiddenInput, 'value': forms.HiddenInput, 'state': forms.HiddenInput}

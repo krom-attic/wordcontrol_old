@@ -8,8 +8,8 @@ from django.db.models import Q
 from django.contrib import messages
 from wordengine import forms
 from wordengine.dictworks import *
-from django.forms.formsets import formset_factory
 from django.forms.models import modelformset_factory
+from functools import partial, wraps
 
 # Actual views here
 
@@ -378,7 +378,12 @@ class ProjectListView(TemplateView):
         upload_form = self.upload_form_class()
         if project_list_form.is_valid():
             project_id = request.GET['project']
-            return redirect('wordengine:project_setup', project_id)
+            if '_setup' in request.GET:
+                return redirect('wordengine:project_setup', project_id)
+            elif '_produce' in request.GET:
+                produce_project(project_id)
+                return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                            'upload_form': upload_form})
         else:
             # TODO Add error message
             return render(request, self.template_name, {'project_list_form': project_list_form,
@@ -405,8 +410,7 @@ class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
     PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
-    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
-    Test = forms.ParamSetupForm
+    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, extra=0, form=forms.ParamSetupForm)
 
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
@@ -425,10 +429,9 @@ class ProjectSetupView(TemplateView):
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
-        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.exclude(term_type='').
-                                                      filter(term_id=None))
+        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.exclude(term_type='')) #.
+                                                      # filter(term_id=None))
         # TODO: allow modification of untyped parameters if project stage allows
-
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set,
                                                     'param_setup_form_set': param_setup_form_set})

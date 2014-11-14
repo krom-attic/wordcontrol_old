@@ -28,17 +28,14 @@ PRJ_TO_REAL = {'ProjectLexeme': 'Lexeme',
                'ProjectSemanticGroup': 'Semantic Group'}
 
 # Variants of terms available for different projected fields
-TERM_TYPES = {('Lexeme', 'syntactic_category_l'): 'SyntacticCategory',
-              ('Lexeme', 'params_l'): (('', '<not selected>'),
-                                       ('Parameter', 'Lexeme parameter'),
-                                       ('Inflection', 'Inflection')),
-              ('Wordform', 'params_l'): (('', '<not selected>'),
-                                         ('Dialect', 'Dialect'),
-                                         ('GrammCategorySet', 'Grammatical Category'),
-                                         ('Informant', 'Informant')),
-              ('Semantic Group', 'params_l'): (('', '<not selected>'),
-                                               ('Dialect', 'Dialect'),
-                                               ('Theme', 'Theme'))}
+TERM_TYPES = {('Lexeme', 'syntactic_category'): 'SyntacticCategory',
+              ('Lexeme', 'params'): (('lexeme parameter', 'Lexeme parameter'),
+                                     ('inflection', 'Inflection')),
+              ('Wordform', 'params'): (('dialect', 'Dialect'),
+                                       ('gramm category set', 'Grammatical Category'),
+                                       ('informant', 'Informant')),
+              ('Semantic Group', 'params'): (('dialect', 'Dialect'),
+                                             ('theme', 'Theme'))}
 
 REL_DIRECTION = (('F', 'Forward'),
                  ('B', 'Backward'),

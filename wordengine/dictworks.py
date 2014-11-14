@@ -128,7 +128,7 @@ def parse_csv(request):
 
                 column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, source_l=source,
                                                              num=colnum+2, writing_system_l=writing_system, state='N',
-                                                             project=project, csvcell=csvcell, processing=processing_l)
+                                                             project=project, csvcell=csvcell, processing_l=processing)
                 print('Column header: ')
                 print(column_literal)
                 column_literal.save()
@@ -165,8 +165,8 @@ def parse_csv(request):
             else:
                 params = ''
 
-            lexeme_src = models.ProjectLexeme(syntactic_category_l=synt_cat, params_l=params, project=project,
-                                                     state='N', col=lang_src_cols[0][1], csvcell=csvcell)
+            lexeme_src = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=project, state='N',
+                                              col=lang_src_cols[0][1], csvcell=csvcell)
             print('row: ' + str(rownum) + ', col 1' + ' (Lexeme)')
             print(lexeme_src)
             lexeme_src.save()
@@ -199,8 +199,8 @@ def parse_csv(request):
                         else:
                             comment = ''
 
-                        wordform = models.ProjectWordform(lexeme_l=lexeme_src, spelling=spelling, comment=comment,
-                                                                 params_l=params, project=project, state='N',
+                        wordform = models.ProjectWordform(lexeme=lexeme_src, spelling=spelling, comment=comment,
+                                                                 params=params, project=project, state='N',
                                                                  col=column_literal, csvcell=csvcell)
                         print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                         print(wordform)
@@ -230,8 +230,8 @@ def parse_csv(request):
                             for n_comm in range(1, len(ext_comm_split)):
                                 comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
-                semantic_gr_src = models.ProjectSemanticGroup(params_l=group_params, comment=group_comment,
-                                                                     project=project, state='N', csvcell=csvcell)
+                semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
+                                                              project=project, state='N', csvcell=csvcell)
                 print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
@@ -260,37 +260,44 @@ def parse_csv(request):
                     else:
                         transl_comment = ''
 
-                    lexeme_trg = models.ProjectLexeme(syntactic_category_l=synt_cat, params_l=params,
-                                                             project=project, state='N', col=column_literal,
-                                                             csvcell=csvcell)
+                    lexeme_trg = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=project,
+                                                      state='N', col=column_literal, csvcell=csvcell)
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Lexeme)')
                     print(lexeme_trg)
                     lexeme_trg.save()
 
-                    wordform = models.ProjectWordform(lexeme_l=lexeme_trg, spelling=spelling, project=project,
-                                                             state='N', col=column_literal, csvcell=csvcell)
+                    wordform = models.ProjectWordform(lexeme=lexeme_trg, spelling=spelling, project=project, state='N',
+                                                      col=column_literal, csvcell=csvcell)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Wordform)')
                     print(wordform)
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
-                                                                         project=project, state='N', csvcell=csvcell)
+                                                                  project=project, state='N', csvcell=csvcell)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                     print(semantic_gr_trg)
                     semantic_gr_trg.save()
 
                     translation = models.ProjectRelation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg,
-                                                                   direction=1, semantic_group_1=semantic_gr_src,
-                                                                   semantic_group_2=semantic_gr_trg,
-                                                                   bind_wf_1=first_wordform, bind_wf_2=wordform,
-                                                                   project=project, state='N')
+                                                         direction=1, semantic_group_1=semantic_gr_src,
+                                                         semantic_group_2=semantic_gr_trg,
+                                                         bind_wf_1=first_wordform, bind_wf_2=wordform,
+                                                         project=project, state='N')
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+1) + ' (Translation)')
                     print(translation)
                     translation.save()
     return project
+
+
+def restore_param_list(value):
+    try:
+        restored_list = ast.literal_eval(value)
+    except ValueError:  # If not evaluable than it should be a string
+        restored_list = [value]
+    return restored_list
 
 
 def to_project_dict(project, model, field):
@@ -301,10 +308,7 @@ def to_project_dict(project, model, field):
 
     for value in get_model('wordengine', model).objects.all().values(field).distinct():
         if value[field]:
-            try:
-                real_value = ast.literal_eval(value[field])
-            except ValueError:  # If not evaluable than it should be a string
-                real_value = [value[field]]
+            real_value = restore_param_list(value[field])
             for sg_value in real_value:
                 pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, src_field=field, project=project,
                                               state='N', term_type=term_type)
@@ -324,6 +328,66 @@ def fill_project_dict(project):
     return None
 
 
+def produce_project_lexemes(project):
+    for p_lexeme in models.ProjectLexeme.objects.all():
+        inflection = None
+        lex_params = []
+        if p_lexeme.params:
+            real_param = restore_param_list(p_lexeme.params)
+            for param in real_param:
+                p_dict_item = models.ProjectDictionary.objects.get(value=param, src_obj='Lexeme',
+                                                                   src_field='params', project=project)
+                if p_dict_item.term_type == 'Inflection':
+                    inflection = models.Inflection.objects.get(pk=p_dict_item.term_id)
+                else:
+                    lex_params.append(models.LexemeParameter.objects.get(pk=p_dict_item.term_id))
+        p_syntactic_category = models.ProjectDictionary.objects.get(value=p_lexeme.syntactic_category_l,
+                                                                    src_obj='Lexeme', src_field='syntactic_category',
+                                                                    project=project)
+        syntactic_category = models.SyntacticCategory.objects.get(pk=p_syntactic_category.term_id)
+        column = models.ProjectColumn.objects.get(pk=p_lexeme.col_id)
+        lexeme = models.Lexeme(language=column.language, syntactic_category=syntactic_category, inflection=inflection)
+        lexeme.save()
+        for lex_param in lex_params:
+            lexeme.lexeme_parameter_m.add(lex_param)
+
+
+def produce_project_model(project, t_model, fixed_fields, fixed_fields_m2m, param_fields, param_fields_m2m):
+    for p_object in get_model('wordengine', 'Project' + t_model).objects.filter(state='N'):
+        # TODO: don't forget to initialize vars
+        fields = {}
+        if p_object.params:
+            real_param = restore_param_list(p_object.params)
+            for param in real_param:
+                p_dict_item = models.ProjectDictionary.objects.get(value=param, src_obj=t_model,
+                                                                   src_field='params', project=project)
+                term_type = p_dict_item.term_type
+                term_id = p_dict_item.term_id
+                if term_type in param_fields:
+                    fields[term_type] = get_model('wordengine', term_type).objects.get(pk=term_id)
+                    # Should add 'continue'?
+                if term_type in param_fields_m2m:
+                    pass
+
+        for fixed_field in fixed_fields:
+            pass
+
+        model = get_model('wordengine', t_model)(**fields)
+        model.save()
+        # TODO add m2ms here
+
+    return model
+
+
+
+def produce_project(project):
+    produce_project_lexemes(project)
+    # produce_project_wordforms(project)
+    # produce_project_semantic_groups(project)
+    # produce_project_translations(project)
+
+
+# TODO Delete it
 def import_data():
     added_translations = []
     transaction.set_autocommit(False)
