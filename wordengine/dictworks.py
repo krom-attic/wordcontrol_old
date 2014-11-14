@@ -306,6 +306,7 @@ def to_project_dict(project, model, field):
     if isinstance(term_type, tuple):
         term_type = ''
 
+    # TODO Replace here and below with content_type usage
     for value in get_model('wordengine', model).objects.all().values(field).distinct():
         if value[field]:
             real_value = restore_param_list(value[field])
@@ -353,7 +354,7 @@ def produce_project_lexemes(project):
 
 
 def produce_project_model(project, t_model, fixed_fields, fixed_fields_m2m, param_fields, param_fields_m2m):
-    for p_object in get_model('wordengine', 'Project' + t_model).objects.filter(state='N'):
+    for p_object in get_model('wordengine', t_model).objects.filter(state='N'):
         # TODO: don't forget to initialize vars
         fields = {}
         if p_object.params:
@@ -364,13 +365,14 @@ def produce_project_model(project, t_model, fixed_fields, fixed_fields_m2m, para
                 term_type = p_dict_item.term_type
                 term_id = p_dict_item.term_id
                 if term_type in param_fields:
-                    fields[term_type] = get_model('wordengine', term_type).objects.get(pk=term_id)
+                    term_object = models.ContentType.objects.get('term_type').model_class()
+                    fields[term_type] = term_object.objects.get(pk=term_id)
                     # Should add 'continue'?
                 if term_type in param_fields_m2m:
                     pass
 
         for fixed_field in fixed_fields:
-            pass
+            term_object = models.ContentType.objects.get('term_type').model_class()
 
         model = get_model('wordengine', t_model)(**fields)
         model.save()

@@ -428,9 +428,10 @@ class ProjectSetupView(TemplateView):
         # project_columns = zip(literal_values, pr_col_setup_set)
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
-        untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.filter(term_type=''))
-        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.exclude(term_type='')) #.
-                                                      # filter(term_id=None))
+        untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
+                                                          filter(content_type=None))
+        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
+                                                      exclude(content_type=None).filter(object_id=None))
         # TODO: allow modification of untyped parameters if project stage allows
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set,

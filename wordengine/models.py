@@ -397,12 +397,10 @@ class ProjectDictionary(ProjectedEntity):
     value = models.CharField(max_length=256)
     src_obj = models.CharField(max_length=256)
     src_field = models.CharField(max_length=256)
-    term_type = models.CharField(max_length=128)
-    term_id = models.PositiveIntegerField(null=True, blank=True)
 
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    content_object = GenericForeignKey('content_type', 'object_id')
+    term_type = models.ForeignKey(ContentType, null=True, blank=True)
+    term_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('term_type', 'term_id')
 
     class Meta:
         unique_together = ('value', 'src_obj', 'src_field', 'project')

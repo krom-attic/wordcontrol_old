@@ -29,10 +29,10 @@ PRJ_TO_REAL = {'ProjectLexeme': 'Lexeme',
 
 # Variants of terms available for different projected fields
 TERM_TYPES = {('Lexeme', 'syntactic_category'): 'SyntacticCategory',
-              ('Lexeme', 'params'): (('lexeme parameter', 'Lexeme parameter'),
+              ('Lexeme', 'params'): (('lexemeparameter', 'Lexeme parameter'),
                                      ('inflection', 'Inflection')),
               ('Wordform', 'params'): (('dialect', 'Dialect'),
-                                       ('gramm category set', 'Grammatical Category'),
+                                       ('grammcategoryset', 'Grammatical Category'),
                                        ('informant', 'Informant')),
               ('Semantic Group', 'params'): (('dialect', 'Dialect'),
                                              ('theme', 'Theme'))}
