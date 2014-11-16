@@ -39,7 +39,7 @@
         {% csrf_token %}
         <h3>Parameter values</h3>
         {% for param_setup_form in param_setup_form_set %}
-            {{ param_setup_form.instance.value }} ( {{ param_setup_form.instance.term_type }} )
+            {{ param_setup_form.instance.value }} ({{ param_setup_form.instance.term_type }})
             {{ param_setup_form.as_p }}
         {% endfor %}
         <!--<h3>Lexeme parameters</h3>

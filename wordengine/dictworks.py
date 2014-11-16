@@ -68,14 +68,6 @@ def modsave(request, upd_object, upd_fields):
     return None
 
 
-def parse_upload(request):
-
-    project = parse_csv(request)
-    fill_project_dict(project)
-
-    return project
-
-
 def parse_csv(request):
     """
     @param request:
@@ -294,20 +286,23 @@ def parse_csv(request):
 
 def restore_param_list(value):
     try:
-        restored_list = ast.literal_eval(value)
+        restored_list = ast.literal_eval(value)  # TODO Fails on spaces with SyntaxError!
     except ValueError:  # If not evaluable than it should be a string
         restored_list = [value]
     return restored_list
 
 
 def to_project_dict(project, model, field):
-    src_obj = PRJ_TO_REAL[model]
-    term_type = TERM_TYPES[(src_obj, field)]
-    if isinstance(term_type, tuple):
-        term_type = ''
+    src_obj = model.__name__
+    fixed_keys = model.fixed_fks()
+    fixed_keys.update(model.fixed_m2ms())
+    if field in fixed_keys.values():
+        term_type = fixed_keys[field].__name__
+    else:
+        term_type = None
 
-    # TODO Replace here and below with content_type usage
-    for value in get_model('wordengine', model).objects.all().values(field).distinct():
+    for value in model.objects.all().values(field).distinct():
+        print(value)
         if value[field]:
             real_value = restore_param_list(value[field])
             for sg_value in real_value:
@@ -322,71 +317,75 @@ def to_project_dict(project, model, field):
 
 
 def fill_project_dict(project):
-    to_project_dict(project, 'ProjectLexeme', 'syntactic_category')
-    to_project_dict(project, 'ProjectLexeme', 'params')
-    to_project_dict(project, 'ProjectWordform', 'params')
-    to_project_dict(project, 'ProjectSemanticGroup', 'params')
+    project_models = (models.ProjectLexeme, models.ProjectWordform, models.ProjectSemanticGroup)
+    for model in project_models:
+        for field in model.project_fields():
+            to_project_dict(project, model, field)
     return None
 
 
-def produce_project_lexemes(project):
-    for p_lexeme in models.ProjectLexeme.objects.all():
-        inflection = None
-        lex_params = []
-        if p_lexeme.params:
-            real_param = restore_param_list(p_lexeme.params)
-            for param in real_param:
-                p_dict_item = models.ProjectDictionary.objects.get(value=param, src_obj='Lexeme',
-                                                                   src_field='params', project=project)
-                if p_dict_item.term_type == 'Inflection':
-                    inflection = models.Inflection.objects.get(pk=p_dict_item.term_id)
-                else:
-                    lex_params.append(models.LexemeParameter.objects.get(pk=p_dict_item.term_id))
-        p_syntactic_category = models.ProjectDictionary.objects.get(value=p_lexeme.syntactic_category_l,
-                                                                    src_obj='Lexeme', src_field='syntactic_category',
-                                                                    project=project)
-        syntactic_category = models.SyntacticCategory.objects.get(pk=p_syntactic_category.term_id)
-        column = models.ProjectColumn.objects.get(pk=p_lexeme.col_id)
-        lexeme = models.Lexeme(language=column.language, syntactic_category=syntactic_category, inflection=inflection)
-        lexeme.save()
-        for lex_param in lex_params:
-            lexeme.lexeme_parameter_m.add(lex_param)
+def parse_upload(request):
+
+    project = parse_csv(request)
+    fill_project_dict(project)
+
+    return project
 
 
-def produce_project_model(project, t_model, fixed_fields, fixed_fields_m2m, param_fields, param_fields_m2m):
-    for p_object in get_model('wordengine', t_model).objects.filter(state='N'):
-        # TODO: don't forget to initialize vars
-        fields = {}
-        if p_object.params:
-            real_param = restore_param_list(p_object.params)
-            for param in real_param:
-                p_dict_item = models.ProjectDictionary.objects.get(value=param, src_obj=t_model,
-                                                                   src_field='params', project=project)
-                term_type = p_dict_item.term_type
-                term_id = p_dict_item.term_id
-                if term_type in param_fields:
-                    term_object = models.ContentType.objects.get('term_type').model_class()
-                    fields[term_type] = term_object.objects.get(pk=term_id)
-                    # Should add 'continue'?
-                if term_type in param_fields_m2m:
-                    pass
+def produce_project_model(project, model):
+    src_obj = model.__name__
+    created_lexemes = []
 
-        for fixed_field in fixed_fields:
-            term_object = models.ContentType.objects.get('term_type').model_class()
+    for project_object in model.objects.filter(state='N').filter(project=project):
 
-        model = get_model('wordengine', t_model)(**fields)
-        model.save()
-        # TODO add m2ms here
+        dict_items = []
+        for project_field in model.project_fields():
+            if project_field == 'params' and project_object.params:
+                real_params = restore_param_list(project_object.params)
+                for value in real_params:
+                    dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
+                                                                           src_field='params', project=project))
+            else:
+                value = getattr(project_object, project_field)
+                if value:
+                    dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
+                                                                           src_field=project_field, project=project))
 
-    return model
+        fields = {'language': project_object.col.language}
+        m2m_items = []
+        for dict_item in dict_items:
+            term_type = dict_item.term_type
+            if term_type in model.fixed_fks().keys():
+                fields[model.fixed_fks()[term_type] + '_id'] = dict_item.term_id
+                # Useful when getting a model is excessive. But is it safe?
+            elif term_type in model.param_fks().keys():
+                fields[model.param_fks()[term_type] + '_id'] = dict_item.term_id
+            else:
+                m2m_items.append(dict_item)
 
+        to_model = model.real_model()(**fields)
+        to_model.save()
+        project_object.state = 'P'
+        project_object.save()
+        to_model.lexeme_parameter_m.add()
+        for m2m_item in m2m_items:
+            term_type = m2m_item.term_type
+            m2m = get_model(APP_NAME, term_type).objects.get(pk=m2m_item.term_id)
+            if term_type in model.fixed_m2ms().keys():
+                getattr(to_model, model.fixed_m2ms()[term_type]).add(m2m)
+            elif term_type in model.param_m2ms().keys():
+                getattr(to_model, model.param_m2ms()[term_type]).add(m2m)
+
+        created_lexemes.append(to_model)
+
+    return created_lexemes
 
 
 def produce_project(project):
-    produce_project_lexemes(project)
-    # produce_project_wordforms(project)
-    # produce_project_semantic_groups(project)
-    # produce_project_translations(project)
+    produce_project_model(project, models.ProjectLexeme)
+    produce_project_model(project, models.ProjectWordform)
+    # produce_project_model(project, models.ProjectSemanticGroup)
+    # produce_project_model(project, models.ProjectTranslation)
 
 
 # TODO Delete it

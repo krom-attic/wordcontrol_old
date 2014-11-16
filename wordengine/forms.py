@@ -92,8 +92,12 @@ class UntypedParamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
         # TODO Here will be "ValueError: need more than 1 value to unpack" if non-tuple param leaks in
-        available_terms = [kv[0] for kv in TERM_TYPES[(self.initial['src_obj'], self.initial['src_field'])]]
-        self.fields['term_type'].queryset = models.ContentType.objects.filter(model__in=available_terms)
+        model = get_model(APP_NAME, self.initial['src_obj'])
+        available_terms = []
+        for params in (model.param_fks(), model.param_m2ms()):
+            for param in params:
+                available_terms.append((param, param))
+        self.fields['term_type'] = forms.ChoiceField(choices=available_terms, required=False)
 
     class Meta:
         model = models.ProjectDictionary
@@ -106,7 +110,7 @@ class ParamSetupForm(forms.ModelForm):
         super(ParamSetupForm, self).__init__(*args, **kwargs)
         # if self.initial:
         choices = [(None, '---------')]
-        for term in models.ContentType.objects.get(pk=self.initial['term_type']).model_class().objects.all():
+        for term in get_model(APP_NAME, self.initial['term_type']).objects.all():
                 choices.append((term.id, term.__str__()), )
         self.fields['term_id'] = forms.ChoiceField(choices=choices, required=False)
     # It may be a good idea to cache choices at a formset level, so it is loaded only once per model

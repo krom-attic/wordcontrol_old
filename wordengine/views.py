@@ -25,7 +25,7 @@ class DoSmthWordformView(TemplateView):
     template_name = 'wordengine/do_smth.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'smth_form': self.some_object_class()})
+        return render(request, self.template_name, {'smth_form': self.some_object_class(), 'lex10': lex_10})
 
     def post(self, request, *args, **kwargs):
         if '_restore_wordform' in request.POST:
@@ -410,7 +410,7 @@ class ProjectSetupView(TemplateView):
     template_name = 'wordengine/project_setup.html'
     PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
-    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, extra=0, form=forms.ParamSetupForm)
+    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
     # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
 
@@ -429,9 +429,9 @@ class ProjectSetupView(TemplateView):
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
-                                                          filter(content_type=None))
+                                                          filter(term_type=None))
         param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                      exclude(content_type=None).filter(object_id=None))
+                                                      exclude(term_type=None).filter(term_id=None))
         # TODO: allow modification of untyped parameters if project stage allows
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set,

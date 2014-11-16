@@ -1,3 +1,5 @@
+APP_NAME = ('wordengine')
+
 # Writing system types
 WS_TYPE = (('PS', 'Phonetic strict'),
            ('PL', 'Phonetic loose'),
@@ -28,14 +30,14 @@ PRJ_TO_REAL = {'ProjectLexeme': 'Lexeme',
                'ProjectSemanticGroup': 'Semantic Group'}
 
 # Variants of terms available for different projected fields
-TERM_TYPES = {('Lexeme', 'syntactic_category'): 'SyntacticCategory',
-              ('Lexeme', 'params'): (('lexemeparameter', 'Lexeme parameter'),
-                                     ('inflection', 'Inflection')),
-              ('Wordform', 'params'): (('dialect', 'Dialect'),
-                                       ('grammcategoryset', 'Grammatical Category'),
-                                       ('informant', 'Informant')),
-              ('Semantic Group', 'params'): (('dialect', 'Dialect'),
-                                             ('theme', 'Theme'))}
+TERM_TYPES = {('ProjectLexeme', 'syntactic_category'): 'SyntacticCategory',
+              ('ProjectLexeme', 'params'): (('lexemeparameter', 'Lexeme parameter'),
+                                            ('inflection', 'Inflection')),
+              ('ProjectWordform', 'params'): (('dialect', 'Dialect'),
+                                              ('grammcategoryset', 'Grammatical Category'),
+                                              ('informant', 'Informant')),
+              ('ProjectSemantic Group', 'params'): (('dialect', 'Dialect'),
+                                                    ('theme', 'Theme'))}
 
 REL_DIRECTION = (('F', 'Forward'),
                  ('B', 'Backward'),
