@@ -153,9 +153,6 @@ class WritingSystem(Term, LanguageRelated):
 
     writing_system_type = models.CharField(choices=WS_TYPE, max_length=2)
 
-    def __str__(self):
-        return self.term_full
-
 
 class Source(Term, LanguageRelated):
     """Class representing sources of language information"""
@@ -165,6 +162,8 @@ class Source(Term, LanguageRelated):
     processing_type = models.CharField(choices=PROC_TYPE, max_length=2)
     processing_comment = models.TextField(blank=True)
 
+
+# TODO Source handling seems to be lame
 
 class GrammCategorySet(LanguageEntity):
     """Class represents possible composite sets of grammar categories and its order in a given language
@@ -231,6 +230,15 @@ class TranslatedTerm(LanguageEntity):
 # Dictionary classes. Abstract
 
 
+class DictEntity(models.Model):
+    source = models.ForeignKey(Source, null=True, blank=True)
+    comment = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, editable=False)
+
+    class Meta:
+        abstract = True
+
+
 class LexemeRelation(models.Model):
     """ Class for lexemes' special relations
     """
@@ -249,12 +257,7 @@ class WordformBase(models.Model):
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
-    source = models.ManyToManyField(Source, through='DictWordform')
-
-    TRANSCRIPT_BRACKETS = {  # TODO Unhardcode this
-        1: ('[{}]'),
-        2: ('/{}/')
-    }
+    source_m = models.ManyToManyField(Source, through='DictWordform')
 
     @property
     def formatted(self):
@@ -296,11 +299,8 @@ class Wordform(WordformBase):
     #TODO Include dialects into description
 
 
-class DictWordform(models.Model):
-    source = models.ForeignKey(Source, null=True, blank=True)
+class DictWordform(DictEntity):
     wordform = models.ForeignKey(Wordform)
-    comment = models.TextField(blank=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
 
 
 # TODO Will not work due to m2m-relation to source via DictWordform
@@ -313,6 +313,39 @@ class DictWordform(models.Model):
 class WordformOrder:
 
     pass
+
+
+class SemanticGroup(models.Model):
+    """ Class representing semantic groups
+    """
+    theme_m = models.ManyToManyField(Theme, null=True, blank=True)
+    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
+
+
+class DictSemanticGroup(DictEntity):
+    semantic_group = models.ForeignKey(SemanticGroup)
+
+
+class Translation(LexemeRelation):
+    """Class representing current translations
+    """
+
+    lexeme_1 = models.ForeignKey(Lexeme, related_name='translation_fst_set')
+    lexeme_2 = models.ForeignKey(Lexeme, related_name='translation_snd_set')
+    semantic_group_1 = models.ForeignKey(SemanticGroup, related_name='translation_fst_set')
+    semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
+    wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
+    wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
+    source_m = models.ManyToManyField(Source, through='DictTranslation')
+    #  TODO: may be these fields should be moved to another class, deliberately made for overlying dictionary
+    # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
+    # is_visible = models.BooleanField(default=True, editable=False)
+
+
+class DictTranslation(DictEntity):
+    translation = models.ForeignKey(Translation)
 
 
 class Relation(LexemeRelation):
@@ -328,45 +361,8 @@ class Relation(LexemeRelation):
     # TODO Will not work due to m2m-relation to source isn't set
 
 
-class SemanticGroup(models.Model):
-    """ Class representing semantic groups
-    """
-    theme_m = models.ManyToManyField(Theme, null=True, blank=True)
-    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
-
-
-class DictSemanticGroup(models.Model):
-    source = models.ForeignKey(Source, null=True, blank=True)
-    semantic_group = models.ForeignKey(SemanticGroup)
-    comment = models.TextField(blank=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
-
-
-class Translation(LexemeRelation):
-    """Class representing current translations
-    """
-
-    lexeme_1 = models.ForeignKey(Lexeme, related_name='translation_fst_set')
-    lexeme_2 = models.ForeignKey(Lexeme, related_name='translation_snd_set')
-    semantic_group_1 = models.ForeignKey(SemanticGroup, related_name='translation_fst_set')
-    semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
-    wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
-    wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
-    source = models.ManyToManyField(Source, through='DictTranslation')
-    #  TODO: may be these fields should be moved to another class, deliberately made for overlying dictionary
-    # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
-    # is_visible = models.BooleanField(default=True, editable=False)
-
-
-class DictTranslation(models.Model):
-    source = models.ForeignKey(Source, null=True, blank=True)
-    translation = models.ForeignKey(Translation)
-    comment = models.TextField(blank=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
-
-
 # Project classes
+
 
 class Project(models.Model):
     user_uploader = models.ForeignKey(auth.models.User, editable=False)
@@ -532,10 +528,10 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return {'Dialect': 'dialect_m'}
 
     def known_fks(self):
-        return {'lexeme': self.lexeme.result}
+        return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
 
     def known_m2ms(self):
-        return
+        return {'source': self.col.source, 'dialect': self.col.dialect}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):

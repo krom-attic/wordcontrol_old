@@ -17,11 +17,11 @@ class WordformForm(forms.ModelForm):
         exclude = ['lexeme']
 
 
-class WordformSampleForm(forms.ModelForm):
-
-    class Meta:
-        model = models.WordformSample
-        exclude = ['lexeme']
+# class WordformSampleForm(forms.ModelForm):
+#
+#     class Meta:
+#         model = models.WordformSample
+#         exclude = ['lexeme']
 
 
 class LexemeForm(forms.ModelForm):

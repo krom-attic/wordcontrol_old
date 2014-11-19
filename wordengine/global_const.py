@@ -1,5 +1,12 @@
 APP_NAME = ('wordengine')
 
+
+TRANSCRIPT_BRACKETS = {
+    1: ('[{}]'),
+    2: ('/{}/')
+}
+
+
 # Writing system types
 WS_TYPE = (('PS', 'Phonetic strict'),
            ('PL', 'Phonetic loose'),
