@@ -231,16 +231,7 @@ class TranslatedTerm(LanguageEntity):
 # Dictionary classes. Abstract
 
 
-class DictEntity(models.Model):
-    source_m = models.ManyToManyField(Source, null=True, blank=True)
-    comment = models.TextField(blank=True)
-    is_deleted = models.BooleanField(default=False, editable=False)
-
-    class Meta:
-        abstract = True
-
-
-class LexemeRelation(DictEntity):
+class LexemeRelation(models.Model):
     """ Class for lexemes' special relations
     """
 
@@ -250,7 +241,7 @@ class LexemeRelation(DictEntity):
         abstract = True
 
 
-class WordformBase(DictEntity):
+class WordformBase(models.Model):
     """Base class for wordforms
     """
 
@@ -258,6 +249,7 @@ class WordformBase(DictEntity):
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
+    source = models.ManyToManyField(Source, through='DictWordform')
 
     TRANSCRIPT_BRACKETS = {  # TODO Unhardcode this
         1: ('[{}]'),
@@ -304,10 +296,18 @@ class Wordform(WordformBase):
     #TODO Include dialects into description
 
 
-class WordformSample(WordformBase):
-    """Class representing current wordform samples"""
+class DictWordform(models.Model):
+    source = models.ForeignKey(Source, null=True, blank=True)
+    wordform = models.ForeignKey(Wordform)
+    comment = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, editable=False)
 
-    informant = models.CharField(max_length=256)
+
+# TODO Will not work due to m2m-relation to source via DictWordform
+# class WordformSample(WordformBase):
+#     """Class representing current wordform samples"""
+#
+#     informant = models.CharField(max_length=256)
 
 
 class WordformOrder:
@@ -324,14 +324,23 @@ class Relation(LexemeRelation):
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='relation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='relation_snd_set')
     relation_type = models.CharField(max_length=32)
+    # source = models.ManyToManyField(Source, through='DictRelation')
+    # TODO Will not work due to m2m-relation to source isn't set
 
 
-class SemanticGroup(DictEntity):
+class SemanticGroup(models.Model):
     """ Class representing semantic groups
     """
     theme_m = models.ManyToManyField(Theme, null=True, blank=True)
     usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+
+
+class DictSemanticGroup(models.Model):
+    source = models.ForeignKey(Source, null=True, blank=True)
+    semantic_group = models.ForeignKey(SemanticGroup)
+    comment = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, editable=False)
 
 
 class Translation(LexemeRelation):
@@ -344,9 +353,17 @@ class Translation(LexemeRelation):
     semantic_group_2 = models.ForeignKey(SemanticGroup, related_name='translation_snd_set')
     wordform_1 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_fst_set')
     wordform_2 = models.ForeignKey(Wordform, null=True, blank=True, related_name='translation_snd_set')
+    source = models.ManyToManyField(Source, through='DictTranslation')
     #  TODO: may be these fields should be moved to another class, deliberately made for overlying dictionary
     # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
     # is_visible = models.BooleanField(default=True, editable=False)
+
+
+class DictTranslation(models.Model):
+    source = models.ForeignKey(Source, null=True, blank=True)
+    translation = models.ForeignKey(Translation)
+    comment = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, editable=False)
 
 
 # Project classes
@@ -515,7 +532,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return {'Dialect': 'dialect_m'}
 
     def known_fks(self):
-        return
+        return {'lexeme': self.lexeme.result}
 
     def known_m2ms(self):
         return
