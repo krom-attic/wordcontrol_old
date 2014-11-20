@@ -334,7 +334,7 @@ def parse_upload(request):
 
 def produce_project_model(project, model):
     src_obj = model.__name__
-    created_lexemes = []
+    created_objects = []
 
     for project_object in model.objects.filter(state='N').filter(project=project):
 
@@ -351,7 +351,7 @@ def produce_project_model(project, model):
                     dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
                                                                            src_field=project_field, project=project))
 
-        fields = {'language': project_object.col.language}
+        fields = project_object.known_fks()
         m2m_items = []
         for dict_item in dict_items:
             term_type = dict_item.term_type
@@ -363,26 +363,37 @@ def produce_project_model(project, model):
             else:
                 m2m_items.append(dict_item)
 
-        to_model = model.real_model()(**fields)
-        to_model.save()
+        model_object = model.real_model()(**fields)
+        model_object.save()
         project_object.state = 'P'
+        project_object.result = model_object
         project_object.save()
-        to_model.lexeme_parameter_m.add()
+
         for m2m_item in m2m_items:
             term_type = m2m_item.term_type
             m2m = get_model(APP_NAME, term_type).objects.get(pk=m2m_item.term_id)
             if term_type in model.fixed_m2ms().keys():
-                getattr(to_model, model.fixed_m2ms()[term_type]).add(m2m)
+                getattr(model_object, model.fixed_m2ms()[term_type]).add(m2m)
             elif term_type in model.param_m2ms().keys():
-                getattr(to_model, model.param_m2ms()[term_type]).add(m2m)
+                getattr(model_object, model.param_m2ms()[term_type]).add(m2m)
 
-        created_lexemes.append(to_model)
+        for known_m2m in model_object.known_m2ms():
+            if known_m2m == 'source':  # Isn't it beautiful?
+                dict_model = get_model(APP_NAME, 'Dict' + model_object.__name__)
 
-    return created_lexemes
+                dict_object = dict_model.create(source=known_m2m['source'], )
+            else:
+                model_object.dialect.add(known_m2m)
+
+
+
+        created_objects.append(model_object)
+
+    return created_objects
 
 
 def produce_project(project):
-    produce_project_model(project, models.ProjectLexeme)
+    # produce_project_model(project, models.ProjectLexeme)
     produce_project_model(project, models.ProjectWordform)
     # produce_project_model(project, models.ProjectSemanticGroup)
     # produce_project_model(project, models.ProjectTranslation)
