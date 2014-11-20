@@ -531,7 +531,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
 
     def known_m2ms(self):
-        return {'source': self.col.source, 'dialect': self.col.dialect}
+        return {'source': {'source': self.col.source, 'wordform': 'result here'}, 'dialect': self.col.dialect}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
