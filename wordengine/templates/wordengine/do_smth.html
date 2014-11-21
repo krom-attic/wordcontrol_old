@@ -1,9 +1,12 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}Do something{% endblock %}
 {% block pagebody %}
-    <form action="" method="post">
-        {% csrf_token %}
-        {{ smth_form.as_p }}
-        <input type="submit" value="Restore wordform" name="_restore_wordform" />
-    </form>
+    <h1>Some data</h1>
+        {{ some_data }}
+    <h1>Some form</h1>
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ some_form.as_p }}
+            <input type="submit" value="Submit" />
+        </form>
 {% endblock %}

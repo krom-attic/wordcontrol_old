@@ -351,7 +351,8 @@ def produce_project_model(project, model):
                     dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
                                                                            src_field=project_field, project=project))
 
-        fields = project_object.known_fks()
+        fields = project_object.known_fields()
+        fields.update(project_object.known_fks())
         m2m_items = []
         for dict_item in dict_items:
             term_type = dict_item.term_type
@@ -377,15 +378,16 @@ def produce_project_model(project, model):
             elif term_type in model.param_m2ms().keys():
                 getattr(model_object, model.param_m2ms()[term_type]).add(m2m)
 
-        for known_m2m in model_object.known_m2ms():
-            if known_m2m == 'source':  # Isn't it beautiful?
-                dict_model = get_model(APP_NAME, 'Dict' + model_object.__name__)
-
-                dict_object = dict_model.create(source=known_m2m['source'], )
+        for known_m2m in project_object.known_m2ms():
+            if isinstance(known_m2m, type):
+                fields = project_object.known_m2ms()[known_m2m]
+                m2m_through = known_m2m(**fields)
+                m2m_through.save()
+                # dict_model = get_model(APP_NAME, 'Dict' + model_object.__name__)
             else:
-                model_object.dialect.add(known_m2m)
-
-
+                m2m = getattr(model_object, known_m2m)
+                if not m2m.exists():
+                    m2m.add(project_object.known_m2ms()[known_m2m])
 
         created_objects.append(model_object)
 
@@ -394,8 +396,8 @@ def produce_project_model(project, model):
 
 def produce_project(project):
     # produce_project_model(project, models.ProjectLexeme)
-    produce_project_model(project, models.ProjectWordform)
-    # produce_project_model(project, models.ProjectSemanticGroup)
+    # produce_project_model(project, models.ProjectWordform)
+    produce_project_model(project, models.ProjectSemanticGroup)
     # produce_project_model(project, models.ProjectTranslation)
 
 

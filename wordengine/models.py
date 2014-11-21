@@ -466,8 +466,14 @@ class ProjectedModel (models.Model):
         project_fields.extend(cls.fixed_m2ms().values())
         return project_fields
 
+    def known_fields(self):
+        return {}
+
     def known_fks(self):
-        pass
+        return {}
+
+    def known_m2ms(self):
+        return {}
 
     class Meta:
         abstract = True
@@ -527,11 +533,16 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     def param_m2ms():
         return {'Dialect': 'dialect_m'}
 
+    def known_fields(self):
+        return {'spelling': self.spelling}
+
     def known_fks(self):
         return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
 
     def known_m2ms(self):
-        return {'source': {'source': self.col.source, 'wordform': 'result here'}, 'dialect': self.col.dialect}
+        return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
+                               'is_deleted': False},
+                'dialect_m': self.col.dialect}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):

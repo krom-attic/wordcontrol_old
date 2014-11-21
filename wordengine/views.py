@@ -25,15 +25,9 @@ class DoSmthWordformView(TemplateView):
     template_name = 'wordengine/do_smth.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'smth_form': self.some_object_class(), 'lex10': lex_10})
-
-    def post(self, request, *args, **kwargs):
-        if '_restore_wordform' in request.POST:
-            wordform_form = get_object_or_404(models.Wordform, pk=request.POST['given_id'])
-            wordform_form.is_deleted = False
-            wordform_form.save()
-        return redirect('wordengine:action_result')
-
+        some_form = self.some_object_class()
+        some_data = models.Lexeme.objects.get(pk=158).lexeme_parameter_m.exists()
+        return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
 
 class AddWordformView(TemplateView):
     """New word addition view
