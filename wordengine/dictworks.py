@@ -223,7 +223,8 @@ def parse_csv(request):
                                 comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
                 semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
-                                                              project=project, state='N', csvcell=csvcell)
+                                                              project=project, state='N', csvcell=csvcell,
+                                                              col=column_literal)
                 print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
@@ -241,6 +242,7 @@ def parse_csv(request):
                     if len(word_dialect) == 1:
                         # TODO Check if the rest of the string is correct
                         transl_dialect = word_dialect.pop().strip(']')
+                        # TODO Here transl_dialect must be split too!!!
                     else:
                         transl_dialect = ''
                     if len(cur_transl_split) == 1:
@@ -266,7 +268,8 @@ def parse_csv(request):
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
-                                                                  project=project, state='N', csvcell=csvcell)
+                                                                  project=project, state='N', csvcell=csvcell,
+                                                                  col=column_literal)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                     print(semantic_gr_trg)
@@ -325,59 +328,25 @@ def parse_upload(request):
 
 
 def produce_project_model(project, model):
-    src_obj = model.__name__
     created_objects = []
 
     for project_object in model.objects.filter(state='N').filter(project=project):
-
-        dict_items = []
-        for project_field in model.project_fields():
-            if project_field == 'params' and project_object.params:
-                real_params = restore_list(project_object.params)
-                for value in real_params:
-                    dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
-                                                                           src_field='params', project=project))
-            else:
-                value = getattr(project_object, project_field)
-                if value:
-                    dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
-                                                                           src_field=project_field, project=project))
-
-        fields = project_object.known_fields()
-        fields.update(project_object.known_fks())
-        m2m_items = []
-        for dict_item in dict_items:
-            term_type = dict_item.term_type
-            if term_type in model.fixed_fks().keys():
-                fields[model.fixed_fks()[term_type] + '_id'] = dict_item.term_id
-            elif term_type in model.param_fks().keys():
-                fields[model.param_fks()[term_type] + '_id'] = dict_item.term_id
-            else:
-                m2m_items.append(dict_item)
-
+        fields = project_object.fields()
         model_object = model.real_model()(**fields)
         model_object.save()
         project_object.state = 'P'
         project_object.result = model_object
         project_object.save()
 
-        for m2m_item in m2m_items:
-            term_type = m2m_item.term_type
-            m2m = get_model(APP_NAME, term_type).objects.get(pk=m2m_item.term_id)
-            if term_type in model.fixed_m2ms().keys():
-                getattr(model_object, model.fixed_m2ms()[term_type]).add(m2m)
-            elif term_type in model.param_m2ms().keys():
-                getattr(model_object, model.param_m2ms()[term_type]).add(m2m)
+        m2m_fields = project_object.m2m_fields()
+        for m2m_field in m2m_fields:
+            getattr(model_object, m2m_field).add(*m2m_fields[m2m_field])
 
-        for known_m2m in project_object.known_m2ms():
-            if isinstance(known_m2m, type):
-                fields = project_object.known_m2ms()[known_m2m]
-                m2m_through = known_m2m(**fields)
-                m2m_through.save()
-            else:
-                m2m = getattr(model_object, known_m2m)
-                if not m2m.exists():
-                    m2m.add(project_object.known_m2ms()[known_m2m])
+        m2m_thru_fields = project_object.m2m_thru_fields()
+        for m2m_thru_field in m2m_thru_fields:
+            fields = m2m_thru_fields[m2m_thru_field]
+            m2m_thru = m2m_thru_field(**fields)
+            m2m_thru.save()
 
         created_objects.append(model_object)
 
@@ -385,8 +354,8 @@ def produce_project_model(project, model):
 
 
 def produce_project(project):
-    # produce_project_model(project, models.ProjectLexeme)
-    # produce_project_model(project, models.ProjectWordform)
+    produce_project_model(project, models.ProjectLexeme)
+    produce_project_model(project, models.ProjectWordform)
     produce_project_model(project, models.ProjectSemanticGroup)
     # produce_project_model(project, models.ProjectTranslation)
 

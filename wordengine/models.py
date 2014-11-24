@@ -4,6 +4,7 @@ from wordengine.global_const import *
 from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 
 
 # System globals. Abstract
@@ -233,7 +234,6 @@ class TranslatedTerm(LanguageEntity):
 
 class DictEntity(models.Model):
     source = models.ForeignKey(Source, null=True, blank=True)
-    comment = models.TextField(blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
 
     class Meta:
@@ -302,6 +302,7 @@ class Wordform(WordformBase):
 
 class DictWordform(DictEntity):
     wordform = models.ForeignKey(Wordform)
+    comment = models.TextField(blank=True)
 
 
 # TODO Will not work due to m2m-relation to source via DictWordform
@@ -323,6 +324,7 @@ class SemanticGroup(models.Model):
     usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
     source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
+    comment = models.TextField(blank=True)
 
 
 class DictSemanticGroup(DictEntity):
@@ -441,62 +443,52 @@ class ProjectColumn(ProjectedEntity):
 
 class ProjectedModel (models.Model):
 
-    @staticmethod
-    def fixed_fks():
-        return {}
-
-    @staticmethod
-    def fixed_m2ms():
-        return {}
-
-    @staticmethod
-    def param_fks():
-        return {}
-
-    @staticmethod
-    def param_m2ms():
-        return {}
-
-    @classmethod
-    def project_fields(cls):
-        if cls.param_fks() or cls.param_m2ms():
-            project_fields = ['params']
+    @property
+    def params_list(self):
+        if self.params:
+            return restore_list(self.params)
         else:
-            project_fields = []
-        project_fields.extend(cls.fixed_fks().values())
-        project_fields.extend(cls.fixed_m2ms().values())
-        return project_fields
+            return []
 
-    def known_fields(self):
+    def fields(self):
         return {}
 
-    def known_fks(self):
+    def m2m_fields(self):
         return {}
 
-    def known_m2ms(self):
+    def m2m_thru_fields(self):
         return {}
 
     class Meta:
         abstract = True
 
 
-def get_from_project_dict(obj, field_value, term_type):
-    src_obj = type(obj).__name__
-    project = obj.project
-    if field_value:
-        value = restore_list(field_value)
-        dict_item = ProjectDictionary.objects.get(value=value, src_obj=src_obj, term_type=term_type, project=project)
+def get_from_project_dict(obj, value, term_type, escape_list=False):
+    if value:
+        src_obj = type(obj).__name__
+        project = obj.project
+        if escape_list:
+            value = value.pop()
 
-    # if project_field == 'params' and project_object.params:
-    #     real_params = restore_list(project_object.params)
-    #     for value in real_params:
-    #         dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
-    #                                                                src_field='params', project=project))
-    # else:
-    #     value = getattr(project_object, project_field)
-    #     if value:
-    #         dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
-    #                                                                src_field=project_field, project=project))
+        if isinstance(value, list):
+            dict_items = []
+            for real_value in value:
+                try:
+                    dict_items.append(ProjectDictionary.objects.get(value=real_value, src_obj=src_obj,
+                                                                    term_type=term_type, project=project).term_id)
+                except ObjectDoesNotExist:
+                    pass  # Really nothing to do
+        else:
+            try:
+                dict_items = ProjectDictionary.objects.get(value=value, src_obj=src_obj,
+                                                           term_type=term_type, project=project).term_id
+            except ObjectDoesNotExist:
+                return None
+
+    else:
+        return None
+
+    return dict_items
 
 
 class ProjectLexeme(ProjectedEntity, ProjectedModel):
@@ -513,23 +505,18 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
     def real_model():
         return Lexeme
 
-    # @staticmethod
-    # def fixed_fks():
-    #     return {'SyntacticCategory': 'syntactic_category'}
-    #
-    # @staticmethod
-    # def param_fks():
-    #     return {'Inflection': 'inflection'}
-    #
-    # @staticmethod
-    # def param_m2ms():
-    #     return {'LexemeParameter': 'lexeme_parameter_m'}
-    #
-    # def known_fks(self):
-    #     return {'language': self.col.language}
-
     def fields(self):
-        return {'syntactic_category': get_from_project_dict(self, self.syntactic_category, 'SyntacticCategory')}
+        fields = {'syntactic_category_id': get_from_project_dict(self, self.syntactic_category, 'SyntacticCategory'),
+                  'language': self.col.language}
+        if self.params_list:
+            fields['inflection'] = get_from_project_dict(self, self.params_list, 'Inflection', True)
+        return fields
+
+    def m2m_fields(self):
+        m2m_fields = {}
+        if self.params_list:
+            m2m_fields['lexeme_parameter_m'] = get_from_project_dict(self, self.params_list, 'LexemeParameter')
+        return m2m_fields
 
 
 class ProjectWordform(ProjectedEntity, ProjectedModel):
@@ -548,33 +535,21 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     def real_model():
         return Wordform
 
-    # @staticmethod
-    # def param_fks():
-    #     return {'GrammCategorySet': 'gramm_category_set'}
-    #
-    # @staticmethod
-    # def param_m2ms():
-    #     return {'Dialect': 'dialect_m'}
-    #
-    # def known_fields(self):
-    #     return {'spelling': self.spelling}
-    #
-    # def known_fks(self):
-    #     return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
-    #
-    # def known_m2ms(self):
-    #     return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
-    #                            'is_deleted': False},
-    #             'dialect_m': self.col.dialect}
-
     def fields(self):
-        return {'lexeme': self.lexeme.result, 'spelling': self.spelling,  'writing_system': self.col.writing_system,
-                'gramm_category_set': get_from_project_dict(self.params, 'GrammCategorySet')}
+        fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
+        if self.params_list:
+            fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
+        return fields
 
-    def fields_m2m(self):
-        return {'dialect_m': (get_from_project_dict(self.params, 'Dialect', True), self.col.dialect)}
+    def m2m_fields(self):
+        m2m_fields = {}
+        if self.params_list:
+            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list, 'Dialect')
+        if 'dialect_m' not in m2m_fields:
+            m2m_fields['dialect_m'] = [self.col.dialect_id]
+        return m2m_fields
 
-    def fields_m2m_thru(self):
+    def m2m_thru_fields(self):
         return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
                                'is_deleted': False}}
 
@@ -583,6 +558,7 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     params = models.CharField(max_length=256, blank=True)  # For the source side there can be a dialect or a theme
     dialect = models.CharField(max_length=256, blank=True)  # For the target side it is only a dialect possible
     comment = models.TextField(blank=True)
+    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
     csvcell = models.ForeignKey(CSVCell)
     result = models.ForeignKey(SemanticGroup, null=True, blank=True)
 
@@ -593,20 +569,27 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     def real_model():
         return SemanticGroup
 
+    @property
+    def dialect_list(self):
+        if self.dialect:
+            return restore_list(self.dialect)
+        else:
+            return []
+
     def fields(self):
-        return {self.comment: 'comment'}
+        return {'comment': self.comment}
 
-    def fields_m2m(self):
-        return {self.dialect: 'dialect_m', self.params: {'Dialect': 'dialect_m', 'Theme': 'theme_m',
-                                                         'UsageConstraint': 'usage_constraint_m'}}
+    def m2m_fields(self):
+        m2m_fields = {}
+        if self.dialect_list:
+            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list.extend(self.dialect_list), 'Dialect')
+        if self.params_list:
+            m2m_fields['theme_m'] = get_from_project_dict(self, self.params_list, 'Theme')
+            m2m_fields['usage_constraint_m'] = get_from_project_dict(self, self.params_list, 'UsageConstraint')
+        return m2m_fields
 
-    # @staticmethod
-    # def fixed_m2ms():
-    #     return {'Dialect': 'dialect_m'}
-    #
-    # @staticmethod
-    # def param_m2ms():
-    #     return {'Dialect': 'dialect_m', 'Theme': 'theme_m', 'UsageConstraint': 'usage_constraint_m'}
+    def m2m_thru_fields(self):
+        return {DictSemanticGroup: {'source': self.col.source, 'semantic_group': self.result, 'is_deleted': False}}
 
 
 class ProjectTranslation(ProjectedEntity, ProjectedModel):
