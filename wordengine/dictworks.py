@@ -1,5 +1,6 @@
 from wordengine import models
 from wordengine.global_const import *
+from wordengine.uniworks import *
 from collections import defaultdict
 import csv
 import codecs
@@ -8,7 +9,6 @@ from django.db.models.loading import get_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 import datetime
 import re
-import ast
 
 
 # Common functions here
@@ -284,14 +284,6 @@ def parse_csv(request):
     return project
 
 
-def restore_param_list(value):
-    try:
-        restored_list = ast.literal_eval(value)  # TODO Fails on spaces with SyntaxError!
-    except ValueError:  # If not evaluable than it should be a string
-        restored_list = [value]
-    return restored_list
-
-
 def to_project_dict(project, model, field):
     src_obj = model.__name__
     fixed_keys = model.fixed_fks()
@@ -304,7 +296,7 @@ def to_project_dict(project, model, field):
     for value in model.objects.all().values(field).distinct():
         print(value)
         if value[field]:
-            real_value = restore_param_list(value[field])
+            real_value = restore_list(value[field])
             for sg_value in real_value:
                 pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, src_field=field, project=project,
                                               state='N', term_type=term_type)
@@ -341,7 +333,7 @@ def produce_project_model(project, model):
         dict_items = []
         for project_field in model.project_fields():
             if project_field == 'params' and project_object.params:
-                real_params = restore_param_list(project_object.params)
+                real_params = restore_list(project_object.params)
                 for value in real_params:
                     dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
                                                                            src_field='params', project=project))
@@ -358,7 +350,6 @@ def produce_project_model(project, model):
             term_type = dict_item.term_type
             if term_type in model.fixed_fks().keys():
                 fields[model.fixed_fks()[term_type] + '_id'] = dict_item.term_id
-                # Useful when getting a model is excessive. But is it safe?
             elif term_type in model.param_fks().keys():
                 fields[model.param_fks()[term_type] + '_id'] = dict_item.term_id
             else:
@@ -383,7 +374,6 @@ def produce_project_model(project, model):
                 fields = project_object.known_m2ms()[known_m2m]
                 m2m_through = known_m2m(**fields)
                 m2m_through.save()
-                # dict_model = get_model(APP_NAME, 'Dict' + model_object.__name__)
             else:
                 m2m = getattr(model_object, known_m2m)
                 if not m2m.exists():

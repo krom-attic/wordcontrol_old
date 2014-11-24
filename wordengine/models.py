@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib import auth
 from wordengine.global_const import *
+from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
@@ -409,7 +410,7 @@ class ImgData(ProjectedEntity):
 class ProjectDictionary(ProjectedEntity):
     value = models.CharField(max_length=256)
     src_obj = models.CharField(max_length=256)
-    src_field = models.CharField(max_length=256)
+    src_field = models.CharField(max_length=256, null=True, blank=True)
 
     term_type = models.CharField(max_length=128, null=True, blank=True)
     term_id = models.PositiveIntegerField(null=True, blank=True)
@@ -418,7 +419,7 @@ class ProjectDictionary(ProjectedEntity):
     # content_object = GenericForeignKey('term_type', 'term_id')
 
     class Meta:
-        unique_together = ('value', 'src_obj', 'src_field', 'project')
+        unique_together = ('value', 'src_obj', 'term_type', 'project')
 
 
 class ProjectColumn(ProjectedEntity):
@@ -479,6 +480,25 @@ class ProjectedModel (models.Model):
         abstract = True
 
 
+def get_from_project_dict(obj, field_value, term_type):
+    src_obj = type(obj).__name__
+    project = obj.project
+    if field_value:
+        value = restore_list(field_value)
+        dict_item = ProjectDictionary.objects.get(value=value, src_obj=src_obj, term_type=term_type, project=project)
+
+    # if project_field == 'params' and project_object.params:
+    #     real_params = restore_list(project_object.params)
+    #     for value in real_params:
+    #         dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
+    #                                                                src_field='params', project=project))
+    # else:
+    #     value = getattr(project_object, project_field)
+    #     if value:
+    #         dict_items.append(models.ProjectDictionary.objects.get(value=value, src_obj=src_obj,
+    #                                                                src_field=project_field, project=project))
+
+
 class ProjectLexeme(ProjectedEntity, ProjectedModel):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
@@ -493,20 +513,23 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
     def real_model():
         return Lexeme
 
-    @staticmethod
-    def fixed_fks():
-        return {'SyntacticCategory': 'syntactic_category'}
+    # @staticmethod
+    # def fixed_fks():
+    #     return {'SyntacticCategory': 'syntactic_category'}
+    #
+    # @staticmethod
+    # def param_fks():
+    #     return {'Inflection': 'inflection'}
+    #
+    # @staticmethod
+    # def param_m2ms():
+    #     return {'LexemeParameter': 'lexeme_parameter_m'}
+    #
+    # def known_fks(self):
+    #     return {'language': self.col.language}
 
-    @staticmethod
-    def param_fks():
-        return {'Inflection': 'inflection'}
-
-    @staticmethod
-    def param_m2ms():
-        return {'LexemeParameter': 'lexeme_parameter_m'}
-
-    def known_fks(self):
-        return {'language': self.col.language}
+    def fields(self):
+        return {'syntactic_category': get_from_project_dict(self, self.syntactic_category, 'SyntacticCategory')}
 
 
 class ProjectWordform(ProjectedEntity, ProjectedModel):
@@ -525,24 +548,35 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     def real_model():
         return Wordform
 
-    @staticmethod
-    def param_fks():
-        return {'GrammCategorySet': 'gramm_category_set'}
+    # @staticmethod
+    # def param_fks():
+    #     return {'GrammCategorySet': 'gramm_category_set'}
+    #
+    # @staticmethod
+    # def param_m2ms():
+    #     return {'Dialect': 'dialect_m'}
+    #
+    # def known_fields(self):
+    #     return {'spelling': self.spelling}
+    #
+    # def known_fks(self):
+    #     return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
+    #
+    # def known_m2ms(self):
+    #     return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
+    #                            'is_deleted': False},
+    #             'dialect_m': self.col.dialect}
 
-    @staticmethod
-    def param_m2ms():
-        return {'Dialect': 'dialect_m'}
+    def fields(self):
+        return {'lexeme': self.lexeme.result, 'spelling': self.spelling,  'writing_system': self.col.writing_system,
+                'gramm_category_set': get_from_project_dict(self.params, 'GrammCategorySet')}
 
-    def known_fields(self):
-        return {'spelling': self.spelling}
+    def fields_m2m(self):
+        return {'dialect_m': (get_from_project_dict(self.params, 'Dialect', True), self.col.dialect)}
 
-    def known_fks(self):
-        return {'lexeme': self.lexeme.result, 'writing_system': self.col.writing_system}
-
-    def known_m2ms(self):
+    def fields_m2m_thru(self):
         return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
-                               'is_deleted': False},
-                'dialect_m': self.col.dialect}
+                               'is_deleted': False}}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
@@ -559,13 +593,20 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     def real_model():
         return SemanticGroup
 
-    @staticmethod
-    def fixed_m2ms():
-        return {'Dialect': 'dialect_m'}
+    def fields(self):
+        return {self.comment: 'comment'}
 
-    @staticmethod
-    def param_m2ms():
-        return {'Dialect': 'dialect_m', 'Theme': 'theme_m', 'UsageConstraint': 'usage_constraint_m'}
+    def fields_m2m(self):
+        return {self.dialect: 'dialect_m', self.params: {'Dialect': 'dialect_m', 'Theme': 'theme_m',
+                                                         'UsageConstraint': 'usage_constraint_m'}}
+
+    # @staticmethod
+    # def fixed_m2ms():
+    #     return {'Dialect': 'dialect_m'}
+    #
+    # @staticmethod
+    # def param_m2ms():
+    #     return {'Dialect': 'dialect_m', 'Theme': 'theme_m', 'UsageConstraint': 'usage_constraint_m'}
 
 
 class ProjectTranslation(ProjectedEntity, ProjectedModel):
