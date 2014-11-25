@@ -364,7 +364,7 @@ class LanguageSetupView(TemplateView):
 class ProjectListView(TemplateView):
     template_name = 'wordengine/project_list.html'
     project_list_form_class = forms.ProjectListForm
-    upload_form_class = forms.UploadFileForm
+    upload_form_class = forms.ProjectUploadForm
 
     def get(self, request, *args, **kwargs):
         project_list_form = self.project_list_form_class(request.GET)
@@ -386,7 +386,7 @@ class ProjectListView(TemplateView):
         project_list_form = self.project_list_form_class()
         upload_form = self.upload_form_class(request.POST, request.FILES)
         if upload_form.is_valid():
-            project_id = parse_upload(request)
+            project_id = parse_upload(request, 'check')
             return redirect('wordengine:project_setup', project_id)
         else:
             # TODO Add error message
@@ -436,6 +436,7 @@ class ProjectSetupView(TemplateView):
             # project_columns.save()
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
+                # TODO Change project column's state to "P"
                 pr_col_setup_set.save()
         if '_types_save' in request.POST:
             untyped_param_form_set = self.UntypedParamFormSet(request.POST)

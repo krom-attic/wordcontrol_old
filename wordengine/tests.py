@@ -22,3 +22,12 @@ class ProjectDictTest(TestCase):
         Здесь нужно будет проверить, что Лексема отдаёт правильные поля для автоматической обработки
         """
         pass
+
+
+class ImportTest(TestCase):
+    def test_csvfile_equality(self):
+        """
+        Here add csv export for a project, so to test that parsed file is identical to its input
+        @return:
+        """
+        pass

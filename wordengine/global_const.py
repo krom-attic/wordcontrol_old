@@ -1,3 +1,5 @@
+import re
+
 APP_NAME = ('wordengine')
 
 
@@ -49,3 +51,9 @@ TERM_TYPES = {('ProjectLexeme', 'syntactic_category'): 'SyntacticCategory',
 REL_DIRECTION = (('F', 'Forward'),
                  ('B', 'Backward'),
                  ('D', 'Duplex'))
+
+SPECIAL_CHARS = ('[', ']', '"', '|')
+
+# Common regexps
+
+RE_EXT_COMM = re.compile(r'(\*\d+:)')

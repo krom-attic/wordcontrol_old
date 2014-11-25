@@ -5,6 +5,7 @@ from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+import string
 
 
 # System globals. Abstract
@@ -389,11 +390,18 @@ class Project(models.Model):
 
 
 class CSVCell(models.Model):
-    row = models.IntegerField()
-    col = models.SmallIntegerField()
+    row = models.PositiveIntegerField()
+    col = models.PositiveSmallIntegerField()
     value = models.TextField(blank=True)
     project = models.ForeignKey(Project)
 
+    @property
+    def excel_cell_code(self):
+        # Here may occur an out-of-range error, but it is not rational to handle it
+        return string.ascii_uppercase[self.col] + str(self.row+1)
+
+    def __str__(self):
+        return 'Cell {0} ({1})'.format(self.excel_cell_code, self.value)
 
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
@@ -439,7 +447,7 @@ class ProjectDictionary(ProjectedEntity):
 class ProjectColumn(ProjectedEntity):
     language_l = models.CharField(max_length=256)
     dialect_l = models.CharField(max_length=256, null=True, blank=True)
-    source_l = models.CharField(max_length=256, null=True, blank=True)
+    # source_l = models.CharField(max_length=256, null=True, blank=True)
     writing_system_l = models.CharField(max_length=256, null=True, blank=True)
     processing_l = models.CharField(max_length=256, null=True, blank=True)
     num = models.SmallIntegerField()
@@ -573,7 +581,7 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     params = models.CharField(max_length=256, blank=True)  # For the source side there can be a dialect or a theme
     dialect = models.CharField(max_length=256, blank=True)  # For the target side it is only a dialect possible
     comment = models.TextField(blank=True)
-    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
+    # col = models.ForeignKey(ProjectColumn, null=True, blank=True)
     csvcell = models.ForeignKey(CSVCell)
     result = models.ForeignKey(SemanticGroup, null=True, blank=True)
 
@@ -614,8 +622,8 @@ class ProjectTranslation(ProjectedEntity, ProjectedModel):
     direction = models.SmallIntegerField()
     semantic_group_1 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_fst_set')
     semantic_group_2 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_snd_set')
-    wordform_1 = models.ForeignKey(ProjectWordform, related_name='translation_fst_set')
-    wordform_2 = models.ForeignKey(ProjectWordform, related_name='translation_snd_set')
+    # wordform_1 = models.ForeignKey(ProjectWordform, related_name='translation_fst_set')
+    # wordform_2 = models.ForeignKey(ProjectWordform, related_name='translation_snd_set')
     result = models.ForeignKey(Translation, null=True, blank=True)
 
     # def __str__(self):
