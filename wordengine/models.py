@@ -21,7 +21,6 @@ class Change(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
-
     class Meta:
         abstract = True
 
@@ -114,8 +113,14 @@ class GrammCategory(Term):
 class Language(Term):
     """Class represents languages present in the system"""
 
-    syntactic_category_m = models.ManyToManyField(SyntacticCategory, null=True, blank=True)
+    syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
+                                                  through_fields=('language', 'syntactic_category'),
+                                                  null=True, blank=True, related_name='synt_cat_set')
     iso_code = models.CharField(max_length=8)  # ISO 639-3
+
+    @property
+    def main_gr_cat(self, synt_cat):
+        return self.synt_cat_set.get(syntactic_category=synt_cat).main_gramm_category_set
 
 
 # Language-dependant classes. Abstract
@@ -160,26 +165,31 @@ class Source(Term, LanguageRelated):
     """Class representing sources of language information"""
 
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
-    source_parent = models.ForeignKey('self', null=True, blank=True)
+
+
+class Processing(Term):
     processing_type = models.CharField(choices=PROC_TYPE, max_length=2)
-    processing_comment = models.TextField(blank=True)
 
-
-# TODO Source handling seems to be lame
 
 class GrammCategorySet(LanguageEntity):
     """Class represents possible composite sets of grammar categories and its order in a given language
     """
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_m = models.ManyToManyField(GrammCategory)  # TODO: Fix string display due to this change
+    gramm_category_m = models.ManyToManyField(GrammCategory)
     position = models.SmallIntegerField(null=True, blank=True)
 
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_multi.all())
+    # def __str__(self):
+    #         return ' '.join(str(s) for s in self.gramm_category_m.all())
 
     class Meta:
         unique_together = ('language', 'position')
+
+
+class SyntCatsInLanguage(models.Model):
+    language = models.ForeignKey(Language)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
 
 
 class Inflection(LanguageEntity):
@@ -233,7 +243,8 @@ class TranslatedTerm(LanguageEntity):
 
 
 class DictEntity(models.Model):
-    source = models.ForeignKey(Source, null=True, blank=True)
+    source = models.ForeignKey(Source)
+    processing = models.ForeignKey(Processing, null=True, blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
 
     class Meta:
@@ -371,6 +382,7 @@ class Project(models.Model):
     user_uploader = models.ForeignKey(auth.models.User, editable=False)
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
+    source = models.ForeignKey(Source, null=True, blank=True)
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
@@ -435,7 +447,7 @@ class ProjectColumn(ProjectedEntity):
 
     language = models.ForeignKey(Language, null=True, blank=True)
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
-    source = models.ForeignKey(Source, null=True, blank=True)
+    # source = models.ForeignKey(Source, null=True, blank=True)
     writing_system = models.ForeignKey(WritingSystem, null=True, blank=True)
     processing_type = models.CharField(choices=PROC_TYPE, max_length=2, null=True, blank=True)
     processing_comment = models.TextField(blank=True)
@@ -539,6 +551,9 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
         if self.params_list:
             fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
+        if 'gramm_category_set_id' not in fields:
+            fields['gramm_category_set_id'] = self.col.language.main_gr_cat(self.lexeme.result.syntactic_category)
+
         return fields
 
     def m2m_fields(self):
@@ -550,7 +565,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return m2m_fields
 
     def m2m_thru_fields(self):
-        return {DictWordform: {'source': self.col.source, 'wordform': self.result, 'comment': self.comment,
+        return {DictWordform: {'source': self.project.source, 'wordform': self.result, 'comment': self.comment,
                                'is_deleted': False}}
 
 
@@ -582,14 +597,15 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     def m2m_fields(self):
         m2m_fields = {}
         if self.dialect_list:
-            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list.extend(self.dialect_list), 'Dialect')
+            m2m_fields['dialect_m'] = get_from_project_dict(self, self.dialect_list, 'Dialect')
         if self.params_list:
+            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list, 'Dialect')
             m2m_fields['theme_m'] = get_from_project_dict(self, self.params_list, 'Theme')
             m2m_fields['usage_constraint_m'] = get_from_project_dict(self, self.params_list, 'UsageConstraint')
         return m2m_fields
 
     def m2m_thru_fields(self):
-        return {DictSemanticGroup: {'source': self.col.source, 'semantic_group': self.result, 'is_deleted': False}}
+        return {DictSemanticGroup: {'source': self.project.source, 'semantic_group': self.result, 'is_deleted': False}}
 
 
 class ProjectTranslation(ProjectedEntity, ProjectedModel):
@@ -598,8 +614,8 @@ class ProjectTranslation(ProjectedEntity, ProjectedModel):
     direction = models.SmallIntegerField()
     semantic_group_1 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_fst_set')
     semantic_group_2 = models.ForeignKey(ProjectSemanticGroup,  related_name='translation_snd_set')
-    bind_wf_1 = models.ForeignKey(ProjectWordform, related_name='translation_fst_set')
-    bind_wf_2 = models.ForeignKey(ProjectWordform, related_name='translation_snd_set')
+    wordform_1 = models.ForeignKey(ProjectWordform, related_name='translation_fst_set')
+    wordform_2 = models.ForeignKey(ProjectWordform, related_name='translation_snd_set')
     result = models.ForeignKey(Translation, null=True, blank=True)
 
     # def __str__(self):
@@ -609,3 +625,11 @@ class ProjectTranslation(ProjectedEntity, ProjectedModel):
     @staticmethod
     def real_model():
         return Translation
+
+    def fields(self):
+        return {'lexeme_1': self.lexeme_1.result, 'lexeme_2': self.lexeme_2.result, 'direction': self.direction,
+                'semantic_group_1': self.semantic_group_1.result, 'semantic_group_2': self.semantic_group_2.result,
+                'wordform_1': self.wordform_1.result, 'wordform_2': self.wordform_2.result}
+
+    def m2m_thru_fields(self):
+        return {DictTranslation: {'source': self.project.source, 'translation': self.result, 'is_deleted': False}}

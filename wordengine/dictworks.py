@@ -99,17 +99,13 @@ def parse_csv(request):
                 csvcell = models.CSVCell(row=1, col=colnum+2, value=col, project=project)
                 csvcell.save()
 
-                source = None
                 writing_system = None
                 dialect = None
                 processing = None
 
-                col_split = col.strip().split('@', 1)
+                col_split = col.strip().split('|', 1)
                 if len(col_split) == 2:
-                    source_proc = col_split.pop().split('|', 1)
-                    if len(source_proc) == 2:
-                        processing = source_proc.pop().strip()
-                    source = source_proc.pop().strip('] ')
+                    processing = col_split.pop().strip()
                 lang_dialect_ws = col_split.pop().split('[', 1)
                 if len(lang_dialect_ws) == 2:
                     writing_system = lang_dialect_ws.pop().strip('] ')
@@ -118,9 +114,9 @@ def parse_csv(request):
                     dialect = lang_dialect.pop().strip(') ')
                 language = lang_dialect.pop().strip()
 
-                column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, source_l=source,
-                                                             num=colnum+2, writing_system_l=writing_system, state='N',
-                                                             project=project, csvcell=csvcell, processing_l=processing)
+                column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum+2,
+                                                      writing_system_l=writing_system, state='N', project=project,
+                                                      csvcell=csvcell, processing_l=processing)
                 print('Column header: ')
                 print(column_literal)
                 column_literal.save()
@@ -223,8 +219,7 @@ def parse_csv(request):
                                 comment.replace('*'+str(n_comm)+':', '"'+ext_comm_split[n_comm].strip()+'"')
 
                 semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
-                                                              project=project, state='N', csvcell=csvcell,
-                                                              col=column_literal)
+                                                              project=project, state='N', csvcell=csvcell)
                 print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                 print(semantic_gr_src)
                 semantic_gr_src.save()
@@ -268,8 +263,7 @@ def parse_csv(request):
                     wordform.save()
 
                     semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
-                                                                  project=project, state='N', csvcell=csvcell,
-                                                                  col=column_literal)
+                                                                  project=project, state='N', csvcell=csvcell)
 
                     print('row: ' + str(rownum) + ', col: ' + str(colnum+2) + ' (Semantic group)')
                     print(semantic_gr_trg)
@@ -331,12 +325,13 @@ def produce_project_model(project, model):
     created_objects = []
 
     for project_object in model.objects.filter(state='N').filter(project=project):
+
+        transaction.set_autocommit(False)
+
         fields = project_object.fields()
         model_object = model.real_model()(**fields)
         model_object.save()
-        project_object.state = 'P'
         project_object.result = model_object
-        project_object.save()
 
         m2m_fields = project_object.m2m_fields()
         for m2m_field in m2m_fields:
@@ -348,6 +343,11 @@ def produce_project_model(project, model):
             m2m_thru = m2m_thru_field(**fields)
             m2m_thru.save()
 
+        project_object.state = 'P'
+        project_object.save()
+
+        transaction.set_autocommit(True)
+
         created_objects.append(model_object)
 
     return created_objects
@@ -357,104 +357,17 @@ def produce_project(project):
     produce_project_model(project, models.ProjectLexeme)
     produce_project_model(project, models.ProjectWordform)
     produce_project_model(project, models.ProjectSemanticGroup)
-    # produce_project_model(project, models.ProjectTranslation)
+    produce_project_model(project, models.ProjectTranslation)
+    project.state = 'P'
+    project.save()
+    return None
 
 
-# TODO Delete it
-def import_data():
-    added_translations = []
-    transaction.set_autocommit(False)
-    language_source = models.Language.objects.get(pk=request.POST['language_1'])
-    language_target = (models.Language.objects.get(pk=request.POST['language_2']),
-                       models.Language.objects.get(pk=request.POST['language_2']),
-                       models.Language.objects.get(pk=request.POST['language_2']))  # TODO Should get real languages
-    source_translation = models.Source.objects.get(pk=request.POST['source_translation'])
-    WORD_SOURCES = {0: None, 1: source_translation}
-
-    source_1 = WORD_SOURCES.get(request.POST['source_1'])
-    source_2 = WORD_SOURCES.get(request.POST['source_2'])
-    # TODO Здесь нужно получить перечень систем письма и диалектов для каждого столбца
-    # try:
-    #     writing_system = models.WritingSystem.objects.get(pk=request.POST['writing_system_???'])
-    # except ValueError:
-    #     writing_system = None
-    writing_system_stub = models.WritingSystem.objects.get(pk=1)
-#     try:
-#         dialect_default = models.Dialect.objects.get(pk=request.POST['dialect_default_???'])
-#     except ValueError:
-#         dialect_default = None
-
-    # synt_cat = models.SyntacticCategory.objects.get(term_abbr=lex_param[0])
-                    # inflection = models.Inflection.objects.get(value=lex_param[1])  # TODO Trim right bracket
-
-
-    try:
-        main_gr_cat_1 = models.GrammCategorySet.objects.filter(language=language_source,
-                                                               syntactic_category=synt_cat)\
-            .order_by('position').first()
-    except ObjectDoesNotExist:
-        main_gr_cat_1 = None
-                    # TODO Here add dialect and source
-#                     if current_wordform[1]:
-#                         dialect = models.Dialect.objects.get(term_abbr=current_wordform[1],  # TODO Add import error
-#                                                              language=current_row_params[2][0].language)
-#                     else:
-#                         dialect = current_row_params[2][2]
-#                     try:
-#                         wordform.dialect_multi.add(dialect)
-#                     except IntegrityError:
-#                         pass  # Nothing to do if dialect isn't specified anywhere
-#                     try:
-#                         wordform.source.add(current_row_params[2][3])
-#                     except IntegrityError:
-#                         pass  # Nothing to do if source isn't specified anywhere
+# TODO Log every change - overload save() method? (Add dict_change)
 #                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
 #                                                     object_id=wordform.id)
 #                     dict_change.save()
 
-#  TODO  WTF vvvvv ?????
-#         if lexeme_1.wordform_set.first():
-#             current_wordforms = lexeme_1.wordform_set
-#         else:
-#             try:
-#                 for wordform in current_wordforms.all():
-#                     wordform.pk = None
-#                     wordform.lexeme = lexeme_1
-#                     wordform.save()
-#             except UnboundLocalError:
-#                 pass  # TODO Handle blank first wordform error
-#         # Does it need to be saved after "add"?
-
-    lexeme_trg = models.Lexeme(language=language_target[i],
-                               syntactic_category=synt_cat)
-    # lexeme_trg.save()
-    print(lexeme_trg)
-    # try:
-    #     main_gr_cat_2 = models.GrammCategorySet.objects.filter(language=language_target[i],
-    #                                                            syntactic_category=synt_cat)\
-    #         .order_by('position').first()
-    # except ObjectDoesNotExist:
-    #     main_gr_cat_2 = None
-
-    relation = models.LexemeRelation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg)
-    # relation.save()
-
-    semantic_group_src = models.SemanticGroup()  # TODO Here should split input
-    semantic_group_trg = models.SemanticGroup()  # TODO Also add sources??
-
-    # TODO Add persisent wordform link
-    translation = models.Translation(lexeme_relation=relation, direction=1, semantic_group_1=semantic_group_src,
-                                     semantic_group_2=semantic_group_trg, is_visible=True)
-    # translation.save()
-
-    # translation.source.add(source_translation)
-
-    # TODO Log every change - overload save() method?
     # dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
     #                                 object_id=translation.id)
     # dict_change.save()
-    added_translations.append(translation)
-    print(translation)
-
-#     # TODO Add form for commenting and duplicates resolution
-#     return added_translations

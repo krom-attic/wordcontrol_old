@@ -74,6 +74,10 @@ class UploadFileForm(forms.Form):
     file = forms.FileField()
 
 
+class ProjectUploadForm(UploadFileForm):
+    source = forms.ModelChoiceField(queryset=models.Source.objects.all())
+
+
 class ProjectListForm(forms.Form):
     project = forms.ModelChoiceField(queryset=models.Project.objects.all())
 

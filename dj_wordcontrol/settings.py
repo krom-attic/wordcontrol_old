@@ -138,25 +138,57 @@ INSTALLED_APPS = (
 
 )
 
+# Sample, described below, is overridden!!
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue'
         }
+        # Above are default Django filters, below are custom
     },
+    # 'formatters': {
+    #     'verbose': {
+    #         'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+    #     },
+    #     'simple': {
+    #         'format': '%(levelname)s %(message)s'
+    #     },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'null': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_false'],
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        },
+        # Above are default Django handlers, below are custom
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_DIR, 'debug.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5
+        },
     },
     'loggers': {
         'django.request': {
@@ -164,6 +196,12 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'django': {
+            'handlers': ['console', 'null', 'file'],  # Default logger with 'file' handler added
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        # Above are default Django loggers, below are custom
     }
 }
 
