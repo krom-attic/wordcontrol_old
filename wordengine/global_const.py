@@ -52,7 +52,7 @@ REL_DIRECTION = (('F', 'Forward'),
                  ('B', 'Backward'),
                  ('D', 'Duplex'))
 
-SPECIAL_CHARS = ('[', ']', '"', '|')
+SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 # Common regexps
 

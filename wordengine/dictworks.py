@@ -83,7 +83,7 @@ def check_cell_for_errors(errors, csvcell, fields_to_check):
     return errors
 
 
-def parse_csv_header(project, job, errors, row):
+def parse_csv_header(project, errors, row):
 
     source_language = None
     lang_src_cols = []
@@ -114,8 +114,7 @@ def parse_csv_header(project, job, errors, row):
         column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum+1,
                                               writing_system_l=writing_system, processing_l=processing,
                                               state='N', project=project, csvcell=csvcell)
-        if job == 'save':
-            column_literal.save()
+        column_literal.save()
 
         # First column is treated as source language
         if not source_language:
@@ -153,7 +152,7 @@ def get_ext_comments_from_csvcell(project, errors, rownum, row):
     return ext_comments, errors
 
 
-def get_lexeme_from_csvcell(project, job, errors, rownum, lexeme_literal, col):
+def get_lexeme_from_csvcell(project, errors, rownum, lexeme_literal, col):
 
     csvcell = models.CSVCell(row=rownum, col=0, value=lexeme_literal, project=project)
     csvcell.save()
@@ -169,13 +168,12 @@ def get_lexeme_from_csvcell(project, job, errors, rownum, lexeme_literal, col):
 
     lexeme_src = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=project, state='N',
                                       col=col, csvcell=csvcell)
-    if job == 'save':
-        lexeme_src.save()
+    lexeme_src.save()
 
     return lexeme_src, errors
 
 
-def get_wordforms_from_csvcell(project, job, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments):
+def get_wordforms_from_csvcell(project, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments):
 
     for colnum, column_literal in lang_src_cols:
         lexeme_wordforms = row[colnum]
@@ -208,8 +206,7 @@ def get_wordforms_from_csvcell(project, job, errors, rownum, row, lang_src_cols,
                                                       params=params, project=project, state='N',
                                                       col=column_literal, csvcell=csvcell)
 
-                    if job == 'save':
-                        wordform.save()
+                    wordform.save()
 
                     # if not first_wordform:
                     #     first_wordform = wordform
@@ -217,7 +214,7 @@ def get_wordforms_from_csvcell(project, job, errors, rownum, row, lang_src_cols,
     return errors
 
 
-def get_translations_from_csvcell(project, job, errors, rownum, row, lang_trg_cols, lexeme_src, ext_comments):
+def get_translations_from_csvcell(project, errors, rownum, row, lang_trg_cols, lexeme_src, ext_comments):
 
     for colnum, column_literal in lang_trg_cols:  # Iterate through multiple target languages
         lexeme_translations = row[colnum]
@@ -245,8 +242,7 @@ def get_translations_from_csvcell(project, job, errors, rownum, row, lang_trg_co
 
             errors = check_cell_for_errors(errors, csvcell, (group_params, group_comment))
 
-            if job == 'save':
-                semantic_gr_src.save()
+            semantic_gr_src.save()
 
             for current_transl in lex_transl_split.pop().split('|'):
                 cur_transl_split = current_transl.split('"', 1)  # ( [params] word [dialect] ), (comment")
@@ -284,15 +280,15 @@ def get_translations_from_csvcell(project, job, errors, rownum, row, lang_trg_co
 
                 errors = check_cell_for_errors(errors, csvcell, (params, spelling, transl_dialect, transl_comment))
 
-                if job == 'save':
-                    lexeme_trg.save()
-                    wordform.save()
-                    semantic_gr_trg.save()
-                    translation.save()
+                lexeme_trg.save()
+                wordform.save()
+                semantic_gr_trg.save()
+                translation.save()
+
     return errors
 
 
-def parse_csv(request, job):
+def parse_csv(request):
     """
     @param request:
     @return:
@@ -315,7 +311,7 @@ def parse_csv(request, job):
 
         if rownum == 0:
             # Header must present, nothing to check
-            lang_src_cols, lang_trg_cols, errors = parse_csv_header(project, job, errors, row)
+            lang_src_cols, lang_trg_cols, errors = parse_csv_header(project, errors, row)
             continue
 
         if row[-1]:
@@ -327,19 +323,19 @@ def parse_csv(request, job):
         lexeme_literal = row[0]
         if lexeme_literal:  # Check if a new lexeme is in the row
             # Lexemes of a source language are bound to the first column with wordforms
-            lexeme_src, errors = get_lexeme_from_csvcell(project, job, errors, rownum,
+            lexeme_src, errors = get_lexeme_from_csvcell(project, errors, rownum,
                                                          lexeme_literal, lang_src_cols[0][1])
         else:
             if not lexeme_src:
                 errors[row] += 'No lexeme in the row\r\n'
                 continue
 
-        errors = get_wordforms_from_csvcell(project, job, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments)
+        errors = get_wordforms_from_csvcell(project, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments)
         # TODO How to choose a wordform to bind with lexemes and translations?
         # TODO At least one wordform of a lexeme must present
         # TODO Should I bind wordforms of identical origination, but processed differently?
 
-        errors = get_translations_from_csvcell(project, job, errors, rownum, row, lang_trg_cols, lexeme_src, ext_comments)
+        errors = get_translations_from_csvcell(project, errors, rownum, row, lang_trg_cols, lexeme_src, ext_comments)
         # TODO Should I warn if no translations found?
 
     return project, errors
@@ -377,15 +373,12 @@ def fill_project_dict(project):
     return None
 
 
-def parse_upload(request, job):
+def parse_upload(request):
 
-    project, errors = parse_csv(request, job)
-    if job == 'save':
-        fill_project_dict(project)
+    project, errors = parse_csv(request)
+    fill_project_dict(project)
 
-    for key, value in errors.items():
-        print(key, ': ', value)
-    return project.id
+    return project.id, errors
 
 
 def produce_project_model(project, model):

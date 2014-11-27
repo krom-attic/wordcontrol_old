@@ -364,35 +364,31 @@ class LanguageSetupView(TemplateView):
 class ProjectListView(TemplateView):
     template_name = 'wordengine/project_list.html'
     project_list_form_class = forms.ProjectListForm
-    upload_form_class = forms.ProjectUploadForm
+    project_upload_form_class = forms.ProjectUploadForm
 
     def get(self, request, *args, **kwargs):
-        project_list_form = self.project_list_form_class(request.GET)
-        upload_form = self.upload_form_class()
-        if project_list_form.is_valid():
-            project_id = request.GET['project']
-            if '_setup' in request.GET:
+        project_upload_form = self.project_upload_form_class()
+        if '_setup' in request.GET:
+            project_list_form = self.project_list_form_class(request.GET)
+            if project_list_form.is_valid():
+                project_id = request.GET['project']
                 return redirect('wordengine:project_setup', project_id)
-            elif '_produce' in request.GET:
-                produce_project(project_id)
-                return render(request, self.template_name, {'project_list_form': project_list_form,
-                                                            'upload_form': upload_form})
-        else:
-            # TODO Add error message
-            return render(request, self.template_name, {'project_list_form': project_list_form,
-                                                        'upload_form': upload_form})
+
+        project_list_form = self.project_list_form_class()
+        return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                    'project_upload_form': project_upload_form})
 
     def post(self, request, *args, **kwargs):
         project_list_form = self.project_list_form_class()
-        upload_form = self.upload_form_class(request.POST, request.FILES)
-        if upload_form.is_valid():
-            project_id = parse_upload(request, 'check')
-            return redirect('wordengine:project_setup', project_id)
+        project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
+        if project_upload_form.is_valid():
+            project_id, errors = parse_upload(request)
+            return redirect('wordengine:project_setup', project_id, errors=errors)
         else:
             # TODO Add error message
             # TODO Upload form not saved on fail
             return render(request, self.template_name, {'project_list_form': project_list_form,
-                                                        'upload_form': upload_form})
+                                                        'project_upload_form': project_upload_form})
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -428,7 +424,8 @@ class ProjectSetupView(TemplateView):
         # TODO: allow modification of untyped parameters if project stage allows
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set,
-                                                    'param_setup_form_set': param_setup_form_set})
+                                                    'param_setup_form_set': param_setup_form_set,
+                                                    'project': project})
 
     def post(self, request, *args, **kwargs):
         if '_column_save' in request.POST:
@@ -438,15 +435,26 @@ class ProjectSetupView(TemplateView):
             if pr_col_setup_set.is_valid():
                 # TODO Change project column's state to "P"
                 pr_col_setup_set.save()
+
         if '_types_save' in request.POST:
             untyped_param_form_set = self.UntypedParamFormSet(request.POST)
             if untyped_param_form_set.is_valid():
                 untyped_param_form_set.save()
+
         if '_terms_save' in request.POST:
             param_setup_form_set = self.ParamSetupFormSet(request.POST)
             print(param_setup_form_set.errors)
             if param_setup_form_set.is_valid():
                 param_setup_form_set.save()
+
+        if '_produce' in request.POST:
+            project_id = request.POST['project'].id
+            produce_project(project_id)
+
+        if '_delete' in request.POST:
+            project = models.Project.objects.get(pk=kwargs['project_id'])
+            project.delete()
+
         return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
 
 

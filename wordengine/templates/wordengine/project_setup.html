@@ -2,6 +2,13 @@
 {% block pagetitle %}Project setup{% endblock %}
 {% block pagebody %}
 <h1>Project setup</h1>
+    <h2>General setup</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        <input type="hidden" value="{{ project }}" name="project" />
+        <input type="submit" value="Produce" name="_produce" />
+        <input type="submit" value="Delete" name="_delete" />
+    </form>
     <h2>Column setup</h2>
     <form action="" method="post">
         {{ pr_col_setup_form_set.management_form }}
