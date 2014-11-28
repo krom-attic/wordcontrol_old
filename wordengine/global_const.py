@@ -25,9 +25,6 @@ SRC_TYPE = (('OK', 'Own knowledge'),
 PRJ_STATE = (('N', 'New'),
              ('P', 'Processed'))
 
-# Processing types
-PROC_TYPE = (('NP', 'No processing'),
-             ('WS', 'Writing system changed'), )
 
 #  TODO Obsolete???
 WORD_SOURCE_CHOICES = (('NN', 'Not needed'),

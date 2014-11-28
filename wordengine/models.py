@@ -168,10 +168,6 @@ class Source(Term, LanguageRelated):
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
 
 
-class Processing(Term):
-    processing_type = models.CharField(choices=PROC_TYPE, max_length=2)
-
-
 class GrammCategorySet(LanguageEntity):
     """Class represents possible composite sets of grammar categories and its order in a given language
     """
@@ -245,7 +241,6 @@ class TranslatedTerm(LanguageEntity):
 
 class DictEntity(models.Model):
     source = models.ForeignKey(Source)
-    processing = models.ForeignKey(Processing, null=True, blank=True)
     is_deleted = models.BooleanField(default=False, editable=False)
 
     class Meta:
@@ -310,6 +305,12 @@ class Wordform(WordformBase):
             ws = ""
         return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
     #TODO Include dialects into description
+
+
+class ProcWordform(models.Model):
+    wordform = models.ForeignKey(Wordform)
+    spelling = models.CharField(max_length=512)
+    writing_system = models.ForeignKey(WritingSystem)
 
 
 class DictWordform(DictEntity):
@@ -449,7 +450,6 @@ class ProjectColumn(ProjectedEntity):
     dialect_l = models.CharField(max_length=256, null=True, blank=True)
     # source_l = models.CharField(max_length=256, null=True, blank=True)
     writing_system_l = models.CharField(max_length=256, null=True, blank=True)
-    processing_l = models.CharField(max_length=256, null=True, blank=True)
     num = models.SmallIntegerField()
     csvcell = models.ForeignKey(CSVCell)
 
@@ -457,8 +457,6 @@ class ProjectColumn(ProjectedEntity):
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
     # source = models.ForeignKey(Source, null=True, blank=True)
     writing_system = models.ForeignKey(WritingSystem, null=True, blank=True)
-    processing_type = models.CharField(choices=PROC_TYPE, max_length=2, null=True, blank=True)
-    processing_comment = models.TextField(blank=True)
 
 
 class ProjectedModel (models.Model):

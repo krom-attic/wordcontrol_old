@@ -98,13 +98,10 @@ def parse_csv_header(project, errors, row):
         dialect = None
         processing = None
 
-        col_split = value.strip().split('|', 1)
+        col_split = value.strip().split('[', 1)
         if len(col_split) == 2:
-            processing = col_split.pop().strip()
-        lang_dialect_ws = col_split.pop().split('[', 1)
-        if len(lang_dialect_ws) == 2:
-            writing_system = lang_dialect_ws.pop().strip('] ')
-        lang_dialect = lang_dialect_ws.pop().split('(', 1)
+            writing_system = col_split.pop().strip('] ')
+        lang_dialect = col_split.pop().split('(', 1)
         if len(lang_dialect) == 2:
             dialect = lang_dialect.pop().strip(') ')
         language = lang_dialect.pop().strip()
@@ -112,7 +109,7 @@ def parse_csv_header(project, errors, row):
         errors = check_cell_for_errors(errors, csvcell, (language, dialect, writing_system, processing))
 
         column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum+1,
-                                              writing_system_l=writing_system, processing_l=processing,
+                                              writing_system_l=writing_system,
                                               state='N', project=project, csvcell=csvcell)
         column_literal.save()
 
@@ -175,17 +172,18 @@ def get_lexeme_from_csvcell(project, errors, rownum, lexeme_literal, col):
 
 def get_wordforms_from_csvcell(project, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments):
 
+    first_col_wordforms = []
+
     for colnum, column_literal in lang_src_cols:
         lexeme_wordforms = row[colnum]
         if lexeme_wordforms:
+            col_wordforms = []
             csvcell = models.CSVCell(row=rownum, col=colnum+1, value=lexeme_wordforms, project=project)
             csvcell.save()
 
             for ext_comment in ext_comments:
                 if lexeme_wordforms.find(ext_comment[0]):
                     lexeme_wordforms = lexeme_wordforms.replace(ext_comment[0], ext_comment[1])
-
-            # first_wordform = None
 
             for current_wordform in lexeme_wordforms.split('|'):
                     wordform_split = current_wordform.split('"', 1)  # ( spelling [params] ), (comment" )
@@ -206,10 +204,13 @@ def get_wordforms_from_csvcell(project, errors, rownum, row, lang_src_cols, lexe
                                                       params=params, project=project, state='N',
                                                       col=column_literal, csvcell=csvcell)
 
+                    col_wordforms.extend(wordform)
                     wordform.save()
 
-                    # if not first_wordform:
-                    #     first_wordform = wordform
+            if first_col_wordforms:
+                errors[csvcell] += "Number of wordforms doesn't match that is in the unprocessed set\r\n"
+            else:
+                first_col_wordforms=
 
     return errors
 
@@ -331,7 +332,6 @@ def parse_csv(request):
                 continue
 
         errors = get_wordforms_from_csvcell(project, errors, rownum, row, lang_src_cols, lexeme_src, ext_comments)
-        # TODO How to choose a wordform to bind with lexemes and translations?
         # TODO At least one wordform of a lexeme must present
         # TODO Should I bind wordforms of identical origination, but processed differently?
 
