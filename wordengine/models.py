@@ -304,7 +304,7 @@ class Wordform(WordformBase):
         except AttributeError:
             ws = ""
         return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
-    #TODO Include dialects into description
+    # TODO Include dialects into description
 
 
 class ProcWordform(models.Model):
@@ -512,7 +512,7 @@ def get_from_project_dict(obj, value, term_type, escape_list=False):
 class ProjectLexeme(ProjectedEntity, ProjectedModel):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
-    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
+    col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
     result = models.ForeignKey(Lexeme, null=True, blank=True)
 
@@ -542,7 +542,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
-    col = models.ForeignKey(ProjectColumn, null=True, blank=True)
+    col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
     result = models.ForeignKey(Wordform, null=True, blank=True)
 
@@ -573,6 +573,21 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     def m2m_thru_fields(self):
         return {DictWordform: {'source': self.project.source, 'wordform': self.result, 'comment': self.comment,
                                'is_deleted': False}}
+
+
+class ProjectProcWordform(ProjectedEntity, ProjectedModel):
+    wordform = models.ForeignKey(ProjectWordform)
+    spelling = models.CharField(max_length=256)
+    col = models.ForeignKey(ProjectColumn)
+    csvcell = models.ForeignKey(CSVCell)
+    result = models.ForeignKey(Wordform, null=True, blank=True)
+
+    @staticmethod
+    def real_model():
+        return ProcWordform
+
+    def fields(self):
+        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):

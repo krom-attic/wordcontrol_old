@@ -135,7 +135,7 @@ INSTALLED_APPS = (
     'wordengine',
 
     # THIRDPARTY APPS
-
+    'debug_toolbar'
 )
 
 # Sample, described below, is overridden!!
