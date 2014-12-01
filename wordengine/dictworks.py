@@ -68,15 +68,15 @@ def modsave(request, upd_object, upd_fields):
 
 
 def check_cell_for_errors(csvcell, fields_to_check):
-    error = ''
+    error = []
     errors = {}
 
     for field in fields_to_check:
         for char in SPECIAL_CHARS:
             if char in str(field):
-                error += 'Unused special symbol: ' + char + ' in ' + str(field) + '\r\n'
+                error.append('Unused special symbol: ' + char + ' in ' + str(field))
         if re.search(RE_EXT_COMM, str(field)):
-            error += 'Excessive extended comments marks in ' + str(field) + '\r\n'
+            error.append('Excessive extended comments marks in ' + str(field))
 
     if error:
         errors[csvcell] = error
@@ -89,10 +89,11 @@ def parse_csv_header(project):
     source_language = None
     lang_src_cols = []
     lang_trg_cols = []
+    errors = {}
 
-    for colnum, value in enumerate(project.row[1:-1]):
+    for colnum, value in enumerate(project.row[1:-1], 1):
 
-        csvcell = models.CSVCell(row=0, col=colnum+1, value=value, project=project)
+        csvcell = models.CSVCell(row=0, col=colnum, value=value, project=project)
         csvcell.save()
 
         writing_system = None
@@ -109,7 +110,7 @@ def parse_csv_header(project):
 
         errors = check_cell_for_errors(csvcell, (language, dialect, writing_system, processing))
 
-        column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum+1,
+        column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum,
                                               writing_system_l=writing_system,
                                               state='N', project=project, csvcell=csvcell)
         column_literal.save()
@@ -119,9 +120,9 @@ def parse_csv_header(project):
             source_language = language
 
         if source_language == language:
-            lang_src_cols.extend([(colnum+1, column_literal)])
+            lang_src_cols.append((colnum, column_literal))
         else:
-            lang_trg_cols.extend([(colnum+1, column_literal)])
+            lang_trg_cols.append((colnum, column_literal))
 
     return lang_src_cols, lang_trg_cols, errors
 
@@ -135,7 +136,7 @@ def get_ext_comments_from_csvcell(project):
     csvcell.save()
     ext_comm_split = RE_EXT_COMM.split(project.row[-1])
     if not ext_comm_split[0]:
-        errors[project.row] += 'Something odd is in extended comment cell\r\n'
+        errors[str(project.row) + ' (ext comments)'] = 'Something odd is in extended comment cell'
 
     odd = True
     temp_list = []
@@ -172,7 +173,7 @@ def get_lexeme_from_csvcell(project, lexeme_literal, col):
     return lexeme_src, errors
 
 
-def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments):
+def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments, new_lexeme):
 
     errors = {}
     first_col_wordforms = []
@@ -181,7 +182,7 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments)
         lexeme_wordforms = project.row[colnum]
         if lexeme_wordforms:
             col_wordforms = []
-            csvcell = models.CSVCell(row=project.rownum, col=colnum+1, value=lexeme_wordforms, project=project)
+            csvcell = models.CSVCell(row=project.rownum, col=colnum, value=lexeme_wordforms, project=project)
             csvcell.save()
 
             for ext_comment in ext_comments:
@@ -207,7 +208,7 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments)
                     wordform = models.ProjectWordform(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                       params=params, project=project, state='N',
                                                       col=column_literal, csvcell=csvcell)
-                    first_col_wordforms.extend(wordform)
+                    first_col_wordforms.append(wordform)
 
                     wordform.save()
             else:
@@ -216,20 +217,21 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments)
                     try:
                         original_wordform = first_col_wordforms[wf_num]
                     except IndexError:
-                        errors[csvcell] += "Number of processed wordforms is more than the number of unprocessed\r\n"
+                        errors[csvcell].append("Number of processed wordforms is more than the number of unprocessed")
                         continue
 
                     errors.update(check_cell_for_errors(csvcell, (spelling)))
                     proc_wordform = models.ProjectProcWordform(wordform=original_wordform, spelling=spelling,
                                                                col=column_literal)
-                    col_wordforms.extend(proc_wordform)
+                    col_wordforms.append(proc_wordform)
 
                     proc_wordform.save()
 
                 if len(col_wordforms) < len(first_col_wordforms):
-                    errors[csvcell] += "Number of processed wordforms is less than the number of unprocessed\r\n"
+                    errors[csvcell].append("Number of processed wordforms is less than the number of unprocessed")
         else:
-            errors[project.row] = "Wordforms expected, but not found\r\n"
+            if new_lexeme:
+                errors[str(project.row) + ' (source cols)'] = "Wordforms expected, but not found"
 
     return errors
 
@@ -237,10 +239,14 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments)
 def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_comments):
 
     errors = {}
+    translations_found = False
+
     for colnum, column_literal in lang_trg_cols:  # Iterate through multiple target languages
         lexeme_translations = project.row[colnum]
         if lexeme_translations:
-            csvcell = models.CSVCell(row=project.rownum+1, col=colnum+2, value=lexeme_translations, project=project)
+            translations_found = True
+
+            csvcell = models.CSVCell(row=project.rownum, col=colnum, value=lexeme_translations, project=project)
             csvcell.save()
 
             for ext_comment in ext_comments:
@@ -284,26 +290,32 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
                 else:
                     transl_comment = ''
 
+                errors.update(check_cell_for_errors(csvcell, (params, spelling, transl_dialect, transl_comment)))
+
                 lexeme_trg = models.ProjectLexeme(syntactic_category=lexeme_src.syntactic_category, params=params,
                                                   project=project, state='N', col=column_literal, csvcell=csvcell)
+
+                lexeme_trg.save()
 
                 wordform = models.ProjectWordform(lexeme=lexeme_trg, spelling=spelling, project=project, state='N',
                                                   col=column_literal, csvcell=csvcell)
 
+                wordform.save()
+
                 semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
                                                               project=project, state='N', csvcell=csvcell)
+
+                semantic_gr_trg.save()
 
                 translation = models.ProjectTranslation(lexeme_1=lexeme_src, lexeme_2=lexeme_trg,
                                                         direction=1, semantic_group_1=semantic_gr_src,
                                                         semantic_group_2=semantic_gr_trg,
                                                         project=project, state='N')
 
-                errors.update(check_cell_for_errors(csvcell, (params, spelling, transl_dialect, transl_comment)))
-
-                lexeme_trg.save()
-                wordform.save()
-                semantic_gr_trg.save()
                 translation.save()
+
+    if not translations_found:
+        errors[str(project.row) + ' (translations)'] = 'Translations expected, but not found'
 
     return errors
 
@@ -337,7 +349,8 @@ def parse_csv(request):
 
         if project.row[-1]:
             # Last column must be an extended comment column
-            ext_comments = get_ext_comments_from_csvcell(project)
+            ext_comments, errors = get_ext_comments_from_csvcell(project)
+            project.errors.update(errors)
         else:
             ext_comments = []
 
@@ -346,18 +359,19 @@ def parse_csv(request):
             # Lexemes of a source language are bound to the first column with wordforms
             lexeme_src, errors = get_lexeme_from_csvcell(project, lexeme_literal, lang_src_cols[0][1])
             project.errors.update(errors)
+            new_lexeme = False
         else:
             if not lexeme_src:
-                project.errors[project.row] += 'No lexeme in the row\r\n'
+                project.errors[str(project.row) + ' (lexemes)'] += 'No lexeme in the row'
                 continue
+            else:
+                new_lexeme = True
 
-        errors = get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments)
+        errors = get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments, new_lexeme)
         project.errors.update(errors)
-        # TODO At least one wordform of a lexeme must present
 
         errors = get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_comments)
         project.errors.update(errors)
-        # TODO Should I warn if no translations found?
 
     return project
 
@@ -396,10 +410,10 @@ def fill_project_dict(project):
 
 def parse_upload(request):
 
-    project, errors = parse_csv(request)
-    fill_project_dict(project)
+    project = parse_csv(request)
+    # fill_project_dict(project)
 
-    return project.id, errors
+    return project.id, project.errors
 
 
 def produce_project_model(project, model):

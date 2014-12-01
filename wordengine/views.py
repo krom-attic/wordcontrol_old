@@ -383,7 +383,15 @@ class ProjectListView(TemplateView):
         project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
         if project_upload_form.is_valid():
             project_id, errors = parse_upload(request)
-            return redirect('wordengine:project_setup', project_id, errors=errors)
+            for k, v in errors.items():
+                print(k)
+                if type(v) == str:
+                    print(v)
+                else:
+                    for val in v:
+                        print(val)
+
+            return redirect('wordengine:project_setup', project_id)
         else:
             # TODO Add error message
             # TODO Upload form not saved on fail
