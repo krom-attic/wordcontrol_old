@@ -458,6 +458,9 @@ class ProjectColumn(ProjectedEntity):
     # source = models.ForeignKey(Source, null=True, blank=True)
     writing_system = models.ForeignKey(WritingSystem, null=True, blank=True)
 
+    def __str__(self):
+        return 'Col #{0}: {1}'.format(str(self.num), self.csvcell)
+
 
 class ProjectedModel (models.Model):
 

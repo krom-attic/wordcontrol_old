@@ -383,15 +383,14 @@ class ProjectListView(TemplateView):
         project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
         if project_upload_form.is_valid():
             project_id, errors = parse_upload(request)
-            for k, v in errors.items():
-                print(k)
-                if type(v) == str:
-                    print(v)
-                else:
-                    for val in v:
-                        print(val)
+            if '_import_file' in request.POST:
+                return redirect('wordengine:project_setup', project_id)
+            if '_check_file' in request.POST:
+                # models.Project.objects.get(pk=project_id).delete()
+                return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                            'project_upload_form': project_upload_form,
+                                                            'errors': errors})
 
-            return redirect('wordengine:project_setup', project_id)
         else:
             # TODO Add error message
             # TODO Upload form not saved on fail

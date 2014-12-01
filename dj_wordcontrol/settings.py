@@ -197,7 +197,8 @@ LOGGING = {
             'propagate': True,
         },
         'django': {
-            'handlers': ['console', 'null', 'file'],  # Default logger with 'file' handler added
+            'handlers': ['console', 'null'],  # , 'file'],
+            #  Default logger with 'file' handler added, but disabled (unicode problems)
             'level': 'DEBUG',
             'propagate': True,
         },

@@ -13,11 +13,15 @@
         {% csrf_token %}
         {{ project_upload_form.as_p }}
         <input type="submit" value="Import file" name="_import_file" />
+        <input type="submit" value="Check file" name="_check_file" />
     </form>
 
     {% if errors %}
-    <h2>Errors</h2>
-    <p>{{ errors }}</p>
+        <h2>Errors</h2>
+        {% for cell, error in errors %}
+            <p>{{ cell }}<br />
+            {{ error }}</p>
+        {% endfor %}
     {% endif %}
 
 {% endblock %}
