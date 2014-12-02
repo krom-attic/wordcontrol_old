@@ -3,6 +3,7 @@
 {% block pagebody %}
 <h1>Project setup</h1>
     <h2>General setup</h2>
+    # TODO: project description
     <form action="" method="post">
         {% csrf_token %}
         <input type="hidden" value="{{ project }}" name="project" />
@@ -18,9 +19,7 @@
             <ul>
                 <li>Language: {{ pr_col_setup_form.instance.language_l }}</li>
                 <li>Dialect: {{ pr_col_setup_form.instance.dialect_l }}</li>
-                <li>Source: {{ pr_col_setup_form.instance.source_l }}</li>
                 <li>Wr. system: {{ pr_col_setup_form.instance.writing_system_l }}</li>
-                <li>Processing type: {{ pr_col_setup_form.instance.processing_l }}</li>
             </ul>
         {{ pr_col_setup_form.as_p }}
         {% endfor %}

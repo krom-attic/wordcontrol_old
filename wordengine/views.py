@@ -8,7 +8,7 @@ from django.contrib import messages
 from wordengine import forms
 from wordengine.dictworks import *
 from django.forms.models import modelformset_factory
-from functools import partial, wraps
+from django.core import serializers
 
 # Actual views here
 
@@ -25,7 +25,7 @@ class DoSmthWordformView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         some_form = self.some_object_class()
-        some_data = models.Lexeme.objects.get(pk=158).lexeme_parameter_m.exists()
+        some_data = ''
         return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
 
 class AddWordformView(TemplateView):
@@ -383,13 +383,13 @@ class ProjectListView(TemplateView):
         project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
         if project_upload_form.is_valid():
             project_id, errors = parse_upload(request)
-            if '_import_file' in request.POST:
-                return redirect('wordengine:project_setup', project_id)
-            if '_check_file' in request.POST:
+            if errors:
                 # models.Project.objects.get(pk=project_id).delete()
                 return render(request, self.template_name, {'project_list_form': project_list_form,
                                                             'project_upload_form': project_upload_form,
                                                             'errors': errors})
+            else:
+                return redirect('wordengine:project_setup', project_id)
 
         else:
             # TODO Add error message
@@ -425,9 +425,9 @@ class ProjectSetupView(TemplateView):
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
-                                                          filter(term_type=None))
+                                                          filter(term_type=''))
         param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                      exclude(term_type=None).filter(term_id=None))
+                                                      exclude(term_type='').filter(term_id=None))
         # TODO: allow modification of untyped parameters if project stage allows
         return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
                                                     'untyped_param_form_set': untyped_param_form_set,
@@ -440,7 +440,7 @@ class ProjectSetupView(TemplateView):
             # project_columns.save()
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
-                # TODO Change project column's state to "P"
+                # TODO Change project column's state to "P", but only if all fields are set
                 pr_col_setup_set.save()
 
         if '_types_save' in request.POST:
@@ -455,8 +455,8 @@ class ProjectSetupView(TemplateView):
                 param_setup_form_set.save()
 
         if '_produce' in request.POST:
-            project_id = request.POST['project'].id
-            produce_project(project_id)
+            project = models.Project.objects.get(pk=kwargs['project_id'])
+            produce_project(project)
 
         if '_delete' in request.POST:
             project = models.Project.objects.get(pk=kwargs['project_id'])

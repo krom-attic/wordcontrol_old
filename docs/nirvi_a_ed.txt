@@ -1,7 +1,7 @@
 ﻿Параметры лексем	Ижорский (сойкинский) [Nirvi]	Ижорский (сойкинский) [учебная]	Финский	Эстонский	Немецкий	Комментарии
 int	a	a	no			
 conj	a	a	mutta | kun taas			
-n	aBi | api [Hev] [Ro] | apṕē [Ro]	aBi | api [Hev] [Ro] | app'ee [Ro]	apu	abi		
+n	aBi | api [Hev] [Ro] | apṕē [Ro]	aBi | api | app'ee	apu	abi		
 n	aBivoiska | aBivägi	apivoiska | apivägi	apuväki			
 v	aBihua	apihua	onnistua			
 			"sattua ""(tulemaan, olemaan, saamaan)"""			
@@ -16,7 +16,7 @@ n	aBu	apu	apu
 n	aBulain	apulain	apulainen			
 n	adjala | adijala | ad'jala	adjala | adijala | ad'jala	pumpulitäytteinen makuupeite			
 n	adlassi	adlassi	atlas			
-n	adra | at̆ra | aDra	adra | atra	sahrat	ader		
+n	adra | at̆ra | aDra	adra | atra | atra	sahrat	ader		
 n	adressi	adressi	osoite			
 n	aDria | at̆rē	atria | atree	ateria	söömaaeg		
 				pidusöök		
@@ -24,13 +24,13 @@ pr n	ADu	Atu	Andrian
 n	aDvjorkka	atvjorkka	ruuvimeisseli			
 n	a₍elia | ajelia	aelia | ajelia	ajelija			
 			kiinniottaja lasten leikeissä			
-v	a₍ella | ajella | aj̆ella	aella | ajella	ajella			
+v	a₍ella | ajella | aj̆ella	aella | ajella | ajella	ajella			
 			pyytää saaliiksi			
 			tavoitella			
 			ottaa kiinni			
 pr n	Agaffona	Agaffona	?			
 adj	aGaniGaZ | ak̆kāna	akanikaz | akkaana	akanainen			
-n	aGatšu(pū)	akatšu | akatšupuu	jokin puulaji			
+n	aGatšu(pū) | aGatšu(pū)	akatšu | akatšupuu	jokin puulaji			
 n	aGonhammaZ	akonhammaz	pärepihti			
 			verkonkorjausteline			
 pr n	Agraffē	Agraffee	?			
@@ -44,7 +44,7 @@ v	ahavoittā	ahavoittaa	?			"ahavoitti tulel kä₍eD [L-suu]; (Keväinen ahavat
 n	*ahe	ahe	?			rīhī on ahtiZ — ahdettuna
 int	ahhah	ahhah	?			"""ahhah kun on makia kakku!"" (Alava)"
 adj, n	ah̭̄h̭āva	ahhaava	kuivatuulinen | ahavainen | kuiva tuuli			
-n	ahilo [Ro] | ahilōsse	ahilo [Ro] | ahiloosse	ahelaisse			
+n	ahilo [Ro] | ahilōsse	ahilo | ahiloosse	ahelaisse			
 v	ahissella	ahissella	väkisin tarjoilla			
 n	ahissoZ	ahissoz	?			Pienessä huonessä on ahissoZ
 v	ahistā	ahistaa	"puristaa | likistää ""(Siemenvoita puristettiin pellavansiemenrouheista)"""			
@@ -53,14 +53,14 @@ v	ahistā	ahistaa	"puristaa | likistää ""(Siemenvoita puristettiin pellavansie
 			ahdistaa henkeä			
 			pakottaa			
 v	ahistua	ahistua	ahdistua | puristua	pigistus		
-adj	ahkera | ah̭kera	ahkera	ahkera			
-n	ahl'e [Ro]	ahl'e [Ro]	?			ahl'es̆sa kütkesse [Ro]
-n	ahmari | ah̭mari	ahmari	?			ah̭nastā sǖ̮vvä, se on nīn ah̭mari
+adj	ahkera | ah̭kera	ahkera | ahkera	ahkera			
+n	ahl'e [Ro]	ahl'e	?			ahl'es̆sa kütkesse [Ro]
+n	ahmari | ah̭mari	ahmari | ahmari	?			ah̭nastā sǖ̮vvä, se on nīn ah̭mari
 v	ahmastā	ahmastaa	?			se ku ahmasti sȫ̭vvä — söi kovasti
 v	ahmia	ahmia	ahmia			
 n	ahmo	ahmo	ahne			
 v	ah̭mostā	ahmostaa	haluaa ahneesti itselleen			
-adj	ahnaZ | ah̆naZ	ahnaz	ahkera työhön			
+adj	ahnaZ | ah̆naZ	ahnaz | ahnaz	ahkera työhön			
 			"halukas | ahkera ""(*esim. viinaan)"""			
 v	ahnastā	ahnastaa	olla halukas | himoita			
 n	aho	aho	aho			
@@ -83,20 +83,20 @@ n	aijas	aijas	?		Zaunpfahl
 v	aĭj̆joittā	aijjoittaa	aidoittaa			
 adj	aik̀ain	aikain	?			sē kaskā (= tarina) ei olD        miun͜ aik̀ain (= minun aikainen) enämpǟ näiDä
 v	aikkā	aikkaa	valittaa ai ai			
-n	aikko [Nar]	aikko [Nar]	haukotus			
+n	aikko [Nar]	aikko	haukotus			
 int	ai͜ koi | aikoi	ai koi | aikoi	?			(Ahavoituneet huulet voideltiin sianrasvalla:) ai͜ koi pehmittǟ hüväst. miul on ai͜ koi hüväD oloD (!). ne oltī ai͜ koi maDalas si̮l rannaZ (nim. rysät). siZ Gu siGa kazvoĭ sūreksE, ai͜ koi sūreks ja lihavaksE (sitten tapettiin). se on aikoi poik̀ā!
 n	ailaZ	ailaz	?			
 adj	aima	aima	pelkkä			
 adv	aimastā	aimastaa	ainoastaan			
-adv	ain | a∙in | a:in	ain | aain	aina			
-adv	ainak̆ki | ainakkì | ainak̆kī | ainaki [L-suu]	ainakki | ainakkii | ainaki [L-suu]	ainakin			
-adj	ainava | a∙inava [Kurkola] | aivono	ainava | aivono	ainoa			
+adv	ain | a∙in | a:in	ain | ain | aain	aina			
+adv	ainak̆ki | ainakkì | ainak̆kī | ainaki [L-suu]	ainakki | ainakki | ainakkii | ainaki	ainakin			
+adj	ainava | a∙inava [Kurkola] | aivono	ainava | ainava| aivono	ainoa			
 n	airo	airo	airo			
-n	aiZa | aiža [Ylä-L] | aisa [Kurkola]	aisa | aiža [Ylä-L]	aisa	ais		
+n	aiZa | aiža [Ylä-L] | aisa [Kurkola]	aisa | aiža | aisa	aisa	ais		
 			verkkokävyn*1			*1: aiZaD [Väärinoja] —ovat kävyn kielen kahden puolen olevat ohuet puuosat
-n	aisakello [L-suu]	aisakello [L-suu]	aisaan kiinnitetty pieni kello			
-n	aisarauta [L-suu]	aisarauta [L-suu]	reen jalaksessa oleva aisan kiinnitysrauta			
-n	aiZanahkain | aiZannahkain | aisannahka [Uusikylä]	aisanahkain | aisannahkain | aisannahka [Uusikylä]	setolkkahihna, joka kannattaa aisoja | aisojen kannatinhihna			
+n	aisakello [L-suu]	aisakello	aisaan kiinnitetty pieni kello			
+n	aisarauta [L-suu]	aisarauta	reen jalaksessa oleva aisan kiinnitysrauta			
+n	aiZanahkain | aiZannahkain | aisannahka [Uusikylä]	aisanahkain | aisannahkain | aisannahka	setolkkahihna, joka kannattaa aisoja | aisojen kannatinhihna			
 n	aitta	aitta	aitta			
 n	aiva | aivo	aiva | aivo	aivo			
 adv	aivan | aiven | aivah	aivan | aiven | aivah	aivan			
@@ -107,16 +107,16 @@ n	aivassuZ	aivassuz	aivastus
 v	aivassuttā	aivassuttaa	?			min̆nū₍a aivassutti
 v	aivastā	aivastaa	aivastaa			
 v	aivastaissa	aivastaissa	aivastaa			
-adv	aiven | aivoin | aivoĭn	aiven | aivoin	aivan			
+adv	aiven | aivoin | aivoĭn	aiven | aivoin | aivoin	aivan			
 n	aivina	aivina	puhdistettu pellava			
 adj, n	aivinain	aivinain	puhdistetusta pellavasta tehty			
 int	aivoi	aivoi	voivoi			
-int	aivoikkaa [Nar]	aivoikkaa [Nar]	ai, ai			
+int	aivoikkaa [Nar]	aivoikkaa	ai, ai			
 n	ajaDoZ	ajatoz	turvoksissa			
 n	ajama	ajama	mätäs*1			*1: mükrän ajama [Uusikylä] — myyrän mätäs
 v	ajattā	ajattaa	?			ajatti vatsan — turvotti
 n	ajav͜ vḙ̄tto	ajav veetto	se, mikä vie turhan paljon aikaa			
-v	aj̆jā | ajjā	ajjaa	ajaa hevosta			
+v	aj̆jā | ajjā	ajjaa | ajjaa	ajaa hevosta			
 			ajaa, kulkea hevosella			
 			ajaa laivaa			
 			ajaa | karkottaa			
@@ -130,14 +130,14 @@ n	ajo	ajo	?			meren ajo — veden rannalle ajama tavara
 			hevosella suoritettu ajo			
 n	ajokip̆pī₍ä	ajokippiiä	?			Sormiajoksesta: sūr kip̆pī₍ä  mok̆kōma ajokip̆pī₍ä tuli
 n	ajopövvü	ajopövvü	pitkä turkki, jota ei varsinaisessa työssä käytetty, vaan matkoilla			
-n	ajos [Ro]	ajos [Ro]	umbus			
-n [pl]	ajut [Ro]	ajut [Ro]	pääaju			
+n	ajos [Ro]	ajos	umbus			
+n [pl]	ajut [Ro]	ajut	pääaju			
 int	ak	ak	?			ak siä paharutkain, tēt pillā! ak siä paharätti ku siä et kūntele! — tottele
 n	akampala	akampala	suuri lumihiutale			
 n	akka	akka	pärerahko			
 			vanha nainen | mummo			
 n	akkain	akkain	?	poole eideke		
-nom	akkaja [Ro]	akkaja [Ro]	?	hakkaja, ettevõtlik mees		
+nom	akkaja [Ro]	akkaja	?	hakkaja, ettevõtlik mees		
 n	ak̆kāna | aGana	akkaana | akana	akana			
 n	akkimain	akkimain	hyväilysana			
 n	akko	akko	pärepihti			
@@ -149,31 +149,31 @@ n	aktsīZnoĭ	aktsiisnoi	viinan tarkastaja
 postp	al | alla | nal | ал	al | alla | nal | аl	alla			
 n	ala-	ala-	ala-			
 n	ala	ala	?			Sananparsi: kat̆tērīna kuZi₍ala — Katriinan päivänä sataa
-n	aлahain [Ro]	alahain [Ro]	?	jõe alajooksul elavaid		
+n	aлahain [Ro]	alahain	?	jõe alajooksul elavaid		
 adv	alahāl	alahaal	alhaalla			
-adv	alahalle | alahalek [Hev]	alahalle | alahalek [Hev]	?		nach unten	
+adv	alahalle | alahalek [Hev]	alahalle | alahalek	?		nach unten	
 adv	alahittē	alahittee	alaitse			
-adv	alait̀se | alait̀si | alait̀s͔e | alaits͔e | ala(i)ts | ałatši | alait̀sE | alaitse [L-suu] | alaitsi [L-suu] | alatsE [Kurkola]	alaitse | alaitsi | alaits | alats | alatši | alaitsE | alatsE [Kurkola]	alitse			
+adv	alait̀se | alait̀si | alait̀s͔e | alaits͔e | ala(i)ts | ala(i)ts | ałatši | alait̀sE | alaitse [L-suu] | alaitsi [L-suu] | alatsE [Kurkola]	alaitse | alaitsi | alaitse | alaitse |alaits | alats | alatši | alaitsE | alaitse | alaitsi | alatsE	alitse			
 adv	alaitsek	alaitsek	?		unten vorbei	
-adv, postp	alak | allak [Hev] | ala [Nar]	alak | allak [Hev] | ala [Nar]	?		nach unten	
-n	alajᵘōksu	alajooksu | alajuoksu	tuuli, joka hangen pintaa pitkin kulkiessaan kuljettaa lunta mukanaan			
+adv, postp	alak | allak [Hev] | ala [Nar]	alak | allak | ala	?		nach unten	
+n	alajᵘōksu | alajᵘōksu	alajooksu | alajuoksu	tuuli, joka hangen pintaa pitkin kulkiessaan kuljettaa lunta mukanaan			
 adj	alakuloine	alakuloine	alakuloinen			
 n	alameri	alameri	alkoi			
 n	alanen	alanen	alasin			
 nom	alanikko	alanikko	?		niedriger Ort	"alanikko mā — alava maa; koDi₍alanikko —erään metsän nimi; alanikko notko t. mā [Kurkola] — alava"
 n	alanneh	alanneh	?		ein niedrig gel(i)egener Ort	
-n	aлaηgumā [Ro]	alangumaa [Ro]	?	madalik		
-n	alaselüs [L-suu]	alaselüs [L-suu]	verkon alapaula			
+n	aлaηgumā [Ro]	alangumaa	?	madalik		
+n	alaselüs [L-suu]	alaselüs	verkon alapaula			
 adv, conj	alaZ	alaz	alas			
-n	alasparZi [Hev]	alasparsi [Hev]	riihen parsi			
+n	alasparZi [Hev]	alasparsi	riihen parsi			
 adv	alaspäin | alas päin	alaspäin | alas päin	alaspäin			
-adv	alassin | aлassi | alas̆si [Ro]	alassin | alassi	alasti			
+adv	alassin | aлassi | alas̆si [Ro]	alassin | alassi | alassi	alasti			
 adv	alassoillē	alassoillee	alassuin			
 adj	alastoĭn	alastoin	alaston			
-n	alaznḙ̄gla	alazneegla	"neula, jolla ""alaset"" neulottiin"			
+n	alaznḙ̄gla	alazneegla	neula, jolla !alaset! neulottiin			
 n	alaZvāhto	alasvaahto	tuisku | lumin tuiskuaminen pitkin jäätä | peltoa			
 n	alaZvirDa	alasvirta	myötävirta			
-adv	alatsi [Ro]	alatsi [Ro]	?	alt läbi		
+adv	alatsi [Ro]	alatsi	?	alt läbi		
 adv	alattuisē	alattuisee	alinomaa			
 adv, postp	alD	ald	alta			
 n	alDo	alto	aalto			
@@ -189,28 +189,28 @@ n	alGu	alku	alku
 n	alileuGa	alileuka	alahuuli			
 n [pl]	aliripsuD	aliripsud	alaluomet			
 adj	alimain	alimain	alimainen			
-v	alkā | alk̀ā | aлga [Ylä-L]	alkaa | alga [Ylä-L]	alkaa			
+v	alkā | alk̀ā | aлga [Ylä-L]	alkaa | alkaa | alga	alkaa			
 v	alkkene-	alkkene-	raueta			
 			?			ilma ałkkenō — asettuu
-v	alkua | alGua | aлgua [Ylä-L]	alkua | algua [Ylä-L]	alkaa			
+v	alkua | alGua | aлgua [Ylä-L]	alkua | alkua | algua	alkaa			
 v	alku-	alku-	?		anfangen	
 pr n	Alkus	Alkus	Alava			
 postp	alla | allāη	alla | allaan	?			miun ikkun͜ allāη (= pihallani) kazvā pihlaja, hǟ nokkī tikka siinä
 			alle			
 adj	al̆lain	allain	alainen			
 			Palveluksessa olosta			
-n	al̆lain | aллain [Ylä-L]	allain	alasin			
+n	al̆lain | aллain [Ylä-L]	allain | allain	alasin			
 			kannattajahirsi			
 			?			pai₍an alaset [Uusikylä] — entisajan paidan alaosa
 			villaiset kintaat, joita pidettiin nahkarukkasissa	?		"aллais̆t [Ylä-L] — labakindad [vir]; alasii [Kurkola] — käpikkindaid [vir]"
-n	alaine [L-suu]	alaine [L-suu]	alasin pajassa			
+n	alaine [L-suu]	alaine	alasin pajassa			
 n	al̆laiZin	allaisin	alasin			
 postp	allak	allak	alle			
-n	allaZ | aллaš [Ylä-L]	allaz | allaš [Ylä-L]	kaukalo			
-adv	al̆lā | allaan [Hev]	allaa | allaan [Hev]	alas			
+n	allaZ | aллaš [Ylä-L]	allaz | allaš	kaukalo			
+adv	al̆lā | allaan [Hev]	allaa | allaan	alas			
 adv, postp, prep	alle | allesse | ałłe	alle | allesse | alle	alle			
-int	alle [Nar]	alle [Nar]	erään linnun ääni			
-n	allekkain [Nar]	allekkain [Nar]	allit			
+int	alle [Nar]	alle	erään linnun ääni			
+n	allekkain [Nar]	allekkain	allit			
 adv	allēssa	alleessa	tallessa | säilyneenä | ehjänä			
 adj	alloGaZ	allokaz	aaltoisa*1			*1: alloGaZ meri — aaltoisa meri
 v	aloittā	aloittaa	aloittaa			
@@ -230,53 +230,53 @@ n	aluZ	aluz	vaateen vuori | alushame
 			makuualus | makuukuivike			
 			alus*1			"*1: kaDon alukseD. (Keväällä tulvaveden aikana) sis käütī av̆vāmas kaik sillan aluksia auG. (Hevosen) kaBjan aluksed tul̆lōt taZaiZekse, lauDajalaD, ei sā ravvoittā. (Vilustumiseen) jalan alukseD voi₍ettī si₍arrazval sis kiukān seläl polDelDī - -. | laGan aluZ — riihen räystäskatoksen alus. Usein oli kaksi isoa lakanalusta. Niissä pidettiin pellolta tuotu kuiva vilja. Kuominan ympärillä ei ollut lakanalusta. ar̆rīnan aluZ — uunimainen syveenys kiukaan; uunin jalkaosassa. | enne oltī kiukān alukseD. | ikkunan͜ aluZ om märänD — ikkunan alus on mädäntynyt. | laGan₍alukseD — puukatokset. mäen₍aluZ"
 			laiva*1			*1: ennen purjelaiva, n. 10 tonnin tai suurempi, joita olivat
-n	alushame [L-suu]	alushame [L-suu]	alushame*1			*1: Entisiä kotikutoisia hameita ruvettiin viimeisinä aikoina pitämään alushameina
+n	alushame [L-suu]	alushame	alushame*1			*1: Entisiä kotikutoisia hameita ruvettiin viimeisinä aikoina pitämään alushameina
 n	alusherZi	alushersi	rakennuksen alimmainen hirsikerta			
 n	aluZmaja	alusmaja	?		Kajüte	
 n	aluZmḙ̄Z	alusmeez	laivan, kaljaasin omistaja | laivan rakentaja			
-n	alustreηki [Kurkola]	alustrenki [Kurkola]	palkattu laivamies			
-n	alusvene [Kurkola]	alusvene [Kurkola]	laivavene			
+n	alustreηki [Kurkola]	alustrenki	palkattu laivamies			
+n	alusvene [Kurkola]	alusvene	laivavene			
 v	alustaa	alustaa	taikinaa | alusta			
 v	alutta- | aluttele-	alutta- | aluttele-	aloittaa		anfangen	
 n	alve	alve	vatsamato | heisimato			
-int	amin | ami·n	amin	aamen			
+int	amin | ami·n	amin | amin	aamen			
 n	ammattel̆līja	ammattellija	?			hǟ on seGalain ammattel̆līja — ammattityömiestä hieman korkeammassa asemassa oleva henkilö, myyjä, pikkuvirkamies jne
 n	ammatti	ammatti	ammatti			
 n	ammattimḙ̄Z	ammattimeez	ammattimies			
-n	"ammi ""Ei tuntenut Saarovesta"""	"ammi ""Ei tuntenut Saarovesta"""	puinen, iso vesiastia			
+n	"ammi ""Ei tuntenut Saarovesta"""	ammi	puinen, iso vesiastia			
 adv	ammillā	ammillaa	ammollaan			
-v	ammottā [Nar]	ammottaa [Nar]	tapan			
+v	ammottā [Nar]	ammottaa	tapan			
 v	ammulDā	ammultaa	ammentaa			
 n	ammuZ	ammuz	?	?	?	äkki-ammuZ — äkkiä tuleva taudinkohtaus | ammukset [Ro] — rabandus [vir] | olla(k) ammuksis — eine Thierkrankheit haben [saks]
 n	ampari	ampari	?	?		pit́t́ä h́eińä panda ambari̯n [Ylä-L] — tuleb panna hein küüni [vir]
-v	ampua | amp̀ua | amBua	ampua	ampua			
+v	ampua | amp̀ua | amBua	ampua | ampua | ampua	ampua			
 			"iskeä ""(ukkosesta)"""			
 			?			ammuĭh hänelt tuBakkā — pyysin, kysyin
-adj	andeligas [Ylä-L]	andeligas [Ylä-L]	?		freigebig	
+adj	andeligas [Ylä-L]	andeligas	?		freigebig	
 n	anDi | antī	anti | antii	arvannosto sotaväkeen menoa varten			
 pr n	Andrē	Andree	Andrej			
-n	aηGeriaZ | aηGriaZ | aηGereZ | aηgaria [L-suu] | aηkerja [Pärspää] | aηkere [Ro]	ankeriaz | ankriaz | ankerez | angaria [L-suu] | ankerja [Pärspää] | ankere [Ro]	ankerias	angerjas		
+n	aηGeriaZ | aηGriaZ | aηGereZ | aηgaria [L-suu] | aηkerja [Pärspää] | aηkere [Ro]	ankeriaz | ankriaz | ankerez | angaria | ankerja | ankere	ankerias	angerjas		
 n	ańiś	an'is'	aniskasvi			
 pr n	AnissĒ	AnissEE	Anisija			
 n	aηkkuri	ankkuri	ankkuri	ankur		
 pr n	Annu	Annu	Anna			
 pr n	Annuška	Annuška	Anna			
-n	an̮sa | an̆sa [Ro]	ansa	teeren ansa			
+n	an̮sa | an̆sa [Ro]	ansa | ansa	teeren ansa			
 v	ansoi- | ansoittele-	ansoi- | ansoittele-	?		[run.] @ mit Schuhriemen versehen	
-v	antā | ant̀ā	antaa	antaa			
+v	antā | ant̀ā	antaa | antaa	antaa			
 			riihen antamisen yhteydessä			
 			antaa lupa			
 			?			"vettä tāz ant̀ā — t.s. sataa; (On puhe Välimataloista, joilla kalastetaan:) ne mat̆tālaD ant̀āt kovast hailia. kaksil lehmim pi₍ettī, hȫ̭ ant̀oiD mait̆toa | hǖ̬ ant̆toiD mait̆to₍ak̆kī paljo lehmäD"
 			?	?		anDoĭ kättä — tervehti kädestä. tās kaiGille kättä antā jällē | hǟ miulle kättä anDoĭ I miä hänelle mäniη kättä anDamā (paennut vävy unessa) || teDri hüppäĭs ta mäni, hǟks se miule kīn antā || miul enempǟ ǟn͜ eı anna — en voi laulaa. a sīz mǖ̬ olemma jälessä ja nō̭ttia enempǟ noiZ (= rupea) anDamā. (Pääsiäiseen mentäessä pyydettiin anteeksi naapureilta:) voD nüD mǖ̬ mǟmmä sūrē püh̭̆h̭ä, anDaGā nüD ant̀īks. ku oDan notkiav vits͔an kät̆tē, miä annav vit̀s͔ā. vit̀s͔āl annettī ain peiDettävöiDä — lyötiin vitsalla. hǟ kaiG lapselle antā periks | miä annoĭn tīDä (= ilmoitin) hänelle jot tul̆līs tänne. antā nīj̆jen haililoiη kḙ̄hua | väl'iž vitša andoi [Ylä-L] — vahel andis vitsa [vir]
-adv	antīks | ant̀iikse | ant̀iiks	antiiks | antiikse	anteeksi			
+adv	antīks | ant̀iikse | ant̀iiks	antiiks | antiikse | antiiks 	anteeksi			
 v	antissa | antīssa	antissa | antiissa	antaa periksi | antautua			
 			pehmetä | esim. raudasta | savimaasta | raakanahasta jne. puhuen			
 n	anttikristuZ	anttikristuz	anttikristus			
 			[Ro] @ valekristus			
 n	antura	antura	(aluksen) köli			
-n	aparaverkko [L-suu]	aparaverkko [L-suu]	pieni käsiverkko, jonka toinen pää on kiinnitetty seipääseen ja pantu pohjaan kiinni			
+n	aparaverkko [L-suu]	aparaverkko	pieni käsiverkko, jonka toinen pää on kiinnitetty seipääseen ja pantu pohjaan kiinni			
 n	ap̆pāja	appaaja	nuotanvetopaikka			
-n	ap̄porkka | ap̄porGa | ap̆porkka | ap̆porGa 	apporkka | apporka	saappaan terä			
+n	ap̄porkka | ap̄porGa | ap̆porkka | ap̆porGa 	apporkka | apporka | apporkka | apporka	saappaan terä			
 n	ap̄pòsteli | ap̄pōstoli	apposteli | appoostoli	apostoli			
 n	apreli	apreli	huhtikuu			
 n	arappi	arappi	murjaani			
@@ -302,35 +302,35 @@ n	arGirō̭Ga | arGirū̮ka | arGirū₍a	arkirooka | arkiruuka | arkiruua	paast
 n	arh̭h̭irei	arhhirei	arkkipiispa			
 n	arh̭h̭itektori	arhhitektori	rakennusmestari			
 pr n	Arhippa	Arhippa	Arhippa			
-n	arho	arho	[? jokin]: rikkaruoho			
+n	arho	arho	[? jokin] @ rikkaruoho			
 			"pehmeä, helposti katkeava, pieni- ja valkokukkainen kasvi, jota mm. syötettiin sialle ""(? Stellaria media)"""			
 n	arkkana	arkkana	silmukka			
-adj	armaDoĭn | armatoine [L-suu] | armoDoĭn | armotoin	armatoin | armatoine [L-suu] | armotoin | armotoin	orpo			
+adj	armaDoĭn | armatoine [L-suu] | armoDoĭn | armotoin	armatoin | armatoine | armotoin | armotoin	orpo			
 			liian*1			*1: armaDoĭn sūr — liian suuri
 v	armahtā	armahtaa	armahtaa			
 adj	armaZ	armaz	hyvä | ystävällinen			
-v	armastā [Nar]	armastaa [Nar]	rakasti | lempi			
+v	armastā [Nar]	armastaa	rakasti | lempi			
 n	aŕmekka	ar'mekka	jonkinlainen päälystakki | kauhtana			
 n	armekki	armekki	kauhtana			
 n	armimain	armimain	?		[in Poesie] @ Liebchen	
 nom	armio	armio	?			Itkuvirrestä: miä veD lāhin sin̆nù₍a soDoitḙ̄lle soriDelDusēn, lā₍in armion aviks akkimaisēn
 n	armo	armo	armo			
-adj	armollīn | ar̆mol̆line [Ro]	armolliin | armolline [Ro]	arka | pelokas	armulik		
+adj	armollīn | ar̆mol̆line [Ro]	armolliin | armolline	arka | pelokas	armulik		
 adj	armullīn | h̭armulij	armulliin | harmulij	armas*1			*1: ah̭ ͜ h̭armulij jum̆māla kuiη kovast tūlō! — ah armas jumala!
 v	aroĭttā	aroittaa	aroittaa | pelättää			
-n	arpoja [Hev] | arpuja	arpoja [Hev] | arpuja	[?] [run.] @ noita			
+n	arpoja [Hev] | arpuja	arpoja | arpuja	[?] [run.] @ noita			
 v	arpoja	arpoja	jakaa niittyjä osuuksiin			
 n	arpuli	arpuli	[Väärinoja] [run.] @ henkilö, joka katsoi kortista, mikä vika oli | unien selittäjä		Zauberer	
-n	ar̆rīna | arina | arinal [Nar] | arin	arriina | arina | arinal [Nar] | arin	uunin suun | arinan, hellan päällys	ahjusuu		
+n	ar̆rīna | arina | arinal [Nar] | arin	arriina | arina | arinal | arin	uunin suun | arinan, hellan päällys	ahjusuu		
 			[Nar] @ hiilloksen kohta			
 			[Väärinoja] @ kiukaan liesi, johon hiilet ja tuhka vedettiin uunista			
 			muuan tasainen paikka Saaroven Krevan mäellä			
-n	ar̆rīna | arina [Väärinoja] [Kurkola]	arriina | arina [Väärinoja] [Kurkola]	ahrain			
+n	ar̆rīna | arina [Väärinoja] [Kurkola]	arriina | arina	ahrain			
 pr n	Arssē	Arssee	?			
-n	arssina | ars͔s͔ina [Hev] | arzina [Hev] | arššina [L-suu] | aršina [Nar]	arssina | arzina [Hev] | arššina [L-suu] | aršina [Nar]	arssina			
+n	arssina | ars͔s͔ina [Hev] | arzina [Hev] | arššina [L-suu] | aršina [Nar]	arssina | arssina | arzina | arššina | aršina	arssina			
 			[L-suu] @ kyynärämitta			
 pr n	Arttamona	Arttamona	?			
-n	artteli | arttali [L-suu]	artteli | arttali [L-suu]	kalastusvenekunta, tav. n. 6-7 miestä | nuottayhtiö			
+n	artteli | arttali [L-suu]	artteli | arttali	kalastusvenekunta, tav. n. 6-7 miestä | nuottayhtiö			
 n	arttuśśi	arttus's'i	peruna			
 v	arvaDa	arvata	arvata			
 			arvioida			
@@ -338,9 +338,9 @@ v	arvaDa	arvata	arvata
 			selittää			
 			laskea lukua, rahaa			
 nom	arvaavalliin	arvaavalliin	?		wer gut errathen kann	
-n	arvo | ar̆vo	arvo	ymmärrys	aru		
+n	arvo | ar̆vo	arvo | arvo	ymmärrys	aru		
 			arvo			
-adj	arvoGaZ | arvoGas | arvokaz  [L-suu]	arvokaz | arvokas	ymmärtävä | älykäs | ymmärtäväinen			
+adj	arvoGaZ | arvoGas | arvokaz  [L-suu]	arvokaz | arvokas | arvokaz	ymmärtävä | älykäs | ymmärtäväinen			
 			arvokas			
 			?			arvokkāD inmīst — hyvästi käyttäytyvät, joista paikkakuntalaiset pitävät. on inmīηk̆ki arvoGaZ ni ͜ Gu sellain oZajā hüväst it̀sijǟ käüttǟ ja el̆lǟ hüväst
 v	arvoĭDella	arvoitella	arvautella			
@@ -352,44 +352,44 @@ v	arvoja	arvoja	?			[run.]: (miun ehtoĭZa em̆moin) kaiG lāDi lakkapūlle, mi
 adj	arvollīn	arvolliin	ymmärtäväinen			
 int	as	as	ah			
 n	aspukka | azbukka	aspukka | azbukka	aapinen			
-postp	asse | assek [Hev] | ašš [Ylä-L]	asse | assek [Hev] | ašš [Ylä-L]	asti | saakka			
+postp	asse | assek [Hev] | ašš [Ylä-L]	asse | assek | ašš	asti | saakka			
 n	as̆sīa | as̆sia | aZi₍ā	assiia | assia | asiaa	asia | homma | työ | työkalu			
 v	as̆sū₍a | as̆sù₍a	assuua | assua	?			hǟ as̆sū käǖv̆vä meil joGa päivä — on tapana käydä
 			asua			
 postp	ast | as	ast | as	asse			
-n	astava | astuva [Hev] [Kurkola] [Ro] | as͔tua [Hev] | ast'iva [L-suu]	astava | astuva [Hev] [Kurkola] [Ro] | astua [Hev] | ast'iva [L-suu]	karhi | äes	äke	Egge	
+n	astava | astuva [Hev] [Kurkola] [Ro] | as͔tua [Hev] | ast'iva [L-suu]	astava | astuva| astua | ast'iva	karhi | äes	äke	Egge	
 			?			astavav veDi — tyhjän (kosimis)matkan teki. se poiGa kolD astavā veDi — sai kolmet rukkaset kosiessaan | vet̆tǟ astavā — saa rukkaset
 n	astarga	astarga	ahrain			
-v	astavoija | astăvoija | astavoittā | ast'ivoittā [L-suu] | ast'evoittā [Ro] | astuvoi- [Hev] [Ro]	astavoija | astavoija | astavoittaa | ast'ivoittaa [L-suu] | ast'evoittaa [Ro] | astuvoi- [Hev] [Ro]	äestää | karhita		eggen	
-n	asterka [Ro] | astrega [Ro]	asterka [Ro] | astrega [Ro]	ahingas			
+v	astavoija | astăvoija | astavoittā | ast'ivoittā [L-suu] | ast'evoittā [Ro] | astuvoi- [Hev] [Ro]	astavoija | astavoija | astavoittaa | ast'ivoittaa | ast'evoittaa | astuvoi-	äestää | karhita		eggen	
+n	asterka [Ro] | astrega [Ro]	asterka | astrega	ahingas			
 n	astia	astia	astia			
-adv	ast'ēs̆sa [Ro]	ast'eessa [Ro]	?	astjasse | nõusse		
-v	astua [Ylä-L]	astua [Ylä-L]	?			aštu — astuda, aššu — astu
+adv	ast'ēs̆sa [Ro]	ast'eessa	?	astjasse | nõusse		
+v	astua [Ylä-L]	astua	?			aštu — astuda, aššu — astu
 n	azbukki	azbukki	aapiskirja			
-v	aZettā | aset̆tā [Ro]	asettaa	asettaa			
+v	aZettā | aset̆tā [Ro]	asettaa | asettaa	asettaa			
 			pysäyttää			
 			peittää jyvät äestämällä			
 			?	rahustada		Härkä temmelsi karjassa: paimenem piDi männä ain aZettam̆mā [Ro]
-v	asettai- [Hev]	asettai- [Hev]	?		sich stellen	
+v	asettai- [Hev]	asettai-	?		sich stellen	
 v	aZettua	asettua	?			tūli aZettū — tyyntyy | särGi hammast: lūn (= luvun) tīZi joD luGi pǟlle joD aZettuĭ hammassärky | laps aZettuĭ makkama
 			asettua yhteen kohtaan			
 n	azra	azra	ahrain			
 n	aZu | as̆su	asu | assu	työase | työkalu			
 			kaljaasi			
-n	asuηkera [Ro]	asunkera [Ro]	?	tarberiistaga		
+n	asuηkera [Ro]	asunkera	?	tarberiistaga		
 n	aZunikka	asunikka	asukki			
 n [pl]	atškaD	atškad	silmälasit			
 n	at̆tāmāni	attaamaani	"johtaja ""(esim. poikasakin)"""			
-adv	auGi | auG | auk | auki [L-suu] [Ro]	auki | auk	auki			
+adv	auGi | auG | auk | auki [L-suu] [Ro]	auki | auk | auk | auki	auki			
 adj	auGinain	aukinain	avonainen			
-n	auGusti(kū)	aukusti | aukustikuu	elokuu			
+n	auGusti(kū) | auGusti(kū)	aukusti | aukustikuu	elokuu			
 adj	aukka	aukka	liian antelias			
-n	aukku | aukko [Nar] [L-suu]	aukku | aukko [Nar] [L-suu]	aukko			
-n	auriηGo [L-suu]	aurinko [L-suu]	aurinko			
+n	aukku | aukko [Nar] [L-suu]	aukku | aukko	aukko			
+n	auriηGo [L-suu]	aurinko	aurinko			
 v	aŭv̆veDa	auvveta	[run.] @ aueta			
 v	avaDa	avata	avata			
 v	ava₍ella	avaella	availla			
-v	avahtua [L-suu]	avahtua [L-suu]	havahtua | herätä			
+v	avahtua [L-suu]	avahtua	havahtua | herätä			
 v	avahua	avahua	avautua			
 n	avanDo	avanto	avanto			
 v	avaroittā	avaroittaa	tehdä tilavaksi | suurentaa			
@@ -400,25 +400,25 @@ n, nom	avohia | hia avoBǟ	avohia | hia avopää	avopää
 n	avomeri	avomeri	avomeri			
 nom	avoiZū | avoi ͜ Zū	avoisuu | avoi suu	avosuu			
 adj	avonain	avonain	?			avonaim meri
-adv	avo·ϑś | avoś	avos'	ehkä			
+adv	avo·ϑś | avoś	avos' | avos'	ehkä			
 n	av̆vain	avvain	avain			
 adj	av̆vāro	avvaaro	tilava | avara			
 pr n	Ābrama	Aabrama	Aabraham			
-n	āDa | āda [Ro]	aata | aada [Ro]	helvetti	põrgu		
-pr n	ĀDo | Āto	Aato	Aatami			
+n	āDa | āda [Ro]	aata | aada	helvetti	põrgu		
+pr n	ĀDo | Āto	Aato | Aato	Aatami			
 v	āDuttā	aatuttaa	totuttaa			
 n	āGentti	aakentti	agentti			
 n	āglitsina	aaglitsina	englantilainen			
 n	āloĭ	aaloi	vaalean punainen			
-int	āmen | aamen	aamen	?			olkaa aamen — olkoon lopussa
-n	āmpūssen [Ro]	aampuussen [Ro]	"tähed ""(kirjaimet)"""			
-n	āmu | aamu [Nar] [Ro]	aamu	aamu			
-adj, adv	āmuin [Ylä-L]	aamuin [Ylä-L]	ammoinen | ammoin			
-n	āmuin | aamuin [Nar]	aamuin	aamu			
-adv	āmuⁱZèl | aamusel [Nar]	aamuisel | aamusel	aamusella			
-n	ānnua | aannua | āǹua [Hev]	aannua | aanua [Hev]	?			"""sivulta halkinainen musta hame, ylhäältä alas asti avonainen aannua. Halkinainen puoli on asetettu vasemmalle sivulle, «kurapuolelle», ja aannuata kannattaa halkeaman yläreunaan kiinnitetty, vasemman olan yli käyvä olkamus. Aannua on n. metrin pituinen ja - - se ulottuu ylhäällä hartioihin kainaloiden alle, alhaalla se tapaa nilkkoihin. Vyötäisiltä sitä kiinnittää ruumiin ympäri sidottu eteen solmittu vyö, vyy. Värttinällä itse kehrätyistä villalangoista on aannua neljällä niidellä kudottu ja itse ommeltu. Leveyttä on siinä kaksi palttinaa (kankaan koko leveyttä) ja reunoissa viistot laijat, niin että helmän pituus on 140-150 cm sekä yläreunan 75-80 cm"" (Pau SM 19 s. 39)"
+int	āmen | aamen	aamen | aamen	?			olkaa aamen — olkoon lopussa
+n	āmpūssen [Ro]	aampuussen	"tähed ""(kirjaimet)"""			
+n	āmu | aamu [Nar] [Ro]	aamu | aamu	aamu			
+adj, adv	āmuin [Ylä-L]	aamuin	ammoinen | ammoin			
+n	āmuin | aamuin [Nar]	aamuin | aamuin	aamu			
+adv	āmuⁱZèl | āmuⁱZèl | aamusel [Nar]	aamuisel | aamusel | aamusel	aamusella			
+n	ānnua | aannua | āǹua [Hev]	aannua | aannua | aanua	?			"""sivulta halkinainen musta hame, ylhäältä alas asti avonainen aannua. Halkinainen puoli on asetettu vasemmalle sivulle, «kurapuolelle», ja aannuata kannattaa halkeaman yläreunaan kiinnitetty, vasemman olan yli käyvä olkamus. Aannua on n. metrin pituinen ja - - se ulottuu ylhäällä hartioihin kainaloiden alle, alhaalla se tapaa nilkkoihin. Vyötäisiltä sitä kiinnittää ruumiin ympäri sidottu eteen solmittu vyö, vyy. Värttinällä itse kehrätyistä villalangoista on aannua neljällä niidellä kudottu ja itse ommeltu. Leveyttä on siinä kaksi palttinaa (kankaan koko leveyttä) ja reunoissa viistot laijat, niin että helmän pituus on 140-150 cm sekä yläreunan 75-80 cm"" (Pau SM 19 s. 39)"
 n	ārnitsa	aarnitsa	ostokankaasta valmistettu naisten puku			
-n	āstaGa | āstoⁱGa | āstaika [L-suu] [Ro]	aastaka | aastoika | aastoka | aastaika [L-suu] [Ro]	vuosi			
+n	āstaGa | āstoⁱGa | āstoⁱGa | āstaika [L-suu] [Ro]	aastaka | aastoika | aastoka | aastaika	vuosi			
 n	ātto	aatto	aatto	eelõhtu		
 v	āttua	aattua	tottua | käydä tavaksi			
 			asettua | tyyntyä			

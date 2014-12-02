@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib import auth
-from wordengine.global_const import *
 from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -404,6 +403,7 @@ class CSVCell(models.Model):
     def __str__(self):
         return 'Cell {0} ({1})'.format(self.excel_cell_code, self.value)
 
+
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
     state = models.CharField(choices=PRJ_STATE, max_length=2)
@@ -433,9 +433,9 @@ class ImgData(ProjectedEntity):
 class ProjectDictionary(ProjectedEntity):
     value = models.CharField(max_length=256)
     src_obj = models.CharField(max_length=256)
-    src_field = models.CharField(max_length=256, null=True, blank=True)
+    # src_field = models.CharField(max_length=256, null=True, blank=True)
 
-    term_type = models.CharField(max_length=128, null=True, blank=True)
+    term_type = models.CharField(max_length=128, blank=True)
     term_id = models.PositiveIntegerField(null=True, blank=True)
     # term_type = models.ForeignKey(ContentType, null=True, blank=True)
     # term_id = models.PositiveIntegerField(null=True, blank=True)
@@ -447,9 +447,9 @@ class ProjectDictionary(ProjectedEntity):
 
 class ProjectColumn(ProjectedEntity):
     language_l = models.CharField(max_length=256)
-    dialect_l = models.CharField(max_length=256, null=True, blank=True)
+    dialect_l = models.CharField(max_length=256, blank=True)
     # source_l = models.CharField(max_length=256, null=True, blank=True)
-    writing_system_l = models.CharField(max_length=256, null=True, blank=True)
+    writing_system_l = models.CharField(max_length=256, blank=True)
     num = models.SmallIntegerField()
     csvcell = models.ForeignKey(CSVCell)
 
@@ -526,6 +526,10 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
     def real_model():
         return Lexeme
 
+    @staticmethod
+    def project_fields():
+        return {'syntactic_category': 'SyntacticCategory', 'params': ('Inflection', 'LexemeParameter')}
+
     def fields(self):
         fields = {'syntactic_category_id': get_from_project_dict(self, self.syntactic_category, 'SyntacticCategory'),
                   'language': self.col.language}
@@ -555,6 +559,10 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     @staticmethod
     def real_model():
         return Wordform
+
+    @staticmethod
+    def project_fields():
+        return {'params': ('GrammCategorySet', 'Dialect')}
 
     def fields(self):
         fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
@@ -607,6 +615,10 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     @staticmethod
     def real_model():
         return SemanticGroup
+
+    @staticmethod
+    def project_fields():
+        return {'params': ('Dialect', 'Theme', 'UsageConstraint'), 'dialect': 'Dialect'}
 
     @property
     def dialect_list(self):

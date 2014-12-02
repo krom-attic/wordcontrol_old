@@ -7,8 +7,6 @@ import codecs
 from django.db import transaction, IntegrityError
 import datetime
 import re
-import itertools
-
 
 # Common functions here
 
@@ -28,7 +26,7 @@ def find_lexemes_wordforms(word_search, exact):
     for word in word_result:
         temp_lexeme_result[word.lexeme].append(word)
     lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but it doesn't)
-    #TODO Invalid search handling
+    # TODO Invalid search handling
     return lexeme_result
 
 
@@ -61,16 +59,18 @@ def modsave(request, upd_object, upd_fields):
         field_change[upd_field].new_value = getattr(upd_object, upd_field)
         field_change[upd_field].save()
 
-
     # TODO: Modsave should record a DictChange, write to log and display action result
 
     return None
 
 
-def check_cell_for_errors(csvcell, fields, list_fields=()):
+def check_cell_for_errors(csvcell, fields, list_fields=[]):
     errors = []
 
-    fields_to_check = fields + list_fields
+    if list_fields:
+        fields_to_check = fields + list_fields
+    else:
+        fields_to_check = fields
 
     for field in fields_to_check:
         for char in SPECIAL_CHARS:
@@ -94,9 +94,8 @@ def parse_csv_header(project):
         csvcell = models.CSVCell(row=0, col=colnum, value=value, project=project)
         csvcell.save()
 
-        writing_system = None
-        dialect = None
-        processing = None
+        writing_system = ''
+        dialect = ''
 
         col_split = value.strip().split('[', 1)
         if len(col_split) == 2:
@@ -106,14 +105,12 @@ def parse_csv_header(project):
             dialect = lang_dialect.pop().strip(') ')
         language = lang_dialect.pop().strip()
 
-        errors.extend(check_cell_for_errors(csvcell, (language, dialect, writing_system, processing)))
+        errors.extend(check_cell_for_errors(csvcell, (language, dialect, writing_system)))
 
         column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum,
                                               writing_system_l=writing_system,
                                               state='N', project=project, csvcell=csvcell)
         column_literal.save()
-
-        print(column_literal)
 
         # First column is treated as source language
         if not source_language:
@@ -135,8 +132,9 @@ def get_ext_comments_from_csvcell(project):
     csvcell = models.CSVCell(row=project.rownum, col=len(project.row)-1, value=project.row[-1], project=project)
     csvcell.save()
     ext_comm_split = RE_EXT_COMM.split(project.row[-1])
-    if ext_comm_split[0]:
-        errors.append((str(csvcell) + ' (ext comments)', 'Something odd is in extended comment cell'))
+    # if ext_comm_split[0]:
+    #     errors.append((str(csvcell) + ' (ext comments)', 'Something odd is in extended comment cell'))
+    # Temporary disabled (for testing purposes)
 
     odd = True
     temp_list = []
@@ -165,7 +163,7 @@ def get_lexeme_from_csvcell(project, lexeme_literal, col):
     else:
         params = ''
 
-    errors.extend(check_cell_for_errors(csvcell, (synt_cat, ), tuple(params)))
+    errors.extend(check_cell_for_errors(csvcell, [synt_cat, ], params or []))
 
     lexeme_src = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=project, state='N',
                                       col=col, csvcell=csvcell)
@@ -206,7 +204,7 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
                     else:
                         comment = ''
 
-                    errors.extend(check_cell_for_errors(csvcell, (spelling, comment), tuple(params)))
+                    errors.extend(check_cell_for_errors(csvcell, [spelling, comment], params or []))
 
                     wordform = models.ProjectWordform(lexeme=lexeme_src, spelling=spelling, comment=comment,
                                                       params=params, project=project, state='N',
@@ -216,14 +214,14 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
                     wordform.save()
             else:
                 for wf_num, current_wordform in enumerate(lexeme_wordforms.split('|')):
-                    spelling = current_wordform
+                    spelling = current_wordform.strip()
                     try:
                         original_wordform = first_col_wordforms[wf_num]
                     except IndexError:
                         errors.append((csvcell, "Number of processed wordforms is more than the number of unprocessed"))
                         continue
 
-                    errors.extend(check_cell_for_errors(csvcell, (spelling, )))
+                    errors.extend(check_cell_for_errors(csvcell, [spelling, ]))
                     proc_wordform = models.ProjectProcWordform(wordform=original_wordform, spelling=spelling,
                                                                col=column_literal, csvcell=csvcell,
                                                                project=project, state='N')
@@ -237,6 +235,9 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
         else:
             if new_lexeme:
                 errors.append((str(project.row) + ' (source cols)', "Wordforms expected, but not found"))
+
+    # TODO Add wordform deduplication
+    # TODO Add param deduplication
 
     return errors
 
@@ -272,7 +273,7 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
             semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
                                                           project=project, state='N', csvcell=csvcell)
 
-            errors.extend(check_cell_for_errors(csvcell, (group_comment, ), tuple(group_params)))
+            errors.extend(check_cell_for_errors(csvcell, [group_comment, ], group_params or []))
 
             semantic_gr_src.save()
 
@@ -284,6 +285,7 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
                     temp_split = param_word_dialect.split(']', 1)
                     params.append(temp_split.pop(0).strip('[ '))  # (param), ...
                     param_word_dialect = temp_split.pop(0)
+                params = params or ''
                 word_dialect = param_word_dialect.strip().split('[', 1)  # (word ), (dialect])
                 spelling = word_dialect.pop(0).strip()  # (word)
                 if len(word_dialect) == 1:
@@ -295,7 +297,7 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
                 else:
                     transl_comment = ''
 
-                errors.extend(check_cell_for_errors(csvcell, (spelling, transl_dialect, transl_comment), tuple(params)))
+                errors.extend(check_cell_for_errors(csvcell, [spelling, transl_dialect, transl_comment], params or []))
 
                 lexeme_trg = models.ProjectLexeme(syntactic_category=lexeme_src.syntactic_category, params=params,
                                                   project=project, state='N', col=column_literal, csvcell=csvcell)
@@ -322,6 +324,8 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
     if not translations_found:
         errors.append((str(project.row) + ' (translations)', 'Translations expected, but not found'))
 
+    # TODO Add wordform deduplication
+
     return errors
 
 
@@ -338,9 +342,10 @@ def parse_csv(request):
                              filename=request.FILES['file'].name, source_id=request.POST['source'])
     project.errors = []
     project.save()
+    lang_src_cols = []
+    lang_trg_cols = []
 
     csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
-    # TODO If there are CSVCell objects of the project, do something with it
 
     for project.rownum, project.row in enumerate(csvreader):
 
@@ -386,14 +391,14 @@ def to_project_dict(project, model, field):
     if field in fixed_keys.values():
         term_type = fixed_keys[field].__name__
     else:
-        term_type = None
+        term_type = ''
 
-    for value in model.objects.all().values(field).distinct():
+    for value in model.objects.all().values(field).distinct():  # TODO NO PROJECT FILTERING???
         print(value)
         if value[field]:
             real_value = restore_list(value[field])
             for sg_value in real_value:
-                pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, src_field=field, project=project,
+                pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, project=project,
                                               state='N', term_type=term_type)
                 try:
                     pd.save()
@@ -404,10 +409,27 @@ def to_project_dict(project, model, field):
 
 
 def fill_project_dict(project):
+    # project_models = (models.ProjectLexeme, models.ProjectWordform, models.ProjectSemanticGroup)
+    # for model in project_models:
+    #     for field in model.project_fields():
+    #         to_project_dict(project, model, field)
+
     project_models = (models.ProjectLexeme, models.ProjectWordform, models.ProjectSemanticGroup)
     for model in project_models:
-        for field in model.project_fields():
-            to_project_dict(project, model, field)
+        src_obj = model.__name__
+        for field, term_type in model.project_fields().items():
+            if type(term_type) == tuple:
+                term_type = None
+            for value in model.objects.filter(project=project).values(field).distinct():
+                if value[field]:
+                    real_value = restore_list(value[field])
+                    for sg_value in real_value:
+                        pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, project=project,
+                                                      state='N', term_type=term_type)
+                        try:
+                            pd.save()
+                        except IntegrityError:
+                            pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
     return None
 
 
@@ -415,7 +437,9 @@ def parse_upload(request):
 
     transaction.set_autocommit(False)
     project = parse_csv(request)
-    # fill_project_dict(project)
+    fill_project_dict(project)
+    if project.errors:
+        transaction.rollback()
     transaction.set_autocommit(True)
 
     return project.id, project.errors
@@ -424,9 +448,7 @@ def parse_upload(request):
 def produce_project_model(project, model):
     created_objects = []
 
-    for project_object in model.objects.filter(state='N').filter(project=project):
-
-        transaction.set_autocommit(False)
+    for project_object in model.objects.filter(state='N', project=project):
 
         fields = project_object.fields()
         model_object = model.real_model()(**fields)
@@ -446,20 +468,21 @@ def produce_project_model(project, model):
         project_object.state = 'P'
         project_object.save()
 
-        transaction.set_autocommit(True)
-
         created_objects.append(model_object)
 
     return created_objects
 
 
 def produce_project(project):
+    transaction.set_autocommit(False)
     produce_project_model(project, models.ProjectLexeme)
     produce_project_model(project, models.ProjectWordform)
+    produce_project_model(project, models.ProjectProcWordform)
     produce_project_model(project, models.ProjectSemanticGroup)
     produce_project_model(project, models.ProjectTranslation)
     project.state = 'P'
     project.save()
+    transaction.set_autocommit(True)
     return None
 
 

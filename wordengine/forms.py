@@ -88,25 +88,23 @@ class ProjectColumnSetupForm(forms.ModelForm):
         model = models.ProjectColumn
         exclude = []
         widgets = {'project': forms.HiddenInput, 'state': forms.HiddenInput, 'language_l': forms.HiddenInput,
-                   'dialect_l': forms.HiddenInput, 'source_l': forms.HiddenInput, 'writing_system_l': forms.HiddenInput,
-                   'processing_l': forms.HiddenInput, 'num': forms.HiddenInput, 'csvcell': forms.HiddenInput}
+                   'dialect_l': forms.HiddenInput, 'writing_system_l': forms.HiddenInput,
+                   'num': forms.HiddenInput, 'csvcell': forms.HiddenInput}
 
 
 class UntypedParamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
-        # TODO Here will be "ValueError: need more than 1 value to unpack" if non-tuple param leaks in
         model = get_model(APP_NAME, self.initial['src_obj'])
-        available_terms = []
-        for params in (model.param_fks(), model.param_m2ms()):
-            for param in params:
-                available_terms.append((param, param))
+        params = model.project_fields()['params']
+        available_terms = ((None, '---------'), )
+        available_terms += tuple(((param, param) for param in params))
         self.fields['term_type'] = forms.ChoiceField(choices=available_terms, required=False)
 
     class Meta:
         model = models.ProjectDictionary
         exclude = ['state', 'project', 'term_id']
-        widgets = {'value': forms.HiddenInput, 'src_field': forms.HiddenInput, 'src_obj': forms.HiddenInput}
+        widgets = {'value': forms.HiddenInput, 'src_obj': forms.HiddenInput}
 
 
 class ParamSetupForm(forms.ModelForm):
