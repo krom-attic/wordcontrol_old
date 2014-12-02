@@ -118,9 +118,8 @@ class Language(Term):
                                                   null=True, blank=True, related_name='synt_cat_set')
     iso_code = models.CharField(max_length=8)  # ISO 639-3
 
-    @property
-    def main_gr_cat(self, synt_cat):
-        return self.synt_cat_set.get(syntactic_category=synt_cat).main_gramm_category_set
+    def get_main_gr_cat(self, synt_cat):
+        return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
 
 
 # Language-dependant classes. Abstract
@@ -175,8 +174,8 @@ class GrammCategorySet(LanguageEntity):
     gramm_category_m = models.ManyToManyField(GrammCategory)
     position = models.SmallIntegerField(null=True, blank=True)
 
-    # def __str__(self):
-    #         return ' '.join(str(s) for s in self.gramm_category_m.all())
+    def __str__(self):
+            return ' '.join(str(s) for s in self.gramm_category_m.all())
 
     class Meta:
         unique_together = ('language', 'position')
@@ -568,8 +567,10 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
         if self.params_list:
             fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
-        if 'gramm_category_set_id' not in fields:
-            fields['gramm_category_set_id'] = self.col.language.main_gr_cat(self.lexeme.result.syntactic_category)
+        if not fields.get('gramm_category_set_id'):
+            fields['gramm_category_set'] = self.col.language.get_main_gr_cat(self.lexeme.result.syntactic_category)
+            if 'gramm_category_set_id' in fields.keys():
+                del fields['gramm_category_set_id']  # Without deletion conflicting keys present
 
         return fields
 
@@ -577,7 +578,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         m2m_fields = {}
         if self.params_list:
             m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list, 'Dialect')
-        if 'dialect_m' not in m2m_fields:
+        if not m2m_fields.get('dialect_m'):
             m2m_fields['dialect_m'] = [self.col.dialect_id]
         return m2m_fields
 
@@ -591,7 +592,7 @@ class ProjectProcWordform(ProjectedEntity, ProjectedModel):
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
-    result = models.ForeignKey(Wordform, null=True, blank=True)
+    result = models.ForeignKey(ProcWordform, null=True, blank=True)
 
     @staticmethod
     def real_model():
@@ -664,8 +665,7 @@ class ProjectTranslation(ProjectedEntity, ProjectedModel):
 
     def fields(self):
         return {'lexeme_1': self.lexeme_1.result, 'lexeme_2': self.lexeme_2.result, 'direction': self.direction,
-                'semantic_group_1': self.semantic_group_1.result, 'semantic_group_2': self.semantic_group_2.result,
-                'wordform_1': self.wordform_1.result, 'wordform_2': self.wordform_2.result}
+                'semantic_group_1': self.semantic_group_1.result, 'semantic_group_2': self.semantic_group_2.result}
 
     def m2m_thru_fields(self):
         return {DictTranslation: {'source': self.project.source, 'translation': self.result, 'is_deleted': False}}

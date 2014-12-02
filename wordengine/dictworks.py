@@ -384,52 +384,23 @@ def parse_csv(request):
     return project
 
 
-def to_project_dict(project, model, field):
-    src_obj = model.__name__
-    fixed_keys = model.fixed_fks()
-    fixed_keys.update(model.fixed_m2ms())
-    if field in fixed_keys.values():
-        term_type = fixed_keys[field].__name__
-    else:
-        term_type = ''
-
-    for value in model.objects.all().values(field).distinct():  # TODO NO PROJECT FILTERING???
-        print(value)
-        if value[field]:
-            real_value = restore_list(value[field])
-            for sg_value in real_value:
-                pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, project=project,
-                                              state='N', term_type=term_type)
-                try:
-                    pd.save()
-                except IntegrityError:
-                    pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
-
-    return None
-
-
 def fill_project_dict(project):
-    # project_models = (models.ProjectLexeme, models.ProjectWordform, models.ProjectSemanticGroup)
-    # for model in project_models:
-    #     for field in model.project_fields():
-    #         to_project_dict(project, model, field)
-
     project_models = (models.ProjectLexeme, models.ProjectWordform, models.ProjectSemanticGroup)
     for model in project_models:
         src_obj = model.__name__
         for field, term_type in model.project_fields().items():
             if type(term_type) == tuple:
-                term_type = None
+                term_type = ''
+            values = set()
             for value in model.objects.filter(project=project).values(field).distinct():
                 if value[field]:
                     real_value = restore_list(value[field])
                     for sg_value in real_value:
-                        pd = models.ProjectDictionary(value=sg_value, src_obj=src_obj, project=project,
-                                                      state='N', term_type=term_type)
-                        try:
-                            pd.save()
-                        except IntegrityError:
-                            pass  # TODO Should only occur if sg_value isn't unique. Reraise an error if that is not
+                        values.add(sg_value)
+            models.ProjectDictionary.objects.bulk_create([models.ProjectDictionary(value=val, src_obj=src_obj,
+                                                                                   project=project, state='N',
+                                                                                   term_type=term_type)
+                                                          for val in values])
     return None
 
 
@@ -475,6 +446,7 @@ def produce_project_model(project, model):
 
 def produce_project(project):
     transaction.set_autocommit(False)
+    # TODO Check if syntactic categories present in language
     produce_project_model(project, models.ProjectLexeme)
     produce_project_model(project, models.ProjectWordform)
     produce_project_model(project, models.ProjectProcWordform)

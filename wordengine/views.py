@@ -28,6 +28,13 @@ class DoSmthWordformView(TemplateView):
         some_data = ''
         return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
 
+    def post(self, request, *args, **kwargs):
+        some_form = self.some_object_class()
+        some_data = ''
+        if '_purge_dict' in request.POST:
+            models.Lexeme.objects.all().delete()
+        return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
+
 class AddWordformView(TemplateView):
     """New word addition view
     """
