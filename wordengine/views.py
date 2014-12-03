@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.contrib import messages
 from wordengine import forms
 from wordengine.dictworks import *
+from django.forms.models import modelformset_factory
+from django.core import serializers
 
 # Actual views here
 
@@ -22,15 +24,16 @@ class DoSmthWordformView(TemplateView):
     template_name = 'wordengine/do_smth.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'smth_form': self.some_object_class()})
+        some_form = self.some_object_class()
+        some_data = ''
+        return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
 
     def post(self, request, *args, **kwargs):
-        if '_restore_wordform' in request.POST:
-            wordform_form = get_object_or_404(models.Wordform, pk=request.POST['given_id'])
-            wordform_form.is_deleted = False
-            wordform_form.save()
-        return redirect('wordengine:action_result')
-
+        some_form = self.some_object_class()
+        some_data = ''
+        if '_purge_dict' in request.POST:
+            models.Lexeme.objects.all().delete()
+        return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
 
 class AddWordformView(TemplateView):
     """New word addition view
@@ -276,8 +279,6 @@ class AddTranslationView(TemplateView):
                 return render(request, self.template_name, {'first_lexeme': first_lexeme,
                                                             'word_search_form': word_search_form})
 
-
-
     def post(self, request, *args, **kwargs):
         is_saved = False
         lexeme_1 = models.Lexeme.objects.get(pk=request.POST['lexeme_1'])
@@ -367,31 +368,124 @@ class LanguageSetupView(TemplateView):
         return super(LanguageSetupView, self).dispatch(*args, **kwargs)
 
 
-
-class DictionaryDataImportView(TemplateView):
-    """ Class view for importing dictionary data via file upload
-    """
-
-    template_name = 'wordengine/translation_import.html'
-    translation_import_form_class = forms.TranslationImportForm
-    upload_form_class = forms.UploadFileForm
+class ProjectListView(TemplateView):
+    template_name = 'wordengine/project_list.html'
+    project_list_form_class = forms.ProjectListForm
+    project_upload_form_class = forms.ProjectUploadForm
 
     def get(self, request, *args, **kwargs):
-        translation_import_form = self.translation_import_form_class()
-        upload_form = self.upload_form_class()
-        return render(request, self.template_name, {'translation_import_form': translation_import_form,
-                                                    'upload_form': upload_form})
+        project_upload_form = self.project_upload_form_class()
+        if '_setup' in request.GET:
+            project_list_form = self.project_list_form_class(request.GET)
+            if project_list_form.is_valid():
+                project_id = request.GET['project']
+                return redirect('wordengine:project_setup', project_id)
+
+        project_list_form = self.project_list_form_class()
+        return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                    'project_upload_form': project_upload_form})
 
     def post(self, request, *args, **kwargs):
-        translation_import_form = self.translation_import_form_class(request.POST)
-        upload_form = self.upload_form_class(request.POST, request.FILES)
-        if translation_import_form.is_valid() and upload_form.is_valid():
-            added_translations = parse_data_import(request)
-            transaction.rollback()
-            transaction.set_autocommit(True)
+        project_list_form = self.project_list_form_class()
+        project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
+        if project_upload_form.is_valid():
+            project_id, errors = parse_upload(request)
+            if errors:
+                # models.Project.objects.get(pk=project_id).delete()
+                return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                            'project_upload_form': project_upload_form,
+                                                            'errors': errors})
+            else:
+                return redirect('wordengine:project_setup', project_id)
+
         else:
-            added_translations = None
-            # TODO Upload form file not saved on fail
-        return render(request, self.template_name, {'translation_import_form': translation_import_form,
-                                                    'upload_form': upload_form,
-                                                    'added_translations': added_translations})
+            # TODO Add error message
+            # TODO Upload form not saved on fail
+            return render(request, self.template_name, {'project_list_form': project_list_form,
+                                                        'project_upload_form': project_upload_form})
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ProjectListView, self).dispatch(*args, **kwargs)
+
+
+class ProjectSetupView(TemplateView):
+    template_name = 'wordengine/project_setup.html'
+    PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
+    UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
+    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
+
+    # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
+
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
+        # Obsolete version of column setup. Must be deleted.
+        # column_initial = []
+        # literal_values = []
+        # for column in models.ProjectColumn.objects.filter(project=project):
+        #     column_initial.append({'project': project, 'literal': column})
+        #     literal_values.append({'language': column.language_l, 'dialect': column.dialect_l, 'source': column.source_l,
+        #                            'writing_system': column.writing_system_l, 'processing': column.processing_l,
+        #                            'num': column.num})
+        # pr_col_setup_set = self.PrColSetupFormSet(initial=column_initial)
+        # project_columns = zip(literal_values, pr_col_setup_set)
+
+        pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
+        untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
+                                                          filter(term_type=''))
+        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
+                                                      exclude(term_type='').filter(term_id=None))
+        # TODO: allow modification of untyped parameters if project stage allows
+        return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
+                                                    'untyped_param_form_set': untyped_param_form_set,
+                                                    'param_setup_form_set': param_setup_form_set,
+                                                    'project': project})
+
+    def post(self, request, *args, **kwargs):
+        if '_column_save' in request.POST:
+            # project_columns = request.POST  # WTF???
+            # project_columns.save()
+            pr_col_setup_set = self.PrColSetupFormSet(request.POST)
+            if pr_col_setup_set.is_valid():
+                # TODO Change project column's state to "P", but only if all fields are set
+                pr_col_setup_set.save()
+
+        if '_types_save' in request.POST:
+            untyped_param_form_set = self.UntypedParamFormSet(request.POST)
+            if untyped_param_form_set.is_valid():
+                untyped_param_form_set.save()
+
+        if '_terms_save' in request.POST:
+            param_setup_form_set = self.ParamSetupFormSet(request.POST)
+            print(param_setup_form_set.errors)
+            if param_setup_form_set.is_valid():
+                param_setup_form_set.save()
+
+        if '_produce' in request.POST:
+            project = models.Project.objects.get(pk=kwargs['project_id'])
+            produce_project(project)
+
+        if '_delete' in request.POST:
+            project = models.Project.objects.get(pk=kwargs['project_id'])
+            project.delete()
+
+        return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
+
+
+class TranslationImportView(TemplateView):
+    # translation_import_form_class = forms.TranslationImportForm
+    def get(self, request, *args, **kwargs):
+        pass
+        # translation_import_form = self.translation_import_form_class()
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
+
+    def post(self, request, *args, **kwargs):
+        pass
+        # translation_import_form = self.translation_import_form_class(request.POST)
+        # if translation_import_form.is_valid() and upload_form.is_valid():
+            # added_translations = parse_upload(request)
+            # transaction.rollback()
+            # transaction.set_autocommit(True)
+        #else:
+            # added_translations = None
+        # return render(request, self.template_name, {'translation_import_form': translation_import_form,

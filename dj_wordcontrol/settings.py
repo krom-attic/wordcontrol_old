@@ -18,7 +18,8 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(PROJECT_DIR, 'sqlite3.db'),  # Or path to database file if using sqlite3.
+        # 'NAME': os.path.join(PROJECT_DIR, 'sqlite3.db'),  # Or path to database file if using sqlite3.
+        'NAME': os.path.join(PROJECT_DIR, 'sqlite3_test.db'),  # Database with test data
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -85,7 +86,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -95,7 +96,7 @@ SECRET_KEY = '=&izv7jn!ylg9p$w1_*62+*s_j@1u19g*_4=4^*cq8eqe*q7on'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    # 'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -134,28 +135,60 @@ INSTALLED_APPS = (
     'wordengine',
 
     # THIRDPARTY APPS
-
+    'debug_toolbar'
 )
 
+# Sample, described below, is overridden!!
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue'
         }
+        # Above are default Django filters, below are custom
     },
+    # 'formatters': {
+    #     'verbose': {
+    #         'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+    #     },
+    #     'simple': {
+    #         'format': '%(levelname)s %(message)s'
+    #     },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'null': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_false'],
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        },
+        # Above are default Django handlers, below are custom
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_DIR, 'debug.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5
+        },
     },
     'loggers': {
         'django.request': {
@@ -163,6 +196,13 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'django': {
+            'handlers': ['console', 'null'],  # , 'file'],
+            #  Default logger with 'file' handler added, but disabled (unicode problems)
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        # Above are default Django loggers, below are custom
     }
 }
 

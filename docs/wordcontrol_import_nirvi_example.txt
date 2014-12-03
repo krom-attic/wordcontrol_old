@@ -1,0 +1,8 @@
+﻿Параметры лексем	Ижорский (сойкинский) [Nirvi]	Ижорский (сойкинский) [учебная]	Финский	Эстонский	Расширенный комментарий
+int	a	a	no		
+conj	a	a	mutta | kun taas		
+n	aBi | api [Hev] [Ro] | apṕē [Ro]	api | api | app'ee	apu	abi	
+adj	ahnaZ | ah̆naZ	ahnaz | ahnaz	ahkera työhön		
+			"halukas | ahkera ""(esim. viinaan)"""		
+n	aDria | at̆rē	atria | atree	sahrat		
+n [pl]	atškaD	atškad	silmälasit		
