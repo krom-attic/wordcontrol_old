@@ -261,8 +261,6 @@ class WordformBase(models.Model):
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-    spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
     source_m = models.ManyToManyField(Source, through='DictWordform')
 
     @property
@@ -290,6 +288,7 @@ class Wordform(WordformBase):
     """Class representing current wordforms"""
 
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    informant = models.CharField(max_length=256, blank=True)
 
     @property
     def dialects(self):
@@ -305,22 +304,16 @@ class Wordform(WordformBase):
     # TODO Include dialects into description
 
 
-class ProcWordform(models.Model):
+class WordformSpell(models.Model):
     wordform = models.ForeignKey(Wordform)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
+    is_original = models.BooleanField()
 
 
 class DictWordform(DictEntity):
     wordform = models.ForeignKey(Wordform)
     comment = models.TextField(blank=True)
-
-
-# TODO Will not work due to m2m-relation to source via DictWordform
-# class WordformSample(WordformBase):
-#     """Class representing current wordform samples"""
-#
-#     informant = models.CharField(max_length=256)
 
 
 class WordformOrder:

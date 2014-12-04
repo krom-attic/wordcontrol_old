@@ -206,23 +206,25 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
 
                     errors.extend(check_cell_for_errors(csvcell, [spelling, comment], params or []))
 
-                    wordform = models.ProjectWordform(lexeme=lexeme_src, spelling=spelling, comment=comment,
+                    wordform = models.ProjectWordform(lexeme=lexeme_src, comment=comment,
                                                       params=params, project=project, state='N',
                                                       col=column_literal, csvcell=csvcell)
-                    first_col_wordforms.append(wordform)
-
                     wordform.save()
+                    first_col_wordforms.append(wordform)
+                    wordform_spell = models.ProjectProcWordform(wordform=wordform, spelling=spelling,
+                                                                col=column_literal, csvcell=csvcell,
+                                                                project=project, state='N')
             else:
                 for wf_num, current_wordform in enumerate(lexeme_wordforms.split('|')):
                     spelling = current_wordform.strip()
                     try:
-                        original_wordform = first_col_wordforms[wf_num]
+                        wordform = first_col_wordforms[wf_num]
                     except IndexError:
                         errors.append((csvcell, "Number of processed wordforms is more than the number of unprocessed"))
                         continue
 
                     errors.extend(check_cell_for_errors(csvcell, [spelling, ]))
-                    proc_wordform = models.ProjectProcWordform(wordform=original_wordform, spelling=spelling,
+                    proc_wordform = models.ProjectProcWordform(wordform=wordform, spelling=spelling,
                                                                col=column_literal, csvcell=csvcell,
                                                                project=project, state='N')
                     col_wordforms.append(proc_wordform)

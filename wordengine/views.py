@@ -415,20 +415,8 @@ class ProjectSetupView(TemplateView):
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
     ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
-    # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
-
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
-        # Obsolete version of column setup. Must be deleted.
-        # column_initial = []
-        # literal_values = []
-        # for column in models.ProjectColumn.objects.filter(project=project):
-        #     column_initial.append({'project': project, 'literal': column})
-        #     literal_values.append({'language': column.language_l, 'dialect': column.dialect_l, 'source': column.source_l,
-        #                            'writing_system': column.writing_system_l, 'processing': column.processing_l,
-        #                            'num': column.num})
-        # pr_col_setup_set = self.PrColSetupFormSet(initial=column_initial)
-        # project_columns = zip(literal_values, pr_col_setup_set)
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
