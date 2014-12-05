@@ -255,13 +255,17 @@ class LexemeRelation(models.Model):
         abstract = True
 
 
-class WordformBase(models.Model):
-    """Base class for wordforms
-    """
+# Dictionary classes. Concrete
+
+
+class Wordform(models.Model):
+    """Class representing current wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     source_m = models.ManyToManyField(Source, through='DictWordform')
+    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    # informant = models.CharField(max_length=256, blank=True)
 
     @property
     def formatted(self):
@@ -276,19 +280,6 @@ class WordformBase(models.Model):
     @property
     def ws(self):
         return str(self.writing_system)
-
-    class Meta:
-        abstract = True
-
-
-# Dictionary classes. Concrete
-
-
-class Wordform(WordformBase):
-    """Class representing current wordforms"""
-
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
-    informant = models.CharField(max_length=256, blank=True)
 
     @property
     def dialects(self):
@@ -308,7 +299,7 @@ class WordformSpell(models.Model):
     wordform = models.ForeignKey(Wordform)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
-    is_original = models.BooleanField()
+    is_processed = models.BooleanField()
 
 
 class DictWordform(DictEntity):
@@ -538,7 +529,6 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
 
 class ProjectWordform(ProjectedEntity, ProjectedModel):
     lexeme = models.ForeignKey(ProjectLexeme)
-    spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
     col = models.ForeignKey(ProjectColumn)
@@ -557,7 +547,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return {'params': ('GrammCategorySet', 'Dialect')}
 
     def fields(self):
-        fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
+        fields = {'lexeme': self.lexeme.result}
         if self.params_list:
             fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
         if not fields.get('gramm_category_set_id'):
@@ -580,19 +570,21 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
                                'is_deleted': False}}
 
 
-class ProjectProcWordform(ProjectedEntity, ProjectedModel):
+class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     wordform = models.ForeignKey(ProjectWordform)
+    is_processed = models.BooleanField()
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
-    result = models.ForeignKey(ProcWordform, null=True, blank=True)
+    result = models.ForeignKey(WordformSpell)
 
     @staticmethod
     def real_model():
-        return ProcWordform
+        return WordformSpell
 
     def fields(self):
-        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
+        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system,
+                'is_processed': self.is_processed}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):

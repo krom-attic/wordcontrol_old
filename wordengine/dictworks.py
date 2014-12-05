@@ -181,7 +181,6 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
         lexeme_wordforms = project.row[colnum]
 
         if lexeme_wordforms:
-            col_wordforms = []
 
             csvcell = models.CSVCell(row=project.rownum, col=colnum, value=lexeme_wordforms, project=project)
             csvcell.save()
@@ -211,10 +210,13 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
                                                       col=column_literal, csvcell=csvcell)
                     wordform.save()
                     first_col_wordforms.append(wordform)
-                    wordform_spell = models.ProjectProcWordform(wordform=wordform, spelling=spelling,
-                                                                col=column_literal, csvcell=csvcell,
-                                                                project=project, state='N')
+
+                    wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
+                                                                 col=column_literal, csvcell=csvcell,
+                                                                 project=project, state='N', is_processed=False)
+                    wordform_spell.save()
             else:
+                wf_num = -1
                 for wf_num, current_wordform in enumerate(lexeme_wordforms.split('|')):
                     spelling = current_wordform.strip()
                     try:
@@ -224,14 +226,12 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
                         continue
 
                     errors.extend(check_cell_for_errors(csvcell, [spelling, ]))
-                    proc_wordform = models.ProjectProcWordform(wordform=wordform, spelling=spelling,
-                                                               col=column_literal, csvcell=csvcell,
-                                                               project=project, state='N')
-                    col_wordforms.append(proc_wordform)
+                    wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
+                                                                 col=column_literal, csvcell=csvcell,
+                                                                 project=project, state='N', is_processed=True)
+                    wordform_spell.save()
 
-                    proc_wordform.save()
-
-                if len(col_wordforms) < len(first_col_wordforms):
+                if wf_num + 1 < len(first_col_wordforms):
                     errors.append((csvcell, "Number of processed wordforms is less than the number of unprocessed"))
 
         else:
@@ -306,10 +306,16 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
 
                 lexeme_trg.save()
 
-                wordform = models.ProjectWordform(lexeme=lexeme_trg, spelling=spelling, project=project, state='N',
+                wordform = models.ProjectWordform(lexeme=lexeme_trg, project=project, state='N',
                                                   col=column_literal, csvcell=csvcell)
 
                 wordform.save()
+
+                wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling, project=project,
+                                                             state='N', col=column_literal, csvcell=csvcell,
+                                                             is_processed=False)
+
+                wordform_spell.save()
 
                 semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
                                                               project=project, state='N', csvcell=csvcell)
@@ -451,7 +457,7 @@ def produce_project(project):
     # TODO Check if syntactic categories present in language
     produce_project_model(project, models.ProjectLexeme)
     produce_project_model(project, models.ProjectWordform)
-    produce_project_model(project, models.ProjectProcWordform)
+    produce_project_model(project, models.ProjectWordformSpell)
     produce_project_model(project, models.ProjectSemanticGroup)
     produce_project_model(project, models.ProjectTranslation)
     project.state = 'P'
