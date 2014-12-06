@@ -8,7 +8,7 @@ def produce_project_model(project, model):
         model_object.save()
         project_object.result = model_object
 
-        m2m_fields = project_object.m2m_fields
+        m2m_fields = project_object.m2m_fields()
         for m2m_field in m2m_fields:
             getattr(model_object, m2m_field).add(*m2m_fields[m2m_field])
 

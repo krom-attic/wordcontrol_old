@@ -427,7 +427,7 @@ class Project(models.Model):
         # TODO Check if syntactic categories present in language
         produce_project_model(self, ProjectLexeme)
         produce_project_model(self, ProjectWordform)
-        produce_project_model(self, ProjectProcWordform)
+        produce_project_model(self, ProjectWordformSpell)
         produce_project_model(self, ProjectSemanticGroup)
         produce_project_model(self, ProjectTranslation)
         self.state = 'P'
