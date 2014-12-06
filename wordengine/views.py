@@ -2,13 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect, get_list_or_40
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.db import transaction
 from django.db.models import Q
 from django.contrib import messages
-from wordengine import forms
-from wordengine.dictworks import *
 from django.forms.models import modelformset_factory
-from django.core import serializers
+from wordengine import forms
+from wordengine.views_ex.dictworks import *
+
 
 # Actual views here
 
@@ -445,13 +444,12 @@ class ProjectSetupView(TemplateView):
 
         if '_terms_save' in request.POST:
             param_setup_form_set = self.ParamSetupFormSet(request.POST)
-            print(param_setup_form_set.errors)
             if param_setup_form_set.is_valid():
                 param_setup_form_set.save()
 
         if '_produce' in request.POST:
             project = models.Project.objects.get(pk=kwargs['project_id'])
-            produce_project(project)
+            project.produce_project()
 
         if '_delete' in request.POST:
             project = models.Project.objects.get(pk=kwargs['project_id'])

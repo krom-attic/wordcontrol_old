@@ -1,11 +1,11 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib import auth
-from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 import string
-
+from wordengine.commonworks import *
+from wordengine.models_ex.projectworks import *
 
 # System globals. Abstract
 
@@ -42,6 +42,39 @@ class FieldChange(Change):
     field_name = models.CharField(max_length=256)
     old_value = models.CharField(max_length=512, blank=True)
     new_value = models.CharField(max_length=512, blank=True)
+
+
+class ChangeTrackMixIn(object):
+    def modsave(request, upd_object, upd_fields):
+
+        field_change = dict()
+        for upd_field in upd_fields.keys():
+            field_change[upd_field] = models.FieldChange(user_changer=request.user,
+                                                         object_type=type(upd_object).__name__,
+                                                         object_id=upd_object.id, field_name=upd_field,
+                                                         old_value=getattr(upd_object, upd_field))
+            setattr(upd_object, upd_field, upd_fields.get(upd_field))
+        upd_object.save()
+        for upd_field in field_change.keys():
+            field_change[upd_field].new_value = getattr(upd_object, upd_field)
+            field_change[upd_field].save()
+
+        # TODO: Modsave should record a DictChange, write to log and display action result
+
+        return None
+
+
+    # TODO Log every change - overload save() method? (Add dict_change)
+    #                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+    #                                                     object_id=wordform.id)
+    #                     dict_change.save()
+
+        # dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+        #                                 object_id=translation.id)
+        # dict_change.save()
+
+
+
 
 
 class Settings(models.Model):
@@ -371,6 +404,37 @@ class Project(models.Model):
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
 
+    def fill_project_dict(self):
+        project_models = (ProjectLexeme, ProjectWordform, ProjectSemanticGroup)
+        for model in project_models:
+            src_obj = model.__name__
+            for field, term_type in model.project_fields().items():
+                if type(term_type) == tuple:
+                    term_type = ''
+                values = set()
+                for value in model.objects.filter(project=self).values(field).distinct():
+                    if value[field]:
+                        real_value = restore_tuple(value[field])
+                        for sg_value in real_value:
+                            values.add(sg_value)
+                ProjectDictionary.objects.bulk_create([ProjectDictionary(value=val, src_obj=src_obj, project=self,
+                                                                         state='N', term_type=term_type) for val
+                                                       in values])
+        return None
+
+    def produce_project(self):
+        transaction.set_autocommit(False)
+        # TODO Check if syntactic categories present in language
+        produce_project_model(self, ProjectLexeme)
+        produce_project_model(self, ProjectWordform)
+        produce_project_model(self, ProjectProcWordform)
+        produce_project_model(self, ProjectSemanticGroup)
+        produce_project_model(self, ProjectTranslation)
+        self.state = 'P'
+        self.save()
+        transaction.set_autocommit(True)
+        return None
+
 
 class CSVCell(models.Model):
     row = models.PositiveIntegerField()
@@ -450,7 +514,7 @@ class ProjectedModel (models.Model):
     @property
     def params_list(self):
         if self.params:
-            return restore_list(self.params)
+            return restore_tuple(self.params)
         else:
             return []
 
@@ -609,7 +673,7 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     @property
     def dialect_list(self):
         if self.dialect:
-            return restore_list(self.dialect)
+            return restore_tuple(self.dialect)
         else:
             return []
 
