@@ -158,14 +158,6 @@ class Language(Term):
 # Language-dependant classes. Abstract
 
 
-class LanguageRelated(models.Model):
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-
-    class Meta:
-        abstract = True
-
-
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
 
@@ -178,7 +170,7 @@ class LanguageEntity(models.Model):
 # Language-dependant classes. Concrete
 
 
-class Dialect(Term, LanguageRelated):
+class Dialect(Term, LanguageEntity):
     """Class represents dialect present in the system"""
 
     parent_dialect = models.ForeignKey('self', null=True, blank=True)
@@ -187,13 +179,20 @@ class Dialect(Term, LanguageRelated):
         return ' '.join([self.term_full, str(self.language)])
 
 
-class WritingSystem(Term, LanguageRelated):
-    """Class represents a writing systems used to spell a word form"""
-
+class WritingRelated(models.Model):
     writing_system_type = models.CharField(choices=WS_TYPE, max_length=2)
 
+    class Meta:
+        abstract = True
 
-class Source(Term, LanguageRelated):
+
+class WritingSystem(Term, WritingRelated):
+    """Class represents a writing systems used to spell a word form"""
+
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+
+
+class Source(Term, LanguageEntity):
     """Class representing sources of language information"""
 
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
@@ -242,11 +241,11 @@ class Lexeme(LanguageEntity):
 
     @property
     def spellings(self):
-        return self.wordform_set.filter(ws=3)
+        return self.wordform_set.filter(writing_type=3)
 
     @property
     def transcriptions(self):
-        return self.wordform_set.filter(ws__in=[1, 2])
+        return self.wordform_set.filter(writing_type__in=[1, 2])
 
     def __str__(self):
         if self.spellings.first():
@@ -291,7 +290,7 @@ class LexemeRelation(models.Model):
 # Dictionary classes. Concrete
 
 
-class Wordform(models.Model):
+class Wordform(WritingRelated):
     """Class representing current wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
