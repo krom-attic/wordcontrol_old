@@ -157,12 +157,10 @@ class LexemeView(TemplateView):
         # "Lexeme parameters" form operations
         if '_find_lexeme' in request.GET:
             lexeme_result = find_lexemes_wordforms(word_search_form, False)
-            print(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'searchtype': 'regular'})
         elif '_find_translation' in request.GET:
             lexeme_result = find_lexemes_wordforms(word_search_form, True)
-            print(lexeme_result)
             translation_result = find_translations(lexeme_result.keys())
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'translation_result': translation_result,

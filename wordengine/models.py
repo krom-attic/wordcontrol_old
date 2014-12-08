@@ -242,11 +242,11 @@ class Lexeme(LanguageEntity):
 
     @property
     def spellings(self):
-        return self.wordform_set.filter(writing_system__writing_system_type=3)
+        return self.wordform_set.filter(ws=3)
 
     @property
     def transcriptions(self):
-        return self.wordform_set.filter(writing_system__writing_system_type__in=[1, 2])
+        return self.wordform_set.filter(ws__in=[1, 2])
 
     def __str__(self):
         if self.spellings.first():
@@ -299,6 +299,15 @@ class Wordform(models.Model):
     source_m = models.ManyToManyField(Source, through='DictWordform')
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
     # informant = models.CharField(max_length=256, blank=True)
+
+    @property
+    def default_spell(self):
+        return self.wordformspell_set.get(is_processed=False).spelling
+
+    @property
+    def ws(self):
+        return self.wordformspell_set.get(is_processed=False).writing_system.writing_system_type
+
 
     @property
     def formatted(self):
@@ -425,13 +434,14 @@ class Project(models.Model):
     def produce_project(self):
         transaction.set_autocommit(False)
         # TODO Check if syntactic categories present in language
-        produce_project_model(self, ProjectLexeme)
-        produce_project_model(self, ProjectWordform)
-        produce_project_model(self, ProjectWordformSpell)
-        produce_project_model(self, ProjectSemanticGroup)
-        produce_project_model(self, ProjectTranslation)
-        self.state = 'P'
-        self.save()
+        if self.state == 'N':
+            produce_project_model(self, ProjectLexeme)
+            produce_project_model(self, ProjectWordform)
+            produce_project_model(self, ProjectWordformSpell)
+            produce_project_model(self, ProjectSemanticGroup)
+            produce_project_model(self, ProjectTranslation)
+            self.state = 'P'
+            self.save()
         transaction.set_autocommit(True)
         return None
 
