@@ -4,7 +4,7 @@
 <h2>Search results</h2>
     {% for lexeme, words in lexeme_result.items %}
         <p> <a href="{% url 'wordengine:show_wordlist' lexeme.id %}"><strong>
-            {{ lexeme.spellings.0.formatted }} {{ lexeme.transcriptions.0.formatted }}
+            {{ lexeme.lexeme_title }}
             </strong>
             — {{ lexeme.language }} {{ lexeme.syntactic_category }}</a>
             <br />

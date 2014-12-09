@@ -4,8 +4,8 @@ APP_NAME = ('wordengine')
 
 
 TRANSCRIPT_BRACKETS = {
-    1: ('[{}]'),
-    2: ('/{}/')
+    'PS': ('[{}]'),
+    'PL': ('/{}/')
 }
 
 

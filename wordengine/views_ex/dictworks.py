@@ -15,9 +15,9 @@ def find_lexemes_wordforms(word_search, exact):
         spelling = word_search.cleaned_data['spelling']
         language = word_search.cleaned_data['language']
         synt_cat = word_search.cleaned_data['syntactic_category']
-        gramm_cats = []
-        sources = []
-        dialects = []
+        gramm_cat = word_search.cleaned_data['gramm_cat']
+        source = word_search.cleaned_data['source']
+        dialect = word_search.cleaned_data['dialect']
         writing_system = None
 
         if exact:
@@ -26,17 +26,17 @@ def find_lexemes_wordforms(word_search, exact):
             word_result = models.WordformSpell.objects.filter(spelling__istartswith=spelling)
 
         if language:
-            word_result = word_result.filter(wordform__lexeme__language__exact=language)
+            word_result = word_result.filter(wordform__lexeme__language=language)
         if synt_cat:
-            word_result = word_result.filter(wordform__lexeme__syntactic_category__exact=synt_cat)
-        if gramm_cats:
-            pass  # TODO Filter by grammatical category
-        if sources:
-            pass  # TODO Filter by source
-        if dialects:
-            pass  # TODO Filter by dialect
+            word_result = word_result.filter(wordform__lexeme__syntactic_category=synt_cat)
+        if gramm_cat:
+            word_result = word_result.filter(wordform__gramm_category_set=gramm_cat)
+        if source:
+            word_result = word_result.filter(wordform__source__in=source)
+        if dialect:
+            word_result = word_result.filter(wordform__dialect=dialect)
         if writing_system:
-            pass  # TODO Filter by writing system
+            word_result = word_result.filter(wordform__)
 
         temp_lexeme_result = defaultdict(list)
 

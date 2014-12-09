@@ -3,7 +3,7 @@
 
 <h2>Lexeme details</h2>
     <h3>
-        {{ exact_lexeme.spellings.0.formatted }} {{ exact_lexeme.transcriptions.0.formatted }}
+        {{ exact_lexeme.lexeme_title }}
     </h3>
     <p>{{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }} <br />
        Inflection: {{ exact_lexeme.inflection }}</p>
@@ -32,7 +32,7 @@
 <h2>Translations</h2>
     {% for lexeme, translations in translation_result.items %}
         <h3>
-        {{ lexeme.spellings.0.formatted }} {{ lexeme.transcriptions.0.formatted }}
+        {{ lexeme.lexeme_title }}
         </h3>
         <p>{{ lexeme.language }} {{ lexeme.syntactic_category }}</p>
         {% if translations %}

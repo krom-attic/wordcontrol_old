@@ -180,7 +180,7 @@ class Dialect(Term, LanguageEntity):
 
 
 class WritingRelated(models.Model):
-    writing_system_type = models.CharField(choices=WS_TYPE, max_length=2)
+    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
 
     class Meta:
         abstract = True
@@ -241,20 +241,24 @@ class Lexeme(LanguageEntity):
 
     @property
     def spellings(self):
-        return self.wordform_set.filter(writing_type=3)
+        return self.wordform_set.filter(writing_type='O')
 
     @property
     def transcriptions(self):
-        return self.wordform_set.filter(writing_type__in=[1, 2])
+        return self.wordform_set.filter(writing_type__in=['PS', 'PL'])
 
-    def __str__(self):
+    @property
+    def lexeme_title(self):
         if self.spellings.first():
-            title_wordform = self.spellings.first().formatted
+            title_wordform = self.spellings.first().default_spell
         elif self.transcriptions.first():
-            title_wordform = self.transcriptions.first().formatted
+            title_wordform = self.transcriptions.first().default_spell
         else:
             title_wordform = '[No wordform attached]'
-        return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
+        return title_wordform
+
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.lexeme_title,  self.language, self.syntactic_category])
 
 
 class TranslatedTerm(LanguageEntity):
@@ -301,26 +305,7 @@ class Wordform(WritingRelated):
 
     @property
     def default_spell(self):
-        return self.wordformspell_set.get(is_processed=False).spelling
-
-    @property
-    def ws(self):
-        return self.wordformspell_set.get(is_processed=False).writing_system.writing_system_type
-
-
-    @property
-    def formatted(self):
-        if self.writing_system:
-            try:
-                return self.TRANSCRIPT_BRACKETS[self.writing_system.writing_system_type.id].format(self.spelling)
-            except KeyError:
-                return self.spelling
-        else:
-            return self.spelling
-
-    @property
-    def ws(self):
-        return str(self.writing_system)
+        return self.wordformspell_set.get(is_processed=False).formatted
 
     @property
     def dialects(self):
@@ -328,11 +313,8 @@ class Wordform(WritingRelated):
             return ', '.join(str(s) for s in self.dialect_multi.all())
 
     def __str__(self):
-        try:
-            ws = str(self.writing_system.term_abbr)
-        except AttributeError:
-            ws = ""
-        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
+        return '{0} ({1} {2}) | {3}'.format(self.default_spell, str(self.lexeme.language),
+                                            str(self.gramm_category_set), str(self.writing_type))
     # TODO Include dialects into description
 
 
@@ -341,6 +323,13 @@ class WordformSpell(models.Model):
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
     is_processed = models.BooleanField()
+
+    @property
+    def formatted(self):
+        if self.writing_system.writing_type == 'O':
+            return self.spelling
+        else:
+            return TRANSCRIPT_BRACKETS[self.writing_system.writing_type].format(self.spelling)
 
 
 class DictWordform(DictEntity):
