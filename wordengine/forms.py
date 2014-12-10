@@ -39,7 +39,6 @@ class SearchWordformForm(forms.Form):
     gramm_category = forms.ModelChoiceField(queryset=models.GrammCategorySet.objects.all(), required=False)
     source = forms.ModelChoiceField(queryset=models.Source.objects.all(), required=False)
     dialect = forms.ModelChoiceField(queryset=models.Dialect.objects.all(), required=False)
-    writing_system = forms.ModelChoiceField(queryset=models.WritingSystem.objects.all(), required=False)
 
 
 class AdminForm(forms.Form):

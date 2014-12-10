@@ -2,6 +2,7 @@ from wordengine import models
 from collections import defaultdict
 from django.db import transaction
 from wordengine.specials.csvworks import parse_csv
+from django.contrib.auth.decorators import login_required
 
 # Common functions here
 
@@ -15,7 +16,7 @@ def find_lexemes_wordforms(word_search, exact):
         spelling = word_search.cleaned_data['spelling']
         language = word_search.cleaned_data['language']
         synt_cat = word_search.cleaned_data['syntactic_category']
-        gramm_cat = word_search.cleaned_data['gramm_cat']
+        gramm_category = word_search.cleaned_data['gramm_category']
         source = word_search.cleaned_data['source']
         dialect = word_search.cleaned_data['dialect']
         writing_system = None
@@ -25,18 +26,16 @@ def find_lexemes_wordforms(word_search, exact):
         else:
             word_result = models.WordformSpell.objects.filter(spelling__istartswith=spelling)
 
+        if gramm_category:
+            word_result = word_result.filter(wordform__gramm_category_set=gramm_category)
+        if source:
+            word_result = word_result.filter(wordform__source_m=source)
+        if dialect:
+            word_result = word_result.filter(wordform__dialect_m=dialect)
         if language:
             word_result = word_result.filter(wordform__lexeme__language=language)
         if synt_cat:
             word_result = word_result.filter(wordform__lexeme__syntactic_category=synt_cat)
-        if gramm_cat:
-            word_result = word_result.filter(wordform__gramm_category_set=gramm_cat)
-        if source:
-            word_result = word_result.filter(wordform__source__in=source)
-        if dialect:
-            word_result = word_result.filter(wordform__dialect=dialect)
-        if writing_system:
-            word_result = word_result.filter(wordform__)
 
         temp_lexeme_result = defaultdict(list)
 
@@ -56,12 +55,15 @@ def find_translations(lexemes):
     translation_result = dict()
 
     for lexeme in lexemes:
+        # This is a workaround for non-symmetric relation (it isn't possible with "through")
         translation_list = []
         for translation in models.Translation.objects.filter(lexeme_1=lexeme):
             translation_list.append(translation.lexeme_2)
         for translation in models.Translation.objects.filter(lexeme_2=lexeme):
             translation_list.append(translation.lexeme_1)
         translation_result[lexeme] = translation_list
+        # If symmetric relations will be possible with "through", it should read:
+        # translation_list = lexeme.translation_m.all()
 
     return translation_result
 
@@ -76,3 +78,24 @@ def parse_upload(request):
     transaction.set_autocommit(True)
 
     return project.id, project.errors
+
+
+@login_required
+@transaction.atomic
+def delete_wordform(request, wordform_id):
+
+    given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
+    taken_lexeme = given_wordform.lexeme
+
+    if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
+                                                     taken_lexeme.translationbase_snd_set.count() > 0):
+        messages.add_message(request, messages.ERROR, "The word has translations and thus can't be deleted")
+    else:
+        modsave(request, given_wordform, {'is_deleted': True})
+
+        messages.add_message(request, messages.SUCCESS, "The word has been deleted")
+
+    if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
+        return redirect('wordengine:show_wordlist')
+    else:
+        return redirect('wordengine:show_wordlist', taken_lexeme.id)

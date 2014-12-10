@@ -11,7 +11,7 @@ from wordengine.views_ex.dictworks import *
 
 # Actual views here
 
-def index(request):
+def index(requst):
     return redirect('wordengine:show_wordlist')
 
 
@@ -33,6 +33,7 @@ class DoSmthWordformView(TemplateView):
         if '_purge_dict' in request.POST:
             models.Lexeme.objects.all().delete()
         return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
+
 
 class AddWordformView(TemplateView):
     """New word addition view
@@ -171,6 +172,7 @@ class LexemeView(TemplateView):
             spelling = request.GET['spelling']
             return redirect('wordengine:add_wordform_lexeme', language=language,
                             syntactic_category=syntactic_category,  spelling=spelling)
+        # TODO Make this ^ via render?
 
         # "Search results" form operations
         elif '_find_translation_lexeme' in request.GET:  # find translation of a particular lexeme
@@ -199,27 +201,6 @@ class LexemeView(TemplateView):
             # except:
             #     messages.error(request, "Invalid request")
             #     return render(request, self.template_name, {'word_search_form': word_search_form})
-
-
-@login_required
-@transaction.atomic
-def delete_wordform(request, wordform_id):
-
-    given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
-    taken_lexeme = given_wordform.lexeme
-
-    if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
-                                                     taken_lexeme.translationbase_snd_set.count() > 0):
-        messages.add_message(request, messages.ERROR, "The word has translations and thus can't be deleted")
-    else:
-        modsave(request, given_wordform, {'is_deleted': True})
-
-        messages.add_message(request, messages.SUCCESS, "The word has been deleted")
-
-    if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
-        return redirect('wordengine:show_wordlist')
-    else:
-        return redirect('wordengine:show_wordlist', taken_lexeme.id)
 
 
 class AddTranslationView(TemplateView):
@@ -454,22 +435,3 @@ class ProjectSetupView(TemplateView):
             project.delete()
 
         return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
-
-
-class TranslationImportView(TemplateView):
-    # translation_import_form_class = forms.TranslationImportForm
-    def get(self, request, *args, **kwargs):
-        pass
-        # translation_import_form = self.translation_import_form_class()
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
-
-    def post(self, request, *args, **kwargs):
-        pass
-        # translation_import_form = self.translation_import_form_class(request.POST)
-        # if translation_import_form.is_valid() and upload_form.is_valid():
-            # added_translations = parse_upload(request)
-            # transaction.rollback()
-            # transaction.set_autocommit(True)
-        #else:
-            # added_translations = None
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
