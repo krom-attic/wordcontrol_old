@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.db import models, transaction
 from django.contrib import auth
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
