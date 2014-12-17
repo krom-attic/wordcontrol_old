@@ -25,37 +25,3 @@
     </form>
 
 {% endif %}
-
-{% if translation_search %}
-<hr />
-
-<h2>Translations</h2>
-    {% for lexeme, translations in translation_result.items %}
-        <h3>
-        {{ lexeme.lexeme_title }}
-        </h3>
-        <p>{{ lexeme.language }} {{ lexeme.syntactic_category }}</p>
-        {% if translations %}
-        <ul>
-        {% for translation in translations %}
-            <li><strong>
-                {% for spelling in translation.spellings %}
-                    {% if not forloop.first %} ~ {% endif %}
-                    {{ spelling.formatted }}
-                {% endfor %}
-                {% for transcription in translation.transcriptions %}
-                    {% if not forloop.first %} ~ {% endif %}
-                    {{ transcription.formatted }}
-                {% endfor %}
-                </strong>
-                — {{ translation.language }} {{ translation.syntactic_category }}
-                ::: <a href="{% url 'wordengine:show_wordlist' translation.id %}">(details)</a> :::</li>
-        {% endfor %}
-        </ul>
-        {% else %}
-        <p>This word has no translations.</p>
-        {% endif %}
-    {% empty %}
-        <p>Translation search returned no results.</p>
-    {% endfor %}
-{% endif %}

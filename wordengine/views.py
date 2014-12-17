@@ -150,7 +150,7 @@ class LexemeView(TemplateView):
     """
 
     word_search_form_class = forms.SearchWordformForm
-    template_name = 'wordengine/lexeme_list.html'
+    template_name = 'wordengine/lexeme_search.html'
 
     def get(self, request, *args, **kwargs):
         word_search_form = self.word_search_form_class(request.GET)
@@ -162,9 +162,9 @@ class LexemeView(TemplateView):
                                                         'lexeme_result': lexeme_result, 'searchtype': 'regular'})
         elif '_find_translation' in request.GET:
             lexeme_result = find_lexemes_wordforms(word_search_form, True)
-            translation_result = find_translations(lexeme_result.keys())
+            lexeme_result = find_translations(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                        'translation_result': translation_result,
+                                                        'lexeme_result': lexeme_result, 'searchtype': 'translations',
                                                         'translation_search': 'word_search'})
         elif '_new_lexeme' in request.GET:
             language = request.GET['language']

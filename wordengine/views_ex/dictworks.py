@@ -7,6 +7,12 @@ from django.contrib.auth.decorators import login_required
 # Common functions here
 
 
+class SearchDetails(object):
+
+    def __init__(self):
+        self.foundforms = set()
+        self.translations = None
+
 def find_lexemes_wordforms(word_search, exact):
     """
     For given search criteria returns matched lexemes among with matched wordform spellings
@@ -37,10 +43,24 @@ def find_lexemes_wordforms(word_search, exact):
         if synt_cat:
             word_result = word_result.filter(wordform__lexeme__syntactic_category=synt_cat)
 
-        temp_lexeme_result = defaultdict(list)
+
+        # defaultdict isn't usable, because we need nested dicts and it is tedious to workaround #16335 Django bug for such case
+
+
+        lexeme_result = defaultdict(SearchDetails)
+
+
 
         for word in word_result:
-            temp_lexeme_result[word.wordform.lexeme].append(word)
+            lexeme = word.wordform.lexeme
+            try:
+                lexeme_result[lexeme.language][lexeme.syntactic_category][lexeme].foundforms.add(word)
+            except KeyError:
+                if lexeme.language not in lexeme_result:
+                    lexeme_result[lexeme.language] = dict()
+                        lexeme_result[lexeme.language].[lexeme.syntactic_category] = dict()
+
+
         lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but it doesn't)
 
         return lexeme_result
@@ -61,11 +81,11 @@ def find_translations(lexemes):
             translation_list.append(translation.lexeme_2)
         for translation in models.Translation.objects.filter(lexeme_2=lexeme):
             translation_list.append(translation.lexeme_1)
-        translation_result[lexeme] = translation_list
+        lexemes[lexeme].translations = translation_list
         # If symmetric relations will be possible with "through", it should read:
         # translation_list = lexeme.translation_m.all()
 
-    return translation_result
+    return lexemes
 
 
 def parse_upload(request):
