@@ -213,6 +213,7 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
                 if len(group_params_comment) == 1:
                     group_comment = group_params_comment.pop().strip('" ')
 
+            # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped
             semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
                                                           project=project, state='N', csvcell=csvcell)
 

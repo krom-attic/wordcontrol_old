@@ -161,8 +161,8 @@ class LexemeView(TemplateView):
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'searchtype': 'regular'})
         elif '_find_translation' in request.GET:
-            lexeme_result = find_lexemes_wordforms(word_search_form, True)
-            lexeme_result = find_translations(lexeme_result)
+            lexeme_result = find_lexemes_wordforms(word_search_form, True, True)
+            # lexeme_result = find_translations(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'searchtype': 'translations',
                                                         'translation_search': 'word_search'})
@@ -175,13 +175,15 @@ class LexemeView(TemplateView):
         # TODO Make this ^ via render?
 
         # "Search results" form operations
+        # TODO Is it obsolete?
         elif '_find_translation_lexeme' in request.GET:  # find translation of a particular lexeme
             lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation_lexeme'])
-            lexeme_words = lexeme_result.wordform_set.all()
-            translation_result = find_translations([lexeme_result])
+            # lexeme_words = lexeme_result.wordform_set.all()
+            # translation_result = find_translations([lexeme_result])
+            lexeme_result = find_translations(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                        'lexeme_result': lexeme_result, 'lexeme_words': lexeme_words,
-                                                        'translation_result': translation_result,
+                                                        'lexeme_result': lexeme_result,# 'lexeme_words': lexeme_words,
+                                                       # 'translation_result': translation_result,
                                                         'translation_search': 'exact_lexeme'})
         elif '_add_translation' in request.GET:
             lexeme_id = request.GET['_add_translation']

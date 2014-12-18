@@ -7,18 +7,39 @@ from django.contrib.auth.decorators import login_required
 # Common functions here
 
 
-class SearchDetails(object):
+class SearchDetails():
 
     def __init__(self):
-        self.foundforms = set()
-        self.translations = None
+        self.found_forms = set()
+        self.translations_fetched = False
 
-def find_lexemes_wordforms(word_search, exact):
+    def __str__(self):
+        return ' '.join([str(self.found_forms), str(self.translations_fetched)])
+
+
+def find_translations(lexeme):
+    # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped
+
+    translation_result = {}
+    # This is a workaround for non-symmetric relation (it isn't possible with "through")
+    for translation in models.Translation.objects.filter(lexeme_1=lexeme):
+        translation_result.setdefault(translation.lexeme_2.language, {}).\
+            setdefault(translation.semantic_group_1, set()).add(translation.lexeme_2)
+    for translation in models.Translation.objects.filter(lexeme_2=lexeme):
+        translation_result.setdefault(translation.lexeme_1.language, {}).\
+            setdefault(translation.semantic_group_2, set()).add(translation.lexeme_1)
+
+    return translation_result
+
+
+def find_lexemes_wordforms(word_search, exact, with_translations=False):
     """
     For given search criteria returns matched lexemes among with matched wordform spellings
     """
 
     if word_search.is_valid():
+        lexeme_result = dict()
+
         spelling = word_search.cleaned_data['spelling']
         language = word_search.cleaned_data['language']
         synt_cat = word_search.cleaned_data['syntactic_category']
@@ -43,49 +64,22 @@ def find_lexemes_wordforms(word_search, exact):
         if synt_cat:
             word_result = word_result.filter(wordform__lexeme__syntactic_category=synt_cat)
 
-
-        # defaultdict isn't usable, because we need nested dicts and it is tedious to workaround #16335 Django bug for such case
-
-
-        lexeme_result = defaultdict(SearchDetails)
-
-
-
         for word in word_result:
             lexeme = word.wordform.lexeme
-            try:
-                lexeme_result[lexeme.language][lexeme.syntactic_category][lexeme].foundforms.add(word)
-            except KeyError:
-                if lexeme.language not in lexeme_result:
-                    lexeme_result[lexeme.language] = dict()
-                        lexeme_result[lexeme.language].[lexeme.syntactic_category] = dict()
 
+            lexeme_result.setdefault(lexeme.syntactic_category, {}).setdefault(lexeme.language, {}).\
+                setdefault(lexeme, SearchDetails()).found_forms.add(word.spelling)
 
-        lexeme_result = dict(temp_lexeme_result)  # Django bug workaround (#16335 marked as fixed, but it doesn't)
+            current_lexeme_details = lexeme_result[lexeme.syntactic_category][lexeme.language][lexeme]
+
+            if not current_lexeme_details.translations_fetched and with_translations:
+                current_lexeme_details.translations = find_translations(lexeme)
 
         return lexeme_result
 
     else:
         # TODO Add error message
         return {}
-
-
-def find_translations(lexemes):
-
-    translation_result = dict()
-
-    for lexeme in lexemes:
-        # This is a workaround for non-symmetric relation (it isn't possible with "through")
-        translation_list = []
-        for translation in models.Translation.objects.filter(lexeme_1=lexeme):
-            translation_list.append(translation.lexeme_2)
-        for translation in models.Translation.objects.filter(lexeme_2=lexeme):
-            translation_list.append(translation.lexeme_1)
-        lexemes[lexeme].translations = translation_list
-        # If symmetric relations will be possible with "through", it should read:
-        # translation_list = lexeme.translation_m.all()
-
-    return lexemes
 
 
 def parse_upload(request):

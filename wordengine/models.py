@@ -249,7 +249,7 @@ class Lexeme(LanguageEntity):
         return self.wordform_set.filter(writing_type__in=['PS', 'PL'])
 
     @property
-    def lexeme_title(self):
+    def lexeme_short(self):
         if self.spellings.first():
             title_wordform = self.spellings.first().default_spell
         elif self.transcriptions.first():
@@ -258,8 +258,19 @@ class Lexeme(LanguageEntity):
             title_wordform = '[No wordform attached]'
         return title_wordform
 
+    @property
+    def lexeme_title(self):
+        lexeme_title = ''
+        if self.spellings.first():
+            lexeme_title = self.spellings.first().default_spell
+        if self.transcriptions.first():
+            ' '.join([lexeme_title, self.transcriptions.first().default_spell]).strip()
+        if not lexeme_title:
+            return '[No wordform attached]'
+        return lexeme_title
+
     def __str__(self):
-        return ' | '.join(str(s) for s in [self.lexeme_title,  self.language, self.syntactic_category])
+        return ' | '.join(str(s) for s in [self.lexeme_short,  self.language, self.syntactic_category])
 
 
 class TranslatedTerm(LanguageEntity):
@@ -352,6 +363,24 @@ class SemanticGroup(models.Model):
     source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
     comment = models.TextField(blank=True)
 
+    def __str__(self):
+        semantic_group_str = ''
+        themes = self.theme_m.all()
+        if themes:
+            semantic_group_str += ','.join(themes) + ' | '
+        usage_contraint = self.usage_constraint_m.all()
+        if usage_contraint:
+            semantic_group_str += ';'.join(usage_contraint) + ' | '
+        dialects = self.dialect_m.all()
+        if dialects:
+            semantic_group_str += ','.join(dialects) + ' | '
+        if self.comment:
+            semantic_group_str += self.comment
+
+        if semantic_group_str:
+            semantic_group_str = semantic_group_str.strip(' | ')
+
+        return semantic_group_str
 
 class DictSemanticGroup(DictEntity):
     semantic_group = models.ForeignKey(SemanticGroup)
@@ -372,6 +401,8 @@ class Translation(LexemeRelation):
     # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
     # is_visible = models.BooleanField(default=True, editable=False)
 
+    # def __str__(self):
+    #     return
 
 class DictTranslation(DictEntity):
     translation = models.ForeignKey(Translation)

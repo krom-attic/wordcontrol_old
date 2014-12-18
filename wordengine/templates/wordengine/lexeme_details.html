@@ -15,13 +15,14 @@
         {% if word.dialects %}
             <i>({{ word.dialects }})</i>
         {% endif %}
-        ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
+        <!--::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::-->
+        </li>
     {% endfor %}
     </ul>
-    <form action="" method="get">
-        <button name="_find_translation_lexeme" value="{{ exact_lexeme.id }}" type="submit">Find translation</button>
-        <button name="_add_wordform" value="{{ exact_lexeme.id }}" type="submit">Add word</button>
-        <button name="_add_translation" value="{{ exact_lexeme.id }}" type="submit">Add translation</button>
-    </form>
+    <!--<form action="" method="get">-->
+        <!--<button name="_find_translation_lexeme" value="{{ exact_lexeme.id }}" type="submit">Find translation</button>-->
+        <!--<button name="_add_wordform" value="{{ exact_lexeme.id }}" type="submit">Add word</button>-->
+        <!--<button name="_add_translation" value="{{ exact_lexeme.id }}" type="submit">Add translation</button>-->
+    <!--</form>-->
 
 {% endif %}
