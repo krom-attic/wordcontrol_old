@@ -40,7 +40,7 @@ def find_lexemes_wordforms(word_search, exact, with_translations=False):
     if word_search.is_valid():
         lexeme_result = dict()
 
-        spelling = word_search.cleaned_data['spelling']
+        spelling = word_search.cleaned_data['spelling'].strip()
         language = word_search.cleaned_data['language']
         synt_cat = word_search.cleaned_data['syntactic_category']
         gramm_category = word_search.cleaned_data['gramm_category']

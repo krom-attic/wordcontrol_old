@@ -3,18 +3,17 @@
 
 <h2>Lexeme details</h2>
     <h3>
-        {{ exact_lexeme.lexeme_title }}
+        {{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }}
     </h3>
-    <p>{{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }} <br />
-       Inflection: {{ exact_lexeme.inflection }}</p>
-    <p>Variants:</p>
+    {% if exact_lexeme.inflection %}<p>Inflection: {{ exact_lexeme.inflection }}</p>{% endif %}
+    <p>{% for lex_param in exact_lexeme.lexeme_parameter_m.all %}{{ lex_param }}{% endfor %}</p>
     <ul>
     {% for word in exact_lexeme.wordform_set.all %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>
-        <span title="{{ word.ws }}" class="underdots">{{ word.formatted }}</span>
-        {% if word.dialects %}
-            <i>({{ word.dialects }})</i>
-        {% endif %}
+        <li>
+        <span {% if word.processed_formatted_all %}title="{{ word.processed_formatted_all }}" class="underdots"{% endif %}>
+            {{ word.default_formatted }}</span>
+        [{{ word.gramm_category_set }}]
+        <i>({{ word.dialects }})</i>
         <!--::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::-->
         </li>
     {% endfor %}

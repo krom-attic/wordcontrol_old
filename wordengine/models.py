@@ -251,9 +251,9 @@ class Lexeme(LanguageEntity):
     @property
     def lexeme_short(self):
         if self.spellings.first():
-            title_wordform = self.spellings.first().default_spell
+            title_wordform = self.spellings.first().default_formatted
         elif self.transcriptions.first():
-            title_wordform = self.transcriptions.first().default_spell
+            title_wordform = self.transcriptions.first().default_formatted
         else:
             title_wordform = '[No wordform attached]'
         return title_wordform
@@ -262,9 +262,9 @@ class Lexeme(LanguageEntity):
     def lexeme_title(self):
         lexeme_title = ''
         if self.spellings.first():
-            lexeme_title = self.spellings.first().default_spell
+            lexeme_title = self.spellings.first().default_formatted
         if self.transcriptions.first():
-            ' '.join([lexeme_title, self.transcriptions.first().default_spell]).strip()
+            ' '.join([lexeme_title, self.transcriptions.first().default_formatted]).strip()
         if not lexeme_title:
             return '[No wordform attached]'
         return lexeme_title
@@ -317,15 +317,39 @@ class Wordform(WritingRelated):
 
     @property
     def default_spell(self):
-        return self.wordformspell_set.get(is_processed=False).formatted
+        return self.wordformspell_set.get(is_processed=False)
+
+    @property
+    def processed_spells(self):
+        return self.wordformspell_set.filter(is_processed=True)
+
+    @property
+    def default_formatted(self):
+        return self.default_spell.formatted
+
+    @property
+    def processed_formatted_all(self):
+        spellings = [spell.formatted for spell in self.processed_spells]
+        if spellings:
+            result = spellings.pop(0)
+            for spelling in spellings:
+                result += ', '
+                result += spelling
+            return result
+        else:
+            return ''
 
     @property
     def dialects(self):
-        if self.dialect_multi.first():
-            return ', '.join(str(s) for s in self.dialect_multi.all())
+        if self.dialect_m.first():
+            return ', '.join(str(s) for s in self.dialect_m.all())
+
+    @property
+    def is_deleted(self):
+        return self.default_spell.is_deleted
 
     def __str__(self):
-        return '{0} ({1} {2}) | {3}'.format(self.default_spell, str(self.lexeme.language),
+        return '{0} ({1} {2}) | {3}'.format(self.default_formatted, str(self.lexeme.language),
                                             str(self.gramm_category_set), str(self.writing_type))
     # TODO Include dialects into description
 
@@ -343,6 +367,8 @@ class WordformSpell(models.Model):
         else:
             return TRANSCRIPT_BRACKETS[self.writing_system.writing_type].format(self.spelling)
 
+    def __str__(self):
+        return self.formatted
 
 class DictWordform(DictEntity):
     wordform = models.ForeignKey(Wordform)
