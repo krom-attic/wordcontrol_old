@@ -2,7 +2,8 @@
 import os
 import socket
 
-if socket.gethostname() == 'ENTER_PRODUCTION_HOST_HERE!!!':  # Do the same for databases
+# TODO: split dev/testing/production environments
+if socket.gethostname() == 'tower.bz8.ru':
     DEBUG = False
 else:
     DEBUG = True
@@ -135,8 +136,11 @@ INSTALLED_APPS = (
     'wordengine',
 
     # THIRDPARTY APPS
-    'debug_toolbar'
+
 )
+
+if DEBUG:
+    INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar', )
 
 # Sample, described below, is overridden!!
 # A sample logging configuration. The only tangible logging
