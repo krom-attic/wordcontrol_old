@@ -4,7 +4,7 @@ import socket
 
 # TODO: split dev/testing/production environments
 if socket.gethostname() == 'tower.bz8.ru':
-    DEBUG = False
+    DEBUG = True
 else:
     DEBUG = True
 TEMPLATE_DEBUG = DEBUG
