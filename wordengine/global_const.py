@@ -4,8 +4,8 @@ APP_NAME = ('wordengine')
 
 
 TRANSCRIPT_BRACKETS = {
-    1: ('[{}]'),
-    2: ('/{}/')
+    'PS': ('[{}]'),
+    'PL': ('/{}/')
 }
 
 
@@ -55,3 +55,4 @@ SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 RE_EXT_COMM = re.compile(r'(\*\d+:)')
 RE_REST_LIST = re.compile(r'\[.*\]')
+RE_REST_TUPLE = re.compile(r'\(.*\)')

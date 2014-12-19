@@ -2,17 +2,16 @@ from django.shortcuts import render, get_object_or_404, redirect, get_list_or_40
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.db import transaction
 from django.db.models import Q
 from django.contrib import messages
-from wordengine import forms
-from wordengine.dictworks import *
 from django.forms.models import modelformset_factory
-from django.core import serializers
+from wordengine import forms
+from wordengine.views_ex.dictworks import *
+
 
 # Actual views here
 
-def index(request):
+def index(requst):
     return redirect('wordengine:show_wordlist')
 
 
@@ -34,6 +33,7 @@ class DoSmthWordformView(TemplateView):
         if '_purge_dict' in request.POST:
             models.Lexeme.objects.all().delete()
         return render(request, self.template_name, {'some_form': some_form, 'some_data': some_data})
+
 
 class AddWordformView(TemplateView):
     """New word addition view
@@ -150,7 +150,7 @@ class LexemeView(TemplateView):
     """
 
     word_search_form_class = forms.SearchWordformForm
-    template_name = 'wordengine/lexeme_list.html'
+    template_name = 'wordengine/lexeme_search.html'
 
     def get(self, request, *args, **kwargs):
         word_search_form = self.word_search_form_class(request.GET)
@@ -158,15 +158,13 @@ class LexemeView(TemplateView):
         # "Lexeme parameters" form operations
         if '_find_lexeme' in request.GET:
             lexeme_result = find_lexemes_wordforms(word_search_form, False)
-            print(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
                                                         'lexeme_result': lexeme_result, 'searchtype': 'regular'})
         elif '_find_translation' in request.GET:
-            lexeme_result = find_lexemes_wordforms(word_search_form, True)
-            print(lexeme_result)
-            translation_result = find_translations(lexeme_result.keys())
+            lexeme_result = find_lexemes_wordforms(word_search_form, True, True)
+            # lexeme_result = find_translations(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                        'translation_result': translation_result,
+                                                        'lexeme_result': lexeme_result, 'searchtype': 'translations',
                                                         'translation_search': 'word_search'})
         elif '_new_lexeme' in request.GET:
             language = request.GET['language']
@@ -174,15 +172,18 @@ class LexemeView(TemplateView):
             spelling = request.GET['spelling']
             return redirect('wordengine:add_wordform_lexeme', language=language,
                             syntactic_category=syntactic_category,  spelling=spelling)
+        # TODO Make this ^ via render?
 
         # "Search results" form operations
+        # TODO Is it obsolete?
         elif '_find_translation_lexeme' in request.GET:  # find translation of a particular lexeme
             lexeme_result = get_object_or_404(models.Lexeme, pk=request.GET['_find_translation_lexeme'])
-            lexeme_words = lexeme_result.wordform_set.all()
-            translation_result = find_translations([lexeme_result])
+            # lexeme_words = lexeme_result.wordform_set.all()
+            # translation_result = find_translations([lexeme_result])
+            lexeme_result = find_translations(lexeme_result)
             return render(request, self.template_name, {'word_search_form': word_search_form,
-                                                        'lexeme_result': lexeme_result, 'lexeme_words': lexeme_words,
-                                                        'translation_result': translation_result,
+                                                        'lexeme_result': lexeme_result,# 'lexeme_words': lexeme_words,
+                                                       # 'translation_result': translation_result,
                                                         'translation_search': 'exact_lexeme'})
         elif '_add_translation' in request.GET:
             lexeme_id = request.GET['_add_translation']
@@ -202,27 +203,6 @@ class LexemeView(TemplateView):
             # except:
             #     messages.error(request, "Invalid request")
             #     return render(request, self.template_name, {'word_search_form': word_search_form})
-
-
-@login_required
-@transaction.atomic
-def delete_wordform(request, wordform_id):
-
-    given_wordform = get_object_or_404(models.Wordform, pk=wordform_id)
-    taken_lexeme = given_wordform.lexeme
-
-    if (taken_lexeme.wordform_set.count() == 1) and (taken_lexeme.translationbase_fst_set.count() +
-                                                     taken_lexeme.translationbase_snd_set.count() > 0):
-        messages.add_message(request, messages.ERROR, "The word has translations and thus can't be deleted")
-    else:
-        modsave(request, given_wordform, {'is_deleted': True})
-
-        messages.add_message(request, messages.SUCCESS, "The word has been deleted")
-
-    if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
-        return redirect('wordengine:show_wordlist')
-    else:
-        return redirect('wordengine:show_wordlist', taken_lexeme.id)
 
 
 class AddTranslationView(TemplateView):
@@ -415,20 +395,8 @@ class ProjectSetupView(TemplateView):
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
     ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
-    # pr_enum_setup_form_class = forms.ProjectEnumeratorSetupForm
-
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
-        # Obsolete version of column setup. Must be deleted.
-        # column_initial = []
-        # literal_values = []
-        # for column in models.ProjectColumn.objects.filter(project=project):
-        #     column_initial.append({'project': project, 'literal': column})
-        #     literal_values.append({'language': column.language_l, 'dialect': column.dialect_l, 'source': column.source_l,
-        #                            'writing_system': column.writing_system_l, 'processing': column.processing_l,
-        #                            'num': column.num})
-        # pr_col_setup_set = self.PrColSetupFormSet(initial=column_initial)
-        # project_columns = zip(literal_values, pr_col_setup_set)
 
         pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
         untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
@@ -457,35 +425,15 @@ class ProjectSetupView(TemplateView):
 
         if '_terms_save' in request.POST:
             param_setup_form_set = self.ParamSetupFormSet(request.POST)
-            print(param_setup_form_set.errors)
             if param_setup_form_set.is_valid():
                 param_setup_form_set.save()
 
         if '_produce' in request.POST:
             project = models.Project.objects.get(pk=kwargs['project_id'])
-            produce_project(project)
+            project.produce_project()
 
         if '_delete' in request.POST:
             project = models.Project.objects.get(pk=kwargs['project_id'])
             project.delete()
 
         return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
-
-
-class TranslationImportView(TemplateView):
-    # translation_import_form_class = forms.TranslationImportForm
-    def get(self, request, *args, **kwargs):
-        pass
-        # translation_import_form = self.translation_import_form_class()
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,
-
-    def post(self, request, *args, **kwargs):
-        pass
-        # translation_import_form = self.translation_import_form_class(request.POST)
-        # if translation_import_form.is_valid() and upload_form.is_valid():
-            # added_translations = parse_upload(request)
-            # transaction.rollback()
-            # transaction.set_autocommit(True)
-        #else:
-            # added_translations = None
-        # return render(request, self.template_name, {'translation_import_form': translation_import_form,

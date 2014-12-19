@@ -1,11 +1,12 @@
-from django.db import models
+from django.db import models, transaction
+from django.db import models, transaction
 from django.contrib import auth
-from wordengine.uniworks import *
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 import string
-
+from wordengine.commonworks import *
+from wordengine.models_ex.projectworks import *
 
 # System globals. Abstract
 
@@ -42,6 +43,39 @@ class FieldChange(Change):
     field_name = models.CharField(max_length=256)
     old_value = models.CharField(max_length=512, blank=True)
     new_value = models.CharField(max_length=512, blank=True)
+
+
+class ChangeTrackMixIn(object):
+    def modsave(request, upd_object, upd_fields):
+
+        field_change = dict()
+        for upd_field in upd_fields.keys():
+            field_change[upd_field] = models.FieldChange(user_changer=request.user,
+                                                         object_type=type(upd_object).__name__,
+                                                         object_id=upd_object.id, field_name=upd_field,
+                                                         old_value=getattr(upd_object, upd_field))
+            setattr(upd_object, upd_field, upd_fields.get(upd_field))
+        upd_object.save()
+        for upd_field in field_change.keys():
+            field_change[upd_field].new_value = getattr(upd_object, upd_field)
+            field_change[upd_field].save()
+
+        # TODO: Modsave should record a DictChange, write to log and display action result
+
+        return None
+
+
+    # TODO Log every change - overload save() method? (Add dict_change)
+    #                     dict_change = models.DictChange(user_changer=request.user, object_type='Wordform',
+    #                                                     object_id=wordform.id)
+    #                     dict_change.save()
+
+        # dict_change = models.DictChange(user_changer=request.user, object_type='Translation',
+        #                                 object_id=translation.id)
+        # dict_change.save()
+
+
+
 
 
 class Settings(models.Model):
@@ -125,14 +159,6 @@ class Language(Term):
 # Language-dependant classes. Abstract
 
 
-class LanguageRelated(models.Model):
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-
-    class Meta:
-        abstract = True
-
-
 class LanguageEntity(models.Model):
     """Abstract base class used to tie an entity to a language"""
 
@@ -145,7 +171,7 @@ class LanguageEntity(models.Model):
 # Language-dependant classes. Concrete
 
 
-class Dialect(Term, LanguageRelated):
+class Dialect(Term, LanguageEntity):
     """Class represents dialect present in the system"""
 
     parent_dialect = models.ForeignKey('self', null=True, blank=True)
@@ -154,13 +180,20 @@ class Dialect(Term, LanguageRelated):
         return ' '.join([self.term_full, str(self.language)])
 
 
-class WritingSystem(Term, LanguageRelated):
+class WritingRelated(models.Model):
+    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
+
+    class Meta:
+        abstract = True
+
+
+class WritingSystem(Term, WritingRelated):
     """Class represents a writing systems used to spell a word form"""
 
-    writing_system_type = models.CharField(choices=WS_TYPE, max_length=2)
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
 
 
-class Source(Term, LanguageRelated):
+class Source(Term, LanguageEntity):
     """Class representing sources of language information"""
 
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
@@ -209,20 +242,35 @@ class Lexeme(LanguageEntity):
 
     @property
     def spellings(self):
-        return self.wordform_set.filter(writing_system__writing_system_type=3)
+        return self.wordform_set.filter(writing_type='O')
 
     @property
     def transcriptions(self):
-        return self.wordform_set.filter(writing_system__writing_system_type__in=[1, 2])
+        return self.wordform_set.filter(writing_type__in=['PS', 'PL'])
 
-    def __str__(self):
+    @property
+    def lexeme_short(self):
         if self.spellings.first():
-            title_wordform = self.spellings.first().formatted
+            title_wordform = self.spellings.first().default_formatted
         elif self.transcriptions.first():
-            title_wordform = self.transcriptions.first().formatted
+            title_wordform = self.transcriptions.first().default_formatted
         else:
             title_wordform = '[No wordform attached]'
-        return ' | '.join(str(s) for s in [title_wordform,  self.language, self.syntactic_category])
+        return title_wordform
+
+    @property
+    def lexeme_title(self):
+        lexeme_title = ''
+        if self.spellings.first():
+            lexeme_title = self.spellings.first().default_formatted
+        if self.transcriptions.first():
+            ' '.join([lexeme_title, self.transcriptions.first().default_formatted]).strip()
+        if not lexeme_title:
+            return '[No wordform attached]'
+        return lexeme_title
+
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.lexeme_short,  self.language, self.syntactic_category])
 
 
 class TranslatedTerm(LanguageEntity):
@@ -255,72 +303,76 @@ class LexemeRelation(models.Model):
         abstract = True
 
 
-class WordformBase(models.Model):
-    """Base class for wordforms
-    """
-
-    lexeme = models.ForeignKey(Lexeme, editable=False)
-    gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-    spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
-    source_m = models.ManyToManyField(Source, through='DictWordform')
-
-    @property
-    def formatted(self):
-        if self.writing_system:
-            try:
-                return self.TRANSCRIPT_BRACKETS[self.writing_system.writing_system_type.id].format(self.spelling)
-            except KeyError:
-                return self.spelling
-        else:
-            return self.spelling
-
-    @property
-    def ws(self):
-        return str(self.writing_system)
-
-    class Meta:
-        abstract = True
-
-
 # Dictionary classes. Concrete
 
 
-class Wordform(WordformBase):
+class Wordform(WritingRelated):
     """Class representing current wordforms"""
 
+    lexeme = models.ForeignKey(Lexeme, editable=False)
+    gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
+    source_m = models.ManyToManyField(Source, through='DictWordform')
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    # informant = models.CharField(max_length=256, blank=True)
+
+    @property
+    def default_spell(self):
+        return self.wordformspell_set.get(is_processed=False)
+
+    @property
+    def processed_spells(self):
+        return self.wordformspell_set.filter(is_processed=True)
+
+    @property
+    def default_formatted(self):
+        return self.default_spell.formatted
+
+    @property
+    def processed_formatted_all(self):
+        spellings = [spell.formatted for spell in self.processed_spells]
+        if spellings:
+            result = spellings.pop(0)
+            for spelling in spellings:
+                result += ', '
+                result += spelling
+            return result
+        else:
+            return ''
 
     @property
     def dialects(self):
-        if self.dialect_multi.first():
-            return ', '.join(str(s) for s in self.dialect_multi.all())
+        if self.dialect_m.first():
+            return ', '.join(str(s) for s in self.dialect_m.all())
+
+    @property
+    def is_deleted(self):
+        return self.default_spell.is_deleted
 
     def __str__(self):
-        try:
-            ws = str(self.writing_system.term_abbr)
-        except AttributeError:
-            ws = ""
-        return '{0} ({1} {2}) | {3}'.format(self.spelling, str(self.lexeme.language), str(self.gramm_category_set), ws)
+        return '{0} ({1} {2}) | {3}'.format(self.default_formatted, str(self.lexeme.language),
+                                            str(self.gramm_category_set), str(self.writing_type))
     # TODO Include dialects into description
 
 
-class ProcWordform(models.Model):
+class WordformSpell(models.Model):
     wordform = models.ForeignKey(Wordform)
     spelling = models.CharField(max_length=512)
     writing_system = models.ForeignKey(WritingSystem)
+    is_processed = models.BooleanField()
 
+    @property
+    def formatted(self):
+        if self.writing_system.writing_type == 'O':
+            return self.spelling
+        else:
+            return TRANSCRIPT_BRACKETS[self.writing_system.writing_type].format(self.spelling)
+
+    def __str__(self):
+        return self.formatted
 
 class DictWordform(DictEntity):
     wordform = models.ForeignKey(Wordform)
     comment = models.TextField(blank=True)
-
-
-# TODO Will not work due to m2m-relation to source via DictWordform
-# class WordformSample(WordformBase):
-#     """Class representing current wordform samples"""
-#
-#     informant = models.CharField(max_length=256)
 
 
 class WordformOrder:
@@ -337,6 +389,24 @@ class SemanticGroup(models.Model):
     source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
     comment = models.TextField(blank=True)
 
+    def __str__(self):
+        semantic_group_str = ''
+        themes = self.theme_m.all()
+        if themes:
+            semantic_group_str += ','.join(themes) + ' | '
+        usage_contraint = self.usage_constraint_m.all()
+        if usage_contraint:
+            semantic_group_str += ';'.join(usage_contraint) + ' | '
+        dialects = self.dialect_m.all()
+        if dialects:
+            semantic_group_str += ','.join(dialects) + ' | '
+        if self.comment:
+            semantic_group_str += self.comment
+
+        if semantic_group_str:
+            semantic_group_str = semantic_group_str.strip(' | ')
+
+        return semantic_group_str
 
 class DictSemanticGroup(DictEntity):
     semantic_group = models.ForeignKey(SemanticGroup)
@@ -357,6 +427,8 @@ class Translation(LexemeRelation):
     # translation_based_m = models.ManyToManyField('self', null=True, blank=True)
     # is_visible = models.BooleanField(default=True, editable=False)
 
+    # def __str__(self):
+    #     return
 
 class DictTranslation(DictEntity):
     translation = models.ForeignKey(Translation)
@@ -386,6 +458,38 @@ class Project(models.Model):
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
+
+    def fill_project_dict(self):
+        project_models = (ProjectLexeme, ProjectWordform, ProjectSemanticGroup)
+        for model in project_models:
+            src_obj = model.__name__
+            for field, term_type in model.project_fields().items():
+                if type(term_type) == tuple:
+                    term_type = ''
+                values = set()
+                for value in model.objects.filter(project=self).values(field).distinct():
+                    if value[field]:
+                        real_value = restore_tuple(value[field])
+                        for sg_value in real_value:
+                            values.add(sg_value)
+                ProjectDictionary.objects.bulk_create([ProjectDictionary(value=val, src_obj=src_obj, project=self,
+                                                                         state='N', term_type=term_type) for val
+                                                       in values])
+        return None
+
+    def produce_project(self):
+        transaction.set_autocommit(False)
+        # TODO Check if syntactic categories present in language
+        if self.state == 'N':
+            produce_project_model(self, ProjectLexeme)
+            produce_project_model(self, ProjectWordform)
+            produce_project_model(self, ProjectWordformSpell)
+            produce_project_model(self, ProjectSemanticGroup)
+            produce_project_model(self, ProjectTranslation)
+            self.state = 'P'
+            self.save()
+        transaction.set_autocommit(True)
+        return None
 
 
 class CSVCell(models.Model):
@@ -466,7 +570,7 @@ class ProjectedModel (models.Model):
     @property
     def params_list(self):
         if self.params:
-            return restore_list(self.params)
+            return restore_tuple(self.params)
         else:
             return []
 
@@ -545,7 +649,6 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
 
 class ProjectWordform(ProjectedEntity, ProjectedModel):
     lexeme = models.ForeignKey(ProjectLexeme)
-    spelling = models.CharField(max_length=256)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
     col = models.ForeignKey(ProjectColumn)
@@ -564,7 +667,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
         return {'params': ('GrammCategorySet', 'Dialect')}
 
     def fields(self):
-        fields = {'lexeme': self.lexeme.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
+        fields = {'lexeme': self.lexeme.result}
         if self.params_list:
             fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
         if not fields.get('gramm_category_set_id'):
@@ -587,19 +690,21 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
                                'is_deleted': False}}
 
 
-class ProjectProcWordform(ProjectedEntity, ProjectedModel):
+class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     wordform = models.ForeignKey(ProjectWordform)
+    is_processed = models.BooleanField()
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
-    result = models.ForeignKey(ProcWordform, null=True, blank=True)
+    result = models.ForeignKey(WordformSpell)
 
     @staticmethod
     def real_model():
-        return ProcWordform
+        return WordformSpell
 
     def fields(self):
-        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system}
+        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system,
+                'is_processed': self.is_processed}
 
 
 class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
@@ -624,7 +729,7 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     @property
     def dialect_list(self):
         if self.dialect:
-            return restore_list(self.dialect)
+            return restore_tuple(self.dialect)
         else:
             return []
 

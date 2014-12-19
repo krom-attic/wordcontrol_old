@@ -3,59 +3,25 @@
 
 <h2>Lexeme details</h2>
     <h3>
-        {{ exact_lexeme.spellings.0.formatted }} {{ exact_lexeme.transcriptions.0.formatted }}
+        {{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }}
     </h3>
-    <p>{{ exact_lexeme.language }} {{ exact_lexeme.syntactic_category }} <br />
-       Inflection: {{ exact_lexeme.inflection }}</p>
-    <p>Variants:</p>
+    {% if exact_lexeme.inflection %}<p>Inflection: {{ exact_lexeme.inflection }}</p>{% endif %}
+    <p>{% for lex_param in exact_lexeme.lexeme_parameter_m.all %}{{ lex_param }}{% endfor %}</p>
     <ul>
     {% for word in exact_lexeme.wordform_set.all %}
-        <li {% if word.is_deleted %} class="deleted"{% endif %}>
-        <span title="{{ word.ws }}" class="underdots">{{ word.formatted }}</span>
-        {% if word.dialects %}
-            <i>({{ word.dialects }})</i>
-        {% endif %}
-        ::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::</li>
+        <li>
+        <span {% if word.processed_formatted_all %}title="{{ word.processed_formatted_all }}" class="underdots"{% endif %}>
+            {{ word.default_formatted }}</span>
+        [{{ word.gramm_category_set }}]
+        <i>({{ word.dialects }})</i>
+        <!--::: <a href="{% url 'wordengine:delete_wordform' word.id %}">(delete)</a> :::-->
+        </li>
     {% endfor %}
     </ul>
-    <form action="" method="get">
-        <button name="_find_translation_lexeme" value="{{ exact_lexeme.id }}" type="submit">Find translation</button>
-        <button name="_add_wordform" value="{{ exact_lexeme.id }}" type="submit">Add word</button>
-        <button name="_add_translation" value="{{ exact_lexeme.id }}" type="submit">Add translation</button>
-    </form>
+    <!--<form action="" method="get">-->
+        <!--<button name="_find_translation_lexeme" value="{{ exact_lexeme.id }}" type="submit">Find translation</button>-->
+        <!--<button name="_add_wordform" value="{{ exact_lexeme.id }}" type="submit">Add word</button>-->
+        <!--<button name="_add_translation" value="{{ exact_lexeme.id }}" type="submit">Add translation</button>-->
+    <!--</form>-->
 
-{% endif %}
-
-{% if translation_search %}
-<hr />
-
-<h2>Translations</h2>
-    {% for lexeme, translations in translation_result.items %}
-        <h3>
-        {{ lexeme.spellings.0.formatted }} {{ lexeme.transcriptions.0.formatted }}
-        </h3>
-        <p>{{ lexeme.language }} {{ lexeme.syntactic_category }}</p>
-        {% if translations %}
-        <ul>
-        {% for translation in translations %}
-            <li><strong>
-                {% for spelling in translation.spellings %}
-                    {% if not forloop.first %} ~ {% endif %}
-                    {{ spelling.formatted }}
-                {% endfor %}
-                {% for transcription in translation.transcriptions %}
-                    {% if not forloop.first %} ~ {% endif %}
-                    {{ transcription.formatted }}
-                {% endfor %}
-                </strong>
-                — {{ translation.language }} {{ translation.syntactic_category }}
-                ::: <a href="{% url 'wordengine:show_wordlist' translation.id %}">(details)</a> :::</li>
-        {% endfor %}
-        </ul>
-        {% else %}
-        <p>This word has no translations.</p>
-        {% endif %}
-    {% empty %}
-        <p>Translation search returned no results.</p>
-    {% endfor %}
 {% endif %}
