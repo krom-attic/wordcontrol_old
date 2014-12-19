@@ -121,7 +121,7 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
-INSTALLED_APPS = (
+DJANGO_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -131,16 +131,23 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+)
 
-    # HOMEBREW APPS
+HOMEBREW_APPS = (
     'wordengine',
+)
 
-    # THIRDPARTY APPS
+THIRDPARTY_APPS = (
+)
 
+DEBUG_APPS = (
+    'debug_toolbar',
 )
 
 if DEBUG:
-    INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar', )
+    INSTALLED_APPS = DJANGO_APPS + HOMEBREW_APPS + THIRDPARTY_APPS + DEBUG_APPS
+else:
+    INSTALLED_APPS = DJANGO_APPS + HOMEBREW_APPS + THIRDPARTY_APPS
 
 # Sample, described below, is overridden!!
 # A sample logging configuration. The only tangible logging
