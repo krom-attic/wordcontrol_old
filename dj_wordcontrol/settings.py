@@ -4,7 +4,7 @@ import socket
 
 # TODO: split dev/testing/production environments
 if socket.gethostname() == 'tower.bz8.ru':
-    DEBUG = True
+    DEBUG = False
 else:
     DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -31,7 +31,7 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['1.kotimaa.cz8.ru']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
