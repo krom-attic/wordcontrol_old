@@ -72,7 +72,7 @@ MEDIA_URL = ''
 if DEBUG:
     STATIC_ROOT = ''
 else:
-    STATIC_ROOT = '/www/site1/webapp/wordcontrol/'
+    STATIC_ROOT = '/www/site1/public_html/'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
