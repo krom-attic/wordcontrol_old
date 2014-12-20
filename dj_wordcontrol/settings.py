@@ -72,7 +72,7 @@ MEDIA_URL = ''
 if DEBUG:
     STATIC_ROOT = ''
 else:
-    STATIC_ROOT = '/home/kotimaa/www/site1/public_html/'
+    STATIC_ROOT = '/home/kotimaa/www/site1/public_html/static/'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
