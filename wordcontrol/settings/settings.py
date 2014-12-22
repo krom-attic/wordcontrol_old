@@ -1,13 +1,8 @@
 # Django settings for dj_wordcontrol project.
 import os
-import socket
 
-# TODO: split dev/testing/production environments
-if socket.gethostname() == 'tower.bz8.ru':
-    DEBUG = False
-else:
-    DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+# DEBUG is set in environment-dependent settings
+# TEMPLATE_DEBUG is set in environment-dependent settings
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 ADMINS = (
@@ -16,22 +11,11 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        # 'NAME': os.path.join(PROJECT_DIR, 'sqlite3.db'),  # Or path to database file if using sqlite3.
-        'NAME': os.path.join(PROJECT_DIR, 'sqlite3_test.db'),  # Database with test data
-        # The following settings are not used with sqlite3:
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',              # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',              # Set to empty string for default.
-    }
-}
+# DATABASES is set in environment-dependent settings
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['1.kotimaa.cz8.ru']
+# ALLOWED_HOSTS is set in environment-dependent settings
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -69,10 +53,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-if DEBUG:
-    STATIC_ROOT = ''
-else:
-    STATIC_ROOT = '/home/kotimaa/www/site1/public_html/static/'
+# STATIC_ROOT is set in environment-dependent settings
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -113,10 +94,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'dj_wordcontrol.urls'
+ROOT_URLCONF = 'wordcontrol.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'dj_wordcontrol.wsgi.application'
+WSGI_APPLICATION = 'wordcontrol.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -124,7 +105,7 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
-INSTALLED_APPS = (
+DJANGO_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -134,16 +115,17 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+]
 
-    # HOMEBREW APPS
+REQUIRED_APPS = []
+
+PROJECT_APPS = [
     'wordengine',
+]
 
-    # THIRDPARTY APPS
+INSTALLED_APPS = DJANGO_APPS + REQUIRED_APPS + PROJECT_APPS
 
-)
-
-if DEBUG:
-    INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar', )
+# Additional apps may be added in environment-dependent settings
 
 # Sample, described below, is overridden!!
 # A sample logging configuration. The only tangible logging
