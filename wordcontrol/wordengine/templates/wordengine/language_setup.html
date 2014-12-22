@@ -1,0 +1,17 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Manage words{% endblock %}
+{% block pagebody %}
+
+<h1>Language setup</h1>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ language_form.as_p }}
+        {% for grcatset_id, grcatset_form in grcatset_forms.items %}
+            <input type="hidden" value={{ grcatset_id }} />
+            {{ grcatset_form.as_p }}
+        {% endfor %}
+
+        <input type="submit" value="Save" name="_language_setup" />
+    </form>
+
+{% endblock %}
