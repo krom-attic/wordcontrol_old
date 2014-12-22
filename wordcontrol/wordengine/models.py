@@ -410,6 +410,7 @@ class SemanticGroup(models.Model):
 
         return semantic_group_str
 
+
 class DictSemanticGroup(DictEntity):
     semantic_group = models.ForeignKey(SemanticGroup)
 
@@ -431,6 +432,7 @@ class Translation(LexemeRelation):
 
     # def __str__(self):
     #     return
+
 
 class DictTranslation(DictEntity):
     translation = models.ForeignKey(Translation)

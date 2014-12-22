@@ -1,8 +1,8 @@
 # Django settings for dj_wordcontrol project.
 import os
 
-SETTINGS_DIR = os.path.dirname(os.path.realpath(__file__))
-ROOT_DIR = os.path.join(SETTINGS_DIR, '..', '..', '..')
+PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
+ROOT_DIR = os.path.join(PROJECT_DIR, '..', '..')
 
 # DEBUG is set in environment-dependent settings
 # TEMPLATE_DEBUG is set in environment-dependent settings
