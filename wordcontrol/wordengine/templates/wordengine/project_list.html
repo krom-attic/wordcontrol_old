@@ -1,0 +1,26 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Import projects{% endblock %}
+{% block pagebody %}
+<h1>Import projects</h1>
+    <h2>Choose a project</h2>
+    <form action="" method="get">
+        {{ project_list_form.as_p }}
+        <input type="submit" value="Setup" name="_setup" />
+    </form>
+
+    <h2>Start new import project</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ project_upload_form.as_p }}
+        <input type="submit" value="Import file" name="_import_file" />
+    </form>
+
+    {% if errors %}
+        <h2>Errors</h2>
+        {% for cell, error in errors %}
+            <p>{{ cell }}<br />
+            {{ error }}</p>
+        {% endfor %}
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Word addition{% endblock %}
+{% block pagebody %}
+
+<form action="" method="post">
+    {% csrf_token %}
+
+    {% if lexeme_form %}
+        {{ lexeme_form.as_p }}
+    {% elif given_lexeme %}
+        {{ given_lexeme }}
+        <input type="hidden" name="lexeme" value="{{ given_lexeme.id }}" />
+    {% endif %}
+
+    {{ source_form.as_p }}
+    {{ wordform_form.as_p }}
+
+    {% if first_lexeme %}
+        <input type="hidden" name="first_lexeme" value="{{ first_lexeme.id }}" />
+        <input type="submit" value="Submit as translation" name="_goto_translation" />
+    {% else %}
+        <input type="submit" value="Submit" />
+        <input type="submit" value="Submit and add a new word" name="_add_new" />
+        <input type="submit" value="Submit and add a new wordform" name="_add_wordform" />
+        <input type="submit" value="Submit and add a translation" name="_add_translation" />
+    {% endif %}
+</form>
+
+{% endblock %}

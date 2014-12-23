@@ -1,0 +1,30 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Translation addition{% endblock %}
+{% block pagebody %}
+<h1>New translation</h1>
+    <h2>First word</h2>
+        {{ first_lexeme }}
+    <h2>Second word</h2>
+        {% if second_lexeme %}
+            {{ second_lexeme }}
+            <h2>Translation details</h2>
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="lexeme_1" value="{{ first_lexeme.id }}" />
+                    <input type="hidden" name="lexeme_2" value="{{ second_lexeme.id }}" />
+                    {{ source_form.as_p }}
+                    {{ translation_form.as_p }}
+                    <input type="submit" value="Add translation" name="_add_translation_pair" />
+                </form>
+        {% else %}
+            <form action="" method="get">
+                {{ word_search_form.as_p }}
+                <input type="submit" value="Find lexeme" name="_lexeme_search" />
+                <input type="submit" value="New lexeme" name="_new_lexeme" />
+
+                {% include "wordengine/search_result.html" %}
+            </form>
+        {% endif %}
+
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Manage words{% endblock %}
+{% block pagebody %}
+
+<h1>Word management</h1>
+    <h2>Lexeme parameters</h2>
+        <form action="" method="get">
+            {{ word_search_form.as_p }}
+            <input type="submit" value="Find lexemes" name="_find_lexeme" />
+            <input type="submit" value="Find translations" name="_find_translation">
+<!--            <input type="submit" value="New lexeme" name="_new_lexeme" /> -->
+        </form>
+
+        <form action="" method="get">
+            {% include "wordengine/lexeme_list.html" %}
+            {% include "wordengine/lexeme_details.html" %}
+        </form>
+
+{% endblock %}
