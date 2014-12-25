@@ -700,7 +700,7 @@ class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
-    result = models.ForeignKey(WordformSpell)
+    result = models.ForeignKey(WordformSpell, null=True, blank=True)
 
     @staticmethod
     def real_model():

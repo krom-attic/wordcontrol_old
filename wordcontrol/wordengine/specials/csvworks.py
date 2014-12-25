@@ -101,7 +101,7 @@ def get_lexeme_from_csvcell(project, lexeme_literal, col):
     lex_param = lexeme_literal.split('[', 1)
     synt_cat = lex_param.pop(0).strip()
     if len(lex_param) == 1:
-        params = (s.strip('] ') for s in lex_param.pop(0).strip().split('['))
+        params = tuple(s.strip('] ') for s in lex_param.pop(0).strip().split('['))
     else:
         params = ''
 
@@ -137,7 +137,7 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
                     spelling_params = wordform_split.pop(0).strip().split('[', 1)  # (spelling ), (params])
                     spelling = spelling_params.pop(0).strip()  # (spelling)
                     if len(spelling_params) == 1:
-                        params = (s.strip('] ') for s in spelling_params.pop().strip().split('['))  # (param), ...
+                        params = tuple(s.strip('] ') for s in spelling_params.pop().strip().split('['))  # (param), ...
                     else:
                         params = ''
                     if len(wordform_split) == 1:
@@ -210,7 +210,7 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
             if len(lex_transl_split) == 2:
                 group_params_comment = lex_transl_split.pop(0).split('"', 1)  # ([params] ), (comment")
                 if group_params_comment[0]:
-                    group_params = (s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('['))
+                    group_params = tuple(s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('['))
                 if len(group_params_comment) == 1:
                     group_comment = group_params_comment.pop().strip('" ')
 
