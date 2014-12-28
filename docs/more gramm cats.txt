@@ -2,5 +2,7 @@
 1. finitness: participle, infinitive, gerund, masdar, converb
 возможно, потребуется иерархический классификатор
 2. orientation
-3. inclusivness
+3. inclusivness (или involvement? - включённость говорящего в действие)
 4. валентность
+
+? transitivity (переходность)
