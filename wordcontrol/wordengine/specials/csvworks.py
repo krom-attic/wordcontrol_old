@@ -69,25 +69,18 @@ def parse_csv_header(project):
 def get_ext_comments_from_csvcell(project):
 
     errors = []
-    ext_comments = []
+    ext_comments = {}
 
     csvcell = models.CSVCell(row=project.rownum, col=len(project.row)-1, value=project.row[-1], project=project)
     csvcell.save()
     ext_comm_split = RE_EXT_COMM.split(project.row[-1])
     # if ext_comm_split[0]:
     #     errors.append((str(csvcell) + ' (ext comments)', 'Something odd is in extended comment cell'))
-    # Temporary disabled (for testing purposes)
+    # TODO Temporary disabled (for testing purposes)
 
-    odd = True
-    temp_list = []
-    for ec in ext_comm_split[1:]:
-        if odd:
-            temp_list = [ec]
-            odd = not odd
-        else:
-            temp_list.append('"'+ec.strip()+'"')
-            ext_comments.append(temp_list)
-            odd = not odd
+    for i in range(1, len(ext_comm_split), 2):
+        ext_comments[ext_comm_split[i]] = '"'+ext_comm_split[i+1].strip()+'"'
+        # Out of range seems to be impossible
 
     return ext_comments, errors
 
@@ -127,9 +120,9 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
             csvcell = models.CSVCell(row=project.rownum, col=colnum, value=lexeme_wordforms, project=project)
             csvcell.save()
 
-            for ext_comment in ext_comments:
-                if lexeme_wordforms.find(ext_comment[0]):
-                    lexeme_wordforms = lexeme_wordforms.replace(ext_comment[0], ext_comment[1])
+            for ext_comment_marker, ext_comment in ext_comments.items():
+                if lexeme_wordforms.find(ext_comment_marker):
+                    lexeme_wordforms = lexeme_wordforms.replace(ext_comment_marker, ext_comment)
 
             if colnum == 1:
                 for current_wordform in lexeme_wordforms.split('|'):

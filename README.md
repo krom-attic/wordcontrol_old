@@ -7,6 +7,7 @@ Detailed documentation is in Russian, since there is no participants in the proj
 Basic information
 -----------------
 WordControl is a Django app. Current Django branch is 1.7.
+Top-level import path is 'wordcontol'.
 
 Development process (v. 2)
 --------------------------
