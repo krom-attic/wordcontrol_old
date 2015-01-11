@@ -459,6 +459,7 @@ class Project(models.Model):
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
     source = models.ForeignKey(Source, null=True, blank=True)
+    state = models.CharField(choices=PRJ_STATE, max_length=2)  # Project state is excessive, but can't be removed now
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
@@ -576,7 +577,7 @@ class ProjectedModel (models.Model):
         if self.params:
             return restore_tuple(self.params)
         else:
-            return []
+            return ()
 
     def fields(self):
         return {}
@@ -596,7 +597,7 @@ def get_from_project_dict(obj, value, term_type, escape_list=False):
         src_obj = type(obj).__name__
         project = obj.project
         if escape_list:
-            value = value.pop()
+            value = value[0]
 
         if isinstance(value, list):
             dict_items = []

@@ -10,6 +10,8 @@ def produce_project_model(project, model):
 
         m2m_fields = project_object.m2m_fields()
         for m2m_field in m2m_fields:
+            # if m2m_fields[m2m_field]:
+            # TODO Find out, why NoneType occurs
             getattr(model_object, m2m_field).add(*m2m_fields[m2m_field])
 
         m2m_thru_fields = project_object.m2m_thru_fields()

@@ -1,5 +1,4 @@
 import codecs
-import datetime
 import csv
 
 from wordengine import models
@@ -273,23 +272,12 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
     return errors
 
 
-def parse_csv(request):
-    """
-    @param request:
-    @return:
+def parse_csv(csvreader, project):
 
-    It's probably impossible to detect (sniff) dialect and encoding correctly, because MS Excel prepares CSV files
-    incorrectly. May be some parsing setting should be introduced.
-    """
-
-    project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now(),  # Always use UTC
-                             filename=request.FILES['file'].name, source_id=request.POST['source'])
     project.errors = []
-    project.save()
+    # project.save() Obsolete?
     lang_src_cols = []
     lang_trg_cols = []
-
-    csvreader = csv.reader(codecs.iterdecode(request.FILES['file'], 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
 
     for project.rownum, project.row in enumerate(csvreader):
 
@@ -304,7 +292,7 @@ def parse_csv(request):
             ext_comments, errors = get_ext_comments_from_csvcell(project)
             project.errors.extend(errors)
         else:
-            ext_comments = []
+            ext_comments = {}
 
         lexeme_literal = project.row[0]
         if lexeme_literal:  # Check if a new lexeme is in the row
@@ -326,3 +314,11 @@ def parse_csv(request):
         project.errors.extend(errors)
 
     return project
+
+
+def get_csv(csvfile):
+    """
+    It's probably impossible to detect (sniff) dialect and encoding correctly, because MS Excel prepares CSV files
+    incorrectly. May be some parsing setting should be introduced.
+    """
+    return csv.reader(codecs.iterdecode(csvfile, 'utf-8'), dialect=csv.excel_tab, delimiter='\t')
