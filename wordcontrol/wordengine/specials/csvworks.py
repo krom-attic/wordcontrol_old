@@ -178,6 +178,19 @@ def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments,
     return errors
 
 
+def split_translation_group(str_to_split):
+    group_params_comment = str_to_split.split('"', 1)  # ([params] ), (comment")
+    if group_params_comment[0]:
+        group_params = tuple(s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('['))
+    else:
+        group_params = ()
+    if len(group_params_comment) == 1:
+        group_comment = group_params_comment.pop().strip('" ')
+    else:
+        group_comment = ''
+    return group_params, group_comment
+
+
 def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_comments):
 
     errors = []
@@ -197,14 +210,11 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
 
             lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
 
-            group_params = ''
-            group_comment = ''
             if len(lex_transl_split) == 2:
-                group_params_comment = lex_transl_split.pop(0).split('"', 1)  # ([params] ), (comment")
-                if group_params_comment[0]:
-                    group_params = tuple(s.strip(' ]') for s in group_params_comment.pop(0).strip('[').split('['))
-                if len(group_params_comment) == 1:
-                    group_comment = group_params_comment.pop().strip('" ')
+                group_params, group_comment = split_translation_group(lex_transl_split.pop(0))
+            else:
+                group_params = ()
+                group_comment = ''
 
             # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped
             semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
