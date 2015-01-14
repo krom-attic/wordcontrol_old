@@ -34,7 +34,10 @@ def check_cell_for_errors2(csvcell_text):
     bar_met = False
     ext_comm_met = False
 
+
     for char in csvcell_text:
+        # This is incorrect, because all *s should be resolved before
+        '''
         if char == '*':
             ext_comm_met = True
             continue
@@ -42,6 +45,7 @@ def check_cell_for_errors2(csvcell_text):
             if char not in string.digits:
                 ext_comm_met = False
             continue
+        '''
 
         if comment_met:
             if char == ' ':
