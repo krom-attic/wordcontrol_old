@@ -1,5 +1,6 @@
 import codecs
 import csv
+import string
 
 from wordengine import models
 from wordengine.global_const import *
@@ -19,8 +20,88 @@ def check_cell_for_errors(csvcell, fields, list_fields=()):
                 errors.append((csvcell, 'Unused special symbol: ' + char + ' in ' + str(field)))
         if re.search(RE_EXT_COMM, str(field)):
             errors.append((csvcell, 'Excessive extended comments marks in ' + str(field)))
-
+# TODO Create check_row to check that *Ns are correct
     return errors
+
+
+def check_cell_for_errors2(csvcell_text):
+    bracket_open = False
+    quote_open = False
+    comment_met = False  # After comment there can be only separator or the end
+    at_met = False
+    essential_met = 0  # 0 - Not met, 1 - Wordform or syntactic category met, 2 - If some parameter occurs after the
+    #  essential (nothing except comments or other parameters should be after it)
+    bar_met = False
+    ext_comm_met = False
+
+    for char in csvcell_text:
+        if char == '*':
+            ext_comm_met = True
+            continue
+        elif ext_comm_met:
+            if char not in string.digits:
+                ext_comm_met = False
+            continue
+
+        if comment_met:
+            if char == ' ':
+                continue
+            else:
+                comment_met = False
+                pass # ERROR: something after comment
+
+        if char not in SPECIAL_CHARS:
+            if bracket_open or quote_open or essential_met == 1 or char == ' ':
+                continue
+            else:
+                if essential_met == 0:
+                    essential_met = 1
+                    continue
+                elif essential_met == 2:
+                    essential_met = 3
+                    pass # ERROR: too many "essentials"
+
+        if bracket_open:
+            if char == ']':
+                bracket_open = False
+            else:
+                pass # ERROR: odd character inside brackets
+        else:
+            if char == '[':
+                bracket_open = True
+                if essential_met == 1:
+                    essential_met = 2
+            elif char == ']':
+                pass # ERROR: closing bracket without open
+
+        if quote_open:
+            if char == '"':
+                quote_open = False
+                comment_met = True
+            else:
+                pass # ERROR: odd character inside quotes
+        else:
+            if char == '"':
+                quote_open = True
+
+        if char == '@':
+            if at_met:
+                pass # ERROR: more than one @
+            else:
+                if essential_met > 0:
+                    pass # ERROR: essentials before @
+                if bar_met:
+                    pass # ERROR: | before @
+                at_met = True
+
+        if char == '|':
+            if essential_met == 0:
+                pass # ERROR: no essential
+            bar_met = True
+            essential_met = 0
+
+        if char in ['@', '|']:
+            comment_met = False
 
 
 def parse_csv_header(project):
