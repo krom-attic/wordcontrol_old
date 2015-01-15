@@ -54,5 +54,7 @@ SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 # Common regexps
 
 RE_EXT_COMM = re.compile(r'(\*\d+:)')
+RE_PARAM = re.compile(r'(\[.*?\])')
+RE_COMMENT = re.compile(r'(\".*?\")')
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
