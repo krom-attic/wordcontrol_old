@@ -38,4 +38,4 @@ Migrations:
 python manage.py makemigrations
 python manage.py migrate
 
-This project will use Fabric as soon as it is update for Python 3 (http://www.fabfile.org/).
+This project will use Fabric as soon as it is updated for Python 3 (http://www.fabfile.org/).
