@@ -449,9 +449,11 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
 def parse_csv(csvreader, project):
 
     project.errors = []
-    # project.save() Obsolete?
-    lang_src_cols = []
-    lang_trg_cols = []
+    project.save()  # Required
+
+    # Obsolete?
+    # lang_src_cols = []
+    # lang_trg_cols = []
 
     for project.rownum, project.row in enumerate(csvreader):
 
