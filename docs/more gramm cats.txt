@@ -6,3 +6,17 @@
 4. валентность
 
 ? transitivity (переходность)
+
+
+ещё какие-то "ошмётки":
+Agency Агенс (зачёркуто)
+Clusivity Инклюзив
+Definiteness Определенность
+Evidentiality Эвиденциальность
+Focus 
+Mirativity Адмиративность
+Modality Модальность
+Noun class Именной класс
+Topic-comment
+Transitivity Переходность
+Valency Валентность

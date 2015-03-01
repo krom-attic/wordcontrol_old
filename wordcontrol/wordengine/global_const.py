@@ -58,3 +58,15 @@ RE_PARAM = re.compile(r'(\[.*?\])')
 RE_COMMENT = re.compile(r'(\".*?\")')
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
+
+ERRORS = {
+    'CSV-1': 'Unexpected parameters at the beginning: ',
+    'CSV-2': 'No essential data',
+    'CSV-3': 'Unexpected data between "]" and "[": ',
+    'CSV-4': 'Unexpected data between brackets and quotes (parameters and comment): ',
+    'CSV-5': 'Unexpected data after quotes (must be used only for comments)',
+    'CSV-6': 'Unexpected comment: ',
+    'CSV-7': 'Unused special symbol: ',
+    'CSV-8': 'Excessive extended comments marks: ',
+    'CSV-9': 'No lexeme in the row'
+}

@@ -6,6 +6,7 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase
+from unittest import skip
 
 
 class SimpleTest(TestCase):
@@ -16,6 +17,7 @@ class SimpleTest(TestCase):
         self.assertEqual(1 + 1, 2)
 
 
+@skip
 class ProjectDictTest(TestCase):
     def test_lexeme_dict(self):
         """
@@ -24,6 +26,7 @@ class ProjectDictTest(TestCase):
         pass
 
 
+@skip
 class ImportTest(TestCase):
     def test_csvfile_equality(self):
         """

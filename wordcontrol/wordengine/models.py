@@ -1,7 +1,7 @@
 import string
 
 from django.db import models, transaction
-from django.contrib import auth
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -16,7 +16,7 @@ from .models_ex.projectworks import *
 class Change(models.Model):
     """Abstract base class representing submitted change."""
 
-    user_changer = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_changer")
+    user_changer = models.ForeignKey(User, editable=False, related_name="%(app_label)s_%(class)s_changer")
     timestamp_change = models.DateTimeField(auto_now_add=True, editable=False)
     comment = models.TextField(blank=True)
     # TODO Check change generating code - it wasn't changed
@@ -35,7 +35,7 @@ class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      Wordforms and Translations"""
 
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
+    user_reviewer = models.ForeignKey(User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
 
 
@@ -455,7 +455,7 @@ class Relation(LexemeRelation):
 
 
 class Project(models.Model):
-    user_uploader = models.ForeignKey(auth.models.User, editable=False)
+    user_uploader = models.ForeignKey(User, editable=False)
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
     source = models.ForeignKey(Source, null=True, blank=True)

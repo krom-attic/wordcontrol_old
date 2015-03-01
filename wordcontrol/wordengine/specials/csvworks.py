@@ -1,124 +1,23 @@
 import codecs
 import csv
-import string
 
 from wordengine import models
 from wordengine.global_const import *
 
 
 def check_for_errors(csvcell, checked_value):
-    unexpected_chars = [(csvcell, 'Unused special symbol: ' + char + ' in ' + checked_value) for char in checked_value
+    unexpected_chars = [(csvcell, 'CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
                         if char in SPECIAL_CHARS]
     ext_comment_marks = RE_EXT_COMM.search(checked_value)
     if ext_comment_marks:
-        unexpected_ext_comments = [(csvcell, 'Excessive extended comments marks (' + mark + ') in ' + checked_value)
+        unexpected_ext_comments = [(csvcell, 'CSV-8', mark + ' in "' + checked_value + '"')
                                    for mark in ext_comment_marks]
         return unexpected_chars + unexpected_ext_comments
     else:
-        return unexpected_chars
-
-
-
-# def check_cell_for_errors(csvcell, fields, list_fields=()):
-#     errors = []
-#
-#     if list_fields:
-#         fields_to_check = fields + list_fields
-#     else:
-#         fields_to_check = fields
-#
-#     for field in fields_to_check:
-#         for char in SPECIAL_CHARS:
-#             if char in str(field):
-#                 errors.append((csvcell, 'Unused special symbol: ' + char + ' in ' + str(field)))
-#         if re.search(RE_EXT_COMM, str(field)):
-#             errors.append((csvcell, 'Excessive extended comments marks in ' + str(field)))
-# # TODO Create check_row to check that *Ns are correct
-#     return errors
-
-
-def check_cell_for_errors2(csvcell_text):
-    # bracket_open = False
-    # quote_open = False
-    # comment_met = False  # After comment there can be only separator or the end
-    # at_met = False
-    # essential_met = 0  # 0 - Not met, 1 - Wordform or syntactic category met, 2 - If some parameter occurs after the
-    # #  essential (nothing except comments or other parameters should be after it)
-    # bar_met = False
-    # ext_comm_met = False
-
-
-    for char in csvcell_text:
-        # This is incorrect, because all *s should be resolved before
-        '''
-        if char == '*':
-            ext_comm_met = True
-            continue
-        elif ext_comm_met:
-            if char not in string.digits:
-                ext_comm_met = False
-            continue
-        '''
-
-        # if comment_met:
-        #     if char == ' ':
-        #         continue
-        #     else:
-        #         comment_met = False
-        #         pass # ERROR: something after comment
-
-        # if char not in SPECIAL_CHARS:
-        #     if bracket_open or quote_open or essential_met == 1 or char == ' ':
-        #         continue
-        #     else:
-        #         if essential_met == 0:
-        #             essential_met = 1
-        #             continue
-        #         elif essential_met == 2:
-        #             essential_met = 3
-        #             pass # ERROR: too many "essentials"
-
-        # if bracket_open:
-        #     if char == ']':
-        #         bracket_open = False
-        #     else:
-        #         pass # ERROR: odd character inside brackets
-        # else:
-        #     if char == '[':
-        #         bracket_open = True
-        #         if essential_met == 1:
-        #             essential_met = 2
-        #     elif char == ']':
-        #         pass # ERROR: closing bracket without open
-
-        # if quote_open:
-        #     if char == '"':
-        #         quote_open = False
-        #         comment_met = True
-        #     else:
-        #         pass # ERROR: odd character inside quotes
-        # else:
-        #     if char == '"':
-        #         quote_open = True
-        #
-        # if char == '@':
-        #     if at_met:
-        #         pass # ERROR: more than one @
-        #     else:
-        #         if essential_met > 0:
-        #             pass # ERROR: essentials before @
-        #         if bar_met:
-        #             pass # ERROR: | before @
-        #         at_met = True
-        #
-        # if char == '|':
-        #     if essential_met == 0:
-        #         pass # ERROR: no essential
-        #     bar_met = True
-        #     essential_met = 0
-        #
-        # if char in ['@', '|']:
-        #     comment_met = False
+        if unexpected_chars:
+            return unexpected_chars
+        else:
+            return ()
 
 
 def parse_csv_header(project):
@@ -182,8 +81,9 @@ def get_ext_comments_from_csvcell(project):
     return ext_comments, errors
 
 
-def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, errors):
+def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell):
 
+    errors = []
     data = ''
     pre_params = []
     post_params = []
@@ -194,10 +94,10 @@ def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, err
         if i % 2 == 0:
             if split_str[i].strip():
                 if data:
-                    errors += (csvcell, 'Unexpected data between "]" and "[": ' + split_str[i].strip())
+                    errors.append((csvcell, 'CSV-3', split_str[i].strip()))
                 else:
                     errors += check_for_errors(csvcell, data)
-                    data = split_str[i]
+                    data = split_str[i].strip()
         else:
             param = split_str[i][1:-1]
             errors += check_for_errors(csvcell, param)
@@ -209,8 +109,7 @@ def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, err
     last_split = RE_COMMENT.split(split_str[-1], 1)
     if last_split[0].strip():
         if data:
-            errors += (csvcell, 'Unexpected data between brackets and quotes (parameters and comment): ' +
-                       last_split[0].strip())
+            errors.append((csvcell, 'CSV-4', last_split[0].strip()))
         else:
             errors += check_for_errors(csvcell, data)
             data = last_split[0].strip()
@@ -219,7 +118,7 @@ def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, err
         comment = last_split[1][1:-1]
         errors += check_for_errors(csvcell, comment)
         if last_split[2] or len(last_split) > 3:
-            errors += (csvcell, 'Unexpected data after quotes (must be used only for comments)')
+            errors.append((csvcell, 'CSV-5'))
 
     result = []
 
@@ -227,15 +126,15 @@ def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, err
         result.append(pre_params)
     else:
         if pre_params:
-            errors += (csvcell, 'Unexpected parameters at the beginning: ' + str(pre_params))
+            errors.append((csvcell, 'CSV-1', str(pre_params)))
 
     if has_data:
         result.append(data)
         if not data:
-            errors += (csvcell, 'No essential data')
+            errors.append((csvcell, 'CSV-2'))
     else:
         if data:
-            errors += (csvcell, 'Unexpected data between "]" and "[": ' + data)
+            errors.append((csvcell, 'CSV-3', data))
 
     result.append(post_params)
 
@@ -243,7 +142,7 @@ def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell, err
         result.append(comment)
     else:
         if comment:
-            errors += (csvcell, 'Unexpected comment: ' + comment)
+            errors.append((csvcell, 'CSV-6', comment))
 
     return result, errors
 
@@ -446,6 +345,18 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
     return errors
 
 
+# # TODO Create check_row to check that *Ns are correct
+#         '''
+#         if char == '*':
+#             ext_comm_met = True
+#             continue
+#         elif ext_comm_met:
+#             if char not in string.digits:
+#                 ext_comm_met = False
+#             continue
+#         '''
+
+
 def parse_csv(csvreader, project):
 
     project.errors = []
@@ -455,38 +366,39 @@ def parse_csv(csvreader, project):
     # lang_src_cols = []
     # lang_trg_cols = []
 
-    for project.rownum, project.row in enumerate(csvreader):
+    row = {'prj': project}
+    for row['num'], row['val'] in enumerate(csvreader):
 
-        if project.rownum == 0:
+        if row['num'] == 0:
             # Header must present, nothing to check
-            lang_src_cols, lang_trg_cols, errors = parse_csv_header(project)
+            lang_src_cols, lang_trg_cols, errors = parse_csv_header(row)
             project.errors.extend(errors)
             continue
 
-        if project.row[-1]:
+        if row['val'][-1]:
             # Last column must be an extended comment column
-            ext_comments, errors = get_ext_comments_from_csvcell(project)
+            ext_comments, errors = get_ext_comments_from_csvcell(row)
             project.errors.extend(errors)
         else:
             ext_comments = {}
 
-        lexeme_literal = project.row[0]
+        lexeme_literal = row['val'][0]
         if lexeme_literal:  # Check if a new lexeme is in the row
             # Lexemes of a source language are bound to the first column with wordforms
-            lexeme_src, errors = get_lexeme_from_csvcell(project, lexeme_literal, lang_src_cols[0][1])
+            lexeme_src, errors = get_lexeme_from_csvcell(row, lexeme_literal, lang_src_cols[0][1])
             project.errors.extend(errors)
             new_lexeme = True
         else:
             if not lexeme_src:
-                project.errors.append((str(project.row) + ' (lexemes)', 'No lexeme in the row'))
+                project.errors.append((str(row['txt']) + ' (lexemes)', 'CSV-9'))
                 continue
             else:
                 new_lexeme = False
 
-        errors = get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments, new_lexeme)
+        errors = get_wordforms_from_csvcell(row, lang_src_cols, lexeme_src, ext_comments, new_lexeme)
         project.errors.extend(errors)
 
-        errors = get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_comments)
+        errors = get_translations_from_csvcell(row, lang_trg_cols, lexeme_src, ext_comments)
         project.errors.extend(errors)
 
     return project
