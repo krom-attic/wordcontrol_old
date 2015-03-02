@@ -1,7 +1,7 @@
 import unittest
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wordcontrol.test_settings")
-from wordengine.specials import csvworks
+from wordengine import models
 
 
 class SplitCSVTest(unittest.TestCase):
@@ -23,6 +23,8 @@ class SplitCSVTest(unittest.TestCase):
     t_dialect2 = '@nother диалект'
     t_lexeme_param2 = 'another параметр[лексемы'
 
+    csv_cell = models.CSVCell()
+
     def test_split_lexeme(self):
         """
         case format:
@@ -39,7 +41,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {}'.format(case[1], ''.join(['[{}]'.format(s) for s in case[2]]))
-            split_str, errors = csvworks.split_data(t_line, False, True, False, None)
+            split_str, errors = self.csv_cell.split_data(t_line, False, True, False)
             t_synt_cat_fact, t_lex_params_fact = split_str
             if case[0]:
                 for exp_error in case[0]:
@@ -67,7 +69,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {}'.format(''.join(['[{}]'.format(s) for s in case[1]]), '"{}"'.format(case[2]))
-            split_str, errors = csvworks.split_data(t_line, False, False, True, None)
+            split_str, errors = self.csv_cell.split_data(t_line, False, False, True)
             t_group_params_fact, t_group_comment_fact = split_str
             if case[0]:
                 for exp_error in case[0]:
@@ -95,7 +97,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {} {}'.format(case[1], ''.join(['[{}]'.format(s) for s in case[2]]), '"{}"'.format(case[3]))
-            split_str, errors = csvworks.split_data(t_line, False, True, True, None)
+            split_str, errors = self.csv_cell.split_data(t_line, False, True, True)
             t_wordform_fact, t_wf_params_fact, t_comment_fact = split_str
             if case[0]:
                 for exp_error in case[0]:

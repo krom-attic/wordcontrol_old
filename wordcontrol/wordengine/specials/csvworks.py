@@ -5,168 +5,86 @@ from wordengine import models
 from wordengine.global_const import *
 
 
-def check_for_errors(csvcell, checked_value):
-    unexpected_chars = [(csvcell, 'CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
-                        if char in SPECIAL_CHARS]
-    ext_comment_marks = RE_EXT_COMM.search(checked_value)
-    if ext_comment_marks:
-        unexpected_ext_comments = [(csvcell, 'CSV-8', mark + ' in "' + checked_value + '"')
-                                   for mark in ext_comment_marks]
-        return unexpected_chars + unexpected_ext_comments
-    else:
-        if unexpected_chars:
-            return unexpected_chars
-        else:
-            return ()
+class CSVRow():
+    def __init__(self, project, num, data):
+        self.project = project
+        self.num = num
+        self.data = data
+        self.errors = []
 
+    def parse_csv_header(self):
 
-def parse_csv_header(project):
+        source_language = None
+        lang_src_cols = []
+        lang_trg_cols = []
+        errors = []
 
-    source_language = None
-    lang_src_cols = []
-    lang_trg_cols = []
-    errors = []
+        for colnum, value in enumerate(self.data[1:-1], 1):
 
-    for colnum, value in enumerate(project.row[1:-1], 1):
+            csvcell = models.CSVCell(rownum=0, colnum=colnum, value=value, project=self.project)
+            csvcell.save()
 
-        csvcell = models.CSVCell(row=0, col=colnum, value=value, project=project)
+            writing_system = ''
+            dialect = ''
+
+            col_split = value.strip().split('[', 1)
+            if len(col_split) == 2:
+                writing_system = col_split.pop().strip('] ')
+            lang_dialect = col_split.pop().split('(', 1)
+            if len(lang_dialect) == 2:
+                dialect = lang_dialect.pop().strip(') ')
+            language = lang_dialect.pop().strip()
+
+            errors.extend(csvcell.check_for_errors((language, dialect, writing_system)))
+            # TODO Check check_for_errors usage
+
+            column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum,
+                                                  writing_system_l=writing_system,
+                                                  state='N', project=self.project, csvcell=csvcell)
+            column_literal.save()
+
+            # First column is treated as source language
+            if not source_language:
+                source_language = language
+
+            if source_language == language:
+                lang_src_cols.append((colnum, column_literal))
+            else:
+                lang_trg_cols.append((colnum, column_literal))
+
+        return lang_src_cols, lang_trg_cols, errors
+
+    def get_ext_comments(self):
+
+        errors = []
+        ext_comments = {}
+
+        csvcell = models.CSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
+                                 project=self.project)
         csvcell.save()
 
-        writing_system = ''
-        dialect = ''
+        ext_comm_split = RE_EXT_COMM.split(self.data[-1])
+        if ext_comm_split[0]:
+            errors.append((str(csvcell), 'CSV-10', '(ext comments)'))
 
-        col_split = value.strip().split('[', 1)
-        if len(col_split) == 2:
-            writing_system = col_split.pop().strip('] ')
-        lang_dialect = col_split.pop().split('(', 1)
-        if len(lang_dialect) == 2:
-            dialect = lang_dialect.pop().strip(') ')
-        language = lang_dialect.pop().strip()
+        for i in range(1, len(ext_comm_split), 2):
+            ext_comments[ext_comm_split[i]] = '"'+ext_comm_split[i+1].strip()+'"'
+            # Out of range seems to be impossible
 
-        errors.extend(check_cell_for_errors(csvcell, (language, dialect, writing_system)))
+        return ext_comments, errors
 
-        column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum,
-                                              writing_system_l=writing_system,
-                                              state='N', project=project, csvcell=csvcell)
-        column_literal.save()
+    def get_lexeme(self):
+        csvcell = models.CSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
+        csvcell.save()
 
-        # First column is treated as source language
-        if not source_language:
-            source_language = language
+        split_str, errors = csvcell.split_data(self.data[0], False, True, False)
+        synt_cat, params = split_str
+        # Lexemes of a source language are bound to the first column with wordforms
+        lexeme_src = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=self.project, state='N',
+                                          col=self.project.lang_src_cols[0][1], csvcell=csvcell)
+        lexeme_src.save()
 
-        if source_language == language:
-            lang_src_cols.append((colnum, column_literal))
-        else:
-            lang_trg_cols.append((colnum, column_literal))
-
-    return lang_src_cols, lang_trg_cols, errors
-
-
-def get_ext_comments_from_csvcell(project):
-
-    errors = []
-    ext_comments = {}
-
-    csvcell = models.CSVCell(row=project.rownum, col=len(project.row)-1, value=project.row[-1], project=project)
-    csvcell.save()
-    ext_comm_split = RE_EXT_COMM.split(project.row[-1])
-    # if ext_comm_split[0]:
-    #     errors.append((str(csvcell) + ' (ext comments)', 'Something odd is in extended comment cell'))
-    # TODO Temporary disabled (for testing purposes)
-
-    for i in range(1, len(ext_comm_split), 2):
-        ext_comments[ext_comm_split[i]] = '"'+ext_comm_split[i+1].strip()+'"'
-        # Out of range seems to be impossible
-
-    return ext_comments, errors
-
-
-def split_data(str_to_split, has_pre_params, has_data, has_comment, csvcell):
-
-    errors = []
-    data = ''
-    pre_params = []
-    post_params = []
-    comment = ''
-
-    split_str = RE_PARAM.split(str_to_split)
-    for i in range(len(split_str)-1):
-        if i % 2 == 0:
-            if split_str[i].strip():
-                if data:
-                    errors.append((csvcell, 'CSV-3', split_str[i].strip()))
-                else:
-                    errors += check_for_errors(csvcell, data)
-                    data = split_str[i].strip()
-        else:
-            param = split_str[i][1:-1]
-            errors += check_for_errors(csvcell, param)
-            if data or not has_data:
-                post_params.append(param)
-            else:
-                pre_params.append(param)
-
-    last_split = RE_COMMENT.split(split_str[-1], 1)
-    if last_split[0].strip():
-        if data:
-            errors.append((csvcell, 'CSV-4', last_split[0].strip()))
-        else:
-            errors += check_for_errors(csvcell, data)
-            data = last_split[0].strip()
-
-    if len(last_split) > 1:
-        comment = last_split[1][1:-1]
-        errors += check_for_errors(csvcell, comment)
-        if last_split[2] or len(last_split) > 3:
-            errors.append((csvcell, 'CSV-5'))
-
-    result = []
-
-    if has_pre_params:
-        result.append(pre_params)
-    else:
-        if pre_params:
-            errors.append((csvcell, 'CSV-1', str(pre_params)))
-
-    if has_data:
-        result.append(data)
-        if not data:
-            errors.append((csvcell, 'CSV-2'))
-    else:
-        if data:
-            errors.append((csvcell, 'CSV-3', data))
-
-    result.append(post_params)
-
-    if has_comment:
-        result.append(comment)
-    else:
-        if comment:
-            errors.append((csvcell, 'CSV-6', comment))
-
-    return result, errors
-
-
-def get_lexeme_from_csvcell(project, lexeme_literal, col):
-    errors = []
-
-    csvcell = models.CSVCell(row=project.rownum, col=0, value=lexeme_literal, project=project)
-    csvcell.save()
-
-    lex_param = lexeme_literal.split('[', 1)
-    synt_cat = lex_param.pop(0).strip()
-    if len(lex_param) == 1:
-        params = tuple(s.strip('] ') for s in lex_param.pop(0).strip().split('['))
-    else:
-        params = ''
-
-    errors.extend(check_cell_for_errors(csvcell, (synt_cat, ), params or ()))
-
-    lexeme_src = models.ProjectLexeme(syntactic_category=synt_cat, params=params, project=project, state='N',
-                                      col=col, csvcell=csvcell)
-    lexeme_src.save()
-
-    return lexeme_src, errors
+        return lexeme_src, errors
 
 
 def get_wordforms_from_csvcell(project, lang_src_cols, lexeme_src, ext_comments, new_lexeme):
@@ -360,46 +278,41 @@ def get_translations_from_csvcell(project, lang_trg_cols, lexeme_src, ext_commen
 def parse_csv(csvreader, project):
 
     project.errors = []
+    # Errors storage format: whole data, error code, erroneous fragment (optional)
     project.save()  # Required
 
-    # Obsolete?
-    # lang_src_cols = []
-    # lang_trg_cols = []
-
-    row = {'prj': project}
-    for row['num'], row['val'] in enumerate(csvreader):
-
-        if row['num'] == 0:
+    for num, data in enumerate(csvreader):
+        row = CSVRow(project, num, data)
+        if row.num == 0:
             # Header must present, nothing to check
-            lang_src_cols, lang_trg_cols, errors = parse_csv_header(row)
-            project.errors.extend(errors)
+            project.lang_src_cols, project.lang_trg_cols, project.errors = row.parse_csv_header()
+            project.colsnum = len(row.data)
             continue
 
-        if row['val'][-1]:
-            # Last column must be an extended comment column
-            ext_comments, errors = get_ext_comments_from_csvcell(row)
-            project.errors.extend(errors)
         else:
-            ext_comments = {}
-
-        lexeme_literal = row['val'][0]
-        if lexeme_literal:  # Check if a new lexeme is in the row
-            # Lexemes of a source language are bound to the first column with wordforms
-            lexeme_src, errors = get_lexeme_from_csvcell(row, lexeme_literal, lang_src_cols[0][1])
-            project.errors.extend(errors)
-            new_lexeme = True
-        else:
-            if not lexeme_src:
-                project.errors.append((str(row['txt']) + ' (lexemes)', 'CSV-9'))
-                continue
+            if row.data[-1]:
+                # Last column must be an extended comment column
+                ext_comments, errors = row.get_ext_comments()
+                project.errors.extend(errors)
             else:
-                new_lexeme = False
+                ext_comments = {}
+            # TODO? Alter row data with ext_comments?
+            if row.data[0]:  # Check if a new lexeme is in the row
+                lexeme_src, errors = row.get_lexeme()
+                project.errors.extend(errors)
+                new_lexeme = True
+            else:
+                if not lexeme_src:
+                    project.errors.append((str(row.data) + ' (lexemes)', 'CSV-9'))
+                    continue
+                else:
+                    new_lexeme = False
 
-        errors = get_wordforms_from_csvcell(row, lang_src_cols, lexeme_src, ext_comments, new_lexeme)
-        project.errors.extend(errors)
+            errors = get_wordforms_from_csvcell(row, lang_src_cols, lexeme_src, ext_comments, new_lexeme)
+            project.errors.extend(errors)
 
-        errors = get_translations_from_csvcell(row, lang_trg_cols, lexeme_src, ext_comments)
-        project.errors.extend(errors)
+            errors = get_translations_from_csvcell(row, lang_trg_cols, lexeme_src, ext_comments)
+            project.errors.extend(errors)
 
     return project
 

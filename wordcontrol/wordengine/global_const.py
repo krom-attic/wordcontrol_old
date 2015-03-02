@@ -68,5 +68,6 @@ ERRORS = {
     'CSV-6': 'Unexpected comment: ',
     'CSV-7': 'Unused special symbol: ',
     'CSV-8': 'Excessive extended comments marks: ',
-    'CSV-9': 'No lexeme in the row'
+    'CSV-9': 'No lexeme in the row',
+    'CSV-10': 'Something odd is in extended comment cell'
 }
