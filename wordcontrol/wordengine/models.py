@@ -521,6 +521,16 @@ class CSVCell(models.Model):
             return unexpected_chars
 
     def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
+        """
+        Splits str_to_split against pattern:
+            [pre_params] data [post_params] "comment"
+        Post params may present in any case
+        :param str_to_split: Original string
+        :param has_pre_params: Pre params MAY present
+        :param has_data: Indicates whether data MUST present or MUST be empty
+        :param has_comment: Comment MAY present
+        :return: list of list for each part that may or must present
+        """
 
         errors = []
         data = ''

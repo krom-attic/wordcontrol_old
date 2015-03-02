@@ -107,3 +107,28 @@ class SplitCSVTest(unittest.TestCase):
                 self.assertEqual(case[1], t_wordform_fact, case)
                 self.assertEqual(case[2], t_wf_params_fact, case)
                 self.assertEqual(case[3], t_comment_fact, case)
+
+    def test_split_translation(self):
+        """
+        case format:
+        [params] wordform [params] "comment"
+        """
+        cases = [
+            [['CSV-2'], [self.t_lexeme_param], '',              [self.t_dialect], self.t_comment],
+            [[],        [self.t_lexeme_param], self.t_wordform, [self.t_dialect], self.t_comment]
+        ]
+
+        for case in cases:
+            t_line = '{} {} {} {}'.format(''.join(['[{}]'.format(s) for s in case[1]]), case[2],
+                                          ''.join(['[{}]'.format(s) for s in case[3]]), '"{}"'.format(case[4]))
+            split_str, errors = self.csv_cell.split_data(t_line, True, True, True)
+            t_params_fact, t_wordform_fact, t_dialect_fact, t_comment_fact = split_str
+            if case[0]:
+                for exp_error in case[0]:
+                    self.assertIn(exp_error, [e[1] for e in errors], case)
+            else:
+                self.assertFalse(errors, 'Unexpected errors present in: ' + str(case))
+                self.assertEqual(case[1], t_params_fact)
+                self.assertEqual(case[2], t_wordform_fact)
+                self.assertEqual(case[3], t_dialect_fact)
+                self.assertEqual(case[4], t_comment_fact)

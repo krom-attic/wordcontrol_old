@@ -69,5 +69,8 @@ ERRORS = {
     'CSV-7': 'Unused special symbol: ',
     'CSV-8': 'Excessive extended comments marks: ',
     'CSV-9': 'No lexeme in the row',
-    'CSV-10': 'Something odd is in extended comment cell'
+    'CSV-10': 'Something odd is in extended comment cell',
+    'CSV-11': 'Wordforms expected, but not found',
+    'CSV-12': "Number of processed wordforms is more than the number of unprocessed",
+    'CSV-13': "Number of processed wordforms is less than the number of unprocessed",
 }
