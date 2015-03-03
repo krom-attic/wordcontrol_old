@@ -404,7 +404,7 @@ class ProjectSetupView(DetailView):
         context['pr_col_setup_form_set'] = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.
                                                                   filter(project=context['project']))
         context['untyped_param_form_set'] = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
-                                                                     filter(term_type=''))
+                                                                     filter(term_type='').order_by('value'))
         context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
                                                                  exclude(term_type='').filter(term_id=None))
         return context
