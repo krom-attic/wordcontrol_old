@@ -23,7 +23,7 @@ urlpatterns = patterns('',
                        url(r'^admin$', views.AdminView.as_view(), name='admin'),
                        url(r'^admin/language/(?P<language_id>\d+)$', views.LanguageSetupView.as_view(),
                            name='language_setup'),
-                       url(r'^view/projects/(?P<project_id>\d+)$', views.ProjectSetupView.as_view(),
+                       url(r'^view/projects/(?P<pk>\d+)$', views.ProjectSetupView.as_view(),
                            name='project_setup'),
                        url(r'^view/projects/?$', views.ProjectListView.as_view(), name='project_list'),
                        )

@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.db.models import Q
 from django.contrib import messages
 from django.forms.models import modelformset_factory
+from django.views.generic import DetailView
 
 from wordengine import forms, models
 from wordengine.views_ex.dictworks import *
@@ -390,33 +391,28 @@ class ProjectListView(TemplateView):
         return super(ProjectListView, self).dispatch(*args, **kwargs)
 
 
-class ProjectSetupView(TemplateView):
-    template_name = 'wordengine/project_setup.html'
+class ProjectSetupView(DetailView):
+    model = models.Project
+
     PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
     ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
-    def get(self, request, *args, **kwargs):
-        project = get_object_or_404(models.Project, pk=kwargs.pop('project_id'))
-
-        pr_col_setup_set = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.filter(project=project))
-        untyped_param_form_set = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
-                                                          filter(term_type=''))
-        param_setup_form_set = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                      exclude(term_type='').filter(term_id=None))
+    def get_context_data(self, **kwargs):
         # TODO: allow modification of untyped parameters if project stage allows
-        return render(request, self.template_name, {'pr_col_setup_form_set': pr_col_setup_set,
-                                                    'untyped_param_form_set': untyped_param_form_set,
-                                                    'param_setup_form_set': param_setup_form_set,
-                                                    'project': project})
+        context = super(ProjectSetupView, self).get_context_data(**kwargs)
+        context['pr_col_setup_form_set'] = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.
+                                                                  filter(project=context['project']))
+        context['untyped_param_form_set'] = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
+                                                                     filter(term_type=''))
+        context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
+                                                                 exclude(term_type='').filter(term_id=None))
+        return context
 
     def post(self, request, *args, **kwargs):
         if '_column_save' in request.POST:
-            # project_columns = request.POST  # WTF???
-            # project_columns.save()
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
-                # TODO Change project column's state to "P", but only if all fields are set
                 pr_col_setup_set.save()
 
         if '_types_save' in request.POST:
