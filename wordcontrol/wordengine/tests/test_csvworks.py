@@ -41,8 +41,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {}'.format(case[1], ''.join(['[{}]'.format(s) for s in case[2]]))
-            split_str, errors = self.csv_cell.split_data(t_line, False, True, False)
-            t_synt_cat_fact, t_lex_params_fact = split_str
+            t_synt_cat_fact, t_lex_params_fact, errors = self.csv_cell.split_data(t_line, False, True, False)
             if case[0]:
                 for exp_error in case[0]:
                     self.assertIn(exp_error, [e[1] for e in errors], case)
@@ -69,8 +68,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {}'.format(''.join(['[{}]'.format(s) for s in case[1]]), '"{}"'.format(case[2]))
-            split_str, errors = self.csv_cell.split_data(t_line, False, False, True)
-            t_group_params_fact, t_group_comment_fact = split_str
+            t_group_params_fact, t_group_comment_fact, errors = self.csv_cell.split_data(t_line, False, False, True)
             if case[0]:
                 for exp_error in case[0]:
                     self.assertIn(exp_error, [e[1] for e in errors], case)
@@ -97,8 +95,7 @@ class SplitCSVTest(unittest.TestCase):
 
         for case in cases:
             t_line = '{} {} {}'.format(case[1], ''.join(['[{}]'.format(s) for s in case[2]]), '"{}"'.format(case[3]))
-            split_str, errors = self.csv_cell.split_data(t_line, False, True, True)
-            t_wordform_fact, t_wf_params_fact, t_comment_fact = split_str
+            t_wordform_fact, t_wf_params_fact, t_comment_fact, errors = self.csv_cell.split_data(t_line, False, True, True)
             if case[0]:
                 for exp_error in case[0]:
                     self.assertIn(exp_error, [e[1] for e in errors], case)
@@ -121,8 +118,8 @@ class SplitCSVTest(unittest.TestCase):
         for case in cases:
             t_line = '{} {} {} {}'.format(''.join(['[{}]'.format(s) for s in case[1]]), case[2],
                                           ''.join(['[{}]'.format(s) for s in case[3]]), '"{}"'.format(case[4]))
-            split_str, errors = self.csv_cell.split_data(t_line, True, True, True)
-            t_params_fact, t_wordform_fact, t_dialect_fact, t_comment_fact = split_str
+            t_params_fact, t_wordform_fact, t_dialect_fact, t_comment_fact, errors =\
+                self.csv_cell.split_data(t_line, True, True, True)
             if case[0]:
                 for exp_error in case[0]:
                     self.assertIn(exp_error, [e[1] for e in errors], case)

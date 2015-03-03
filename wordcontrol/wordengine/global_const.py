@@ -73,4 +73,5 @@ ERRORS = {
     'CSV-11': 'Wordforms expected, but not found',
     'CSV-12': "Number of processed wordforms is more than the number of unprocessed",
     'CSV-13': "Number of processed wordforms is less than the number of unprocessed",
+    'CSV-14': 'Translations expected, but not found'
 }

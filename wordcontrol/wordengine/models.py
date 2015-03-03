@@ -593,7 +593,9 @@ class CSVCell(models.Model):
             if comment:
                 errors.append((self, 'CSV-6', comment))
 
-        return result, errors
+        result.append(errors)
+
+        return result
 
     def __str__(self):
         return 'Cell {0} ({1})'.format(self.excel_cell_code, self.value)
