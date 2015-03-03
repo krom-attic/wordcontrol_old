@@ -1,7 +1,7 @@
 import string
 
 from django.db import models, transaction
-from django.contrib import auth
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -16,7 +16,7 @@ from .models_ex.projectworks import *
 class Change(models.Model):
     """Abstract base class representing submitted change."""
 
-    user_changer = models.ForeignKey(auth.models.User, editable=False, related_name="%(app_label)s_%(class)s_changer")
+    user_changer = models.ForeignKey(User, editable=False, related_name="%(app_label)s_%(class)s_changer")
     timestamp_change = models.DateTimeField(auto_now_add=True, editable=False)
     comment = models.TextField(blank=True)
     # TODO Check change generating code - it wasn't changed
@@ -35,7 +35,7 @@ class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      Wordforms and Translations"""
 
-    user_reviewer = models.ForeignKey(auth.models.User, editable=False, null=True, blank=True)
+    user_reviewer = models.ForeignKey(User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
 
 
@@ -455,10 +455,11 @@ class Relation(LexemeRelation):
 
 
 class Project(models.Model):
-    user_uploader = models.ForeignKey(auth.models.User, editable=False)
+    user_uploader = models.ForeignKey(User, editable=False)
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
     source = models.ForeignKey(Source, null=True, blank=True)
+    state = models.CharField(choices=PRJ_STATE, max_length=2)  # Project state is excessive, but can't be removed now
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
@@ -473,7 +474,7 @@ class Project(models.Model):
                 values = set()
                 for value in model.objects.filter(project=self).values(field).distinct():
                     if value[field]:
-                        real_value = restore_tuple(value[field])
+                        real_value = restore_list(value[field])
                         for sg_value in real_value:
                             values.add(sg_value)
                 ProjectDictionary.objects.bulk_create([ProjectDictionary(value=val, src_obj=src_obj, project=self,
@@ -497,15 +498,125 @@ class Project(models.Model):
 
 
 class CSVCell(models.Model):
-    row = models.PositiveIntegerField()
-    col = models.PositiveSmallIntegerField()
+    rownum = models.PositiveIntegerField()
+    colnum = models.PositiveSmallIntegerField()
     value = models.TextField(blank=True)
     project = models.ForeignKey(Project)
 
     @property
     def excel_cell_code(self):
         # Here may occur an out-of-range error, but it is not rational to handle it
-        return string.ascii_uppercase[self.col] + str(self.row+1)
+        return string.ascii_uppercase[self.colnum] + str(self.rownum+1)
+
+    @staticmethod
+    def check_for_errors(checked_value):
+        unexpected_chars = [('CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
+                            if char in SPECIAL_CHARS]
+        ext_comment_marks = RE_EXT_COMM.findall(checked_value)
+        if ext_comment_marks:
+            unexpected_ext_comments = [('CSV-8', mark + ' in "' + checked_value + '"')
+                                       for mark in ext_comment_marks]
+            return unexpected_chars + unexpected_ext_comments
+        else:
+            return unexpected_chars
+
+    def split_header(self, str_to_split):
+        errors = []
+
+        writing_system = ''
+        dialect = ''
+
+        col_split = str_to_split.strip().split('[', 1)
+        if len(col_split) == 2:
+            writing_system = col_split.pop().strip('] ')
+        lang_dialect = col_split.pop().split('(', 1)
+        if len(lang_dialect) == 2:
+            dialect = lang_dialect.pop().strip(') ')
+        language = lang_dialect.pop().strip()
+
+        errors.extend(self.check_for_errors(language))
+        errors.extend(self.check_for_errors(dialect))
+        errors.extend(self.check_for_errors(writing_system))
+
+        return language, dialect, writing_system, errors
+
+    def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
+        """
+        Splits str_to_split against pattern:
+            [pre_params] data [post_params] "comment"
+        Post params may present in any case
+        :param str_to_split: Original string
+        :param has_pre_params: Pre params MAY present
+        :param has_data: Indicates whether data MUST present or MUST be empty
+        :param has_comment: Comment MAY present
+        :return: list of list for each part that may or must present
+        """
+
+        errors = []
+        data = ''
+        pre_params = []
+        post_params = []
+        comment = ''
+
+        split_str = RE_PARAM.split(str_to_split)
+        for i in range(len(split_str)-1):
+            if i % 2 == 0:
+                if split_str[i].strip():
+                    if data:
+                        # data already found
+                        errors.append((self, WCError('CSV-3', split_str[i].strip())))
+                    else:
+                        data = split_str[i].strip()
+            else:
+                param = split_str[i][1:-1]
+                errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(param)]
+                if data or not has_data:
+                    post_params.append(param)
+                else:
+                    pre_params.append(param)
+
+        last_split = RE_COMMENT.split(split_str[-1].strip(), 1)
+        if last_split[0].strip():
+            if data:
+                # data already found
+                errors.append((self, WCError('CSV-4', last_split[0].strip())))
+            else:
+                data = last_split[0].strip()
+
+        if len(last_split) > 1:
+            comment = last_split[1][1:-1]
+            if last_split[2] or len(last_split) > 3:
+                errors.append((self, WCError('CSV-5', last_split[2:])))
+
+        result = []
+
+        if has_pre_params:
+            result.append(pre_params or '')
+        else:
+            if pre_params:
+                errors.append((self, WCError('CSV-1', str(pre_params))))
+
+        if has_data:
+            errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(data)]
+            result.append(data)
+            if not data:
+                errors.append((self, WCError('CSV-2')))
+        else:
+            if data:
+                errors.append((self, WCError('CSV-3', data)))
+
+        result.append(post_params or '')
+
+        if has_comment:
+            errors += [(self, e[0], e[1]) for e in self.check_for_errors(comment)]
+            result.append(comment)
+        else:
+            if comment:
+                errors.append((self, WCError('CSV-6', comment)))
+
+        result.append(errors)
+
+        return result
 
     def __str__(self):
         return 'Cell {0} ({1})'.format(self.excel_cell_code, self.value)
@@ -576,7 +687,7 @@ class ProjectedModel (models.Model):
         if self.params:
             return restore_tuple(self.params)
         else:
-            return []
+            return ()
 
     def fields(self):
         return {}
@@ -596,7 +707,7 @@ def get_from_project_dict(obj, value, term_type, escape_list=False):
         src_obj = type(obj).__name__
         project = obj.project
         if escape_list:
-            value = value.pop()
+            value = value[0]
 
         if isinstance(value, list):
             dict_items = []
@@ -700,7 +811,7 @@ class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
     csvcell = models.ForeignKey(CSVCell)
-    result = models.ForeignKey(WordformSpell)
+    result = models.ForeignKey(WordformSpell, null=True, blank=True)
 
     @staticmethod
     def real_model():

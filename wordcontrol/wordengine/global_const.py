@@ -53,6 +53,34 @@ SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 # Common regexps
 
-RE_EXT_COMM = re.compile(r'(\*\d+:)')
+RE_EXT_COMM = re.compile(r'(\*\d+)')
+RE_PARAM = re.compile(r'(\[.*?\])')
+RE_COMMENT = re.compile(r'(\".*?\")')
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
+
+
+class WCError():
+    ERRORS = {
+        'CSV-1': 'Unexpected parameters at the beginning: ',
+        'CSV-2': 'No essential data.',
+        'CSV-3': 'Unexpected data between "]" and "[": ',
+        'CSV-4': 'Unexpected data between brackets and quotes (parameters and comment): ',
+        'CSV-5': 'Unexpected data after quotes (must be used only for comments).',
+        'CSV-6': 'Unexpected comment: ',
+        'CSV-7': 'Unused special symbol: ',
+        'CSV-8': 'Excessive extended comments marks: ',
+        'CSV-9': 'No lexeme in the row.',
+        'CSV-10': 'Something odd is in extended comment cell.',
+        'CSV-11': 'Wordforms expected, but not found.',
+        'CSV-12': "Number of processed wordforms is more than the number of unprocessed.",
+        'CSV-13': "Number of processed wordforms is less than the number of unprocessed.",
+        'CSV-14': 'Translations expected, but not found.'
+    }
+
+    def __init__(self, errorcode, errordetails='No details'):
+        self.errorcode = errorcode
+        self.errordetails = errordetails
+
+    def __str__(self):
+        return 'Error #{}. {} {}.'.format(self.errorcode, self.ERRORS[self.errorcode], self.errordetails)
