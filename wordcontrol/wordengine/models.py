@@ -474,7 +474,7 @@ class Project(models.Model):
                 values = set()
                 for value in model.objects.filter(project=self).values(field).distinct():
                     if value[field]:
-                        real_value = restore_tuple(value[field])
+                        real_value = restore_list(value[field])
                         for sg_value in real_value:
                             values.add(sg_value)
                 ProjectDictionary.objects.bulk_create([ProjectDictionary(value=val, src_obj=src_obj, project=self,
@@ -506,19 +506,39 @@ class CSVCell(models.Model):
     @property
     def excel_cell_code(self):
         # Here may occur an out-of-range error, but it is not rational to handle it
-        return string.ascii_uppercase[self.col] + str(self.rownum+1)
+        return string.ascii_uppercase[self.colnum] + str(self.rownum+1)
 
     @staticmethod
     def check_for_errors(checked_value):
         unexpected_chars = [('CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
                             if char in SPECIAL_CHARS]
-        ext_comment_marks = RE_EXT_COMM.search(checked_value)
+        ext_comment_marks = RE_EXT_COMM.findall(checked_value)
         if ext_comment_marks:
             unexpected_ext_comments = [('CSV-8', mark + ' in "' + checked_value + '"')
                                        for mark in ext_comment_marks]
             return unexpected_chars + unexpected_ext_comments
         else:
             return unexpected_chars
+
+    def split_header(self, str_to_split):
+        errors = []
+
+        writing_system = ''
+        dialect = ''
+
+        col_split = str_to_split.strip().split('[', 1)
+        if len(col_split) == 2:
+            writing_system = col_split.pop().strip('] ')
+        lang_dialect = col_split.pop().split('(', 1)
+        if len(lang_dialect) == 2:
+            dialect = lang_dialect.pop().strip(') ')
+        language = lang_dialect.pop().strip()
+
+        errors.extend(self.check_for_errors(language))
+        errors.extend(self.check_for_errors(dialect))
+        errors.extend(self.check_for_errors(writing_system))
+
+        return language, dialect, writing_system, errors
 
     def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
         """
@@ -543,55 +563,56 @@ class CSVCell(models.Model):
             if i % 2 == 0:
                 if split_str[i].strip():
                     if data:
-                        errors.append((self, 'CSV-3', split_str[i].strip()))
+                        # data already found
+                        errors.append((self, WCError('CSV-3', split_str[i].strip())))
                     else:
-                        errors += [(self, e[0], e[1]) for e in self.check_for_errors(data)]
                         data = split_str[i].strip()
             else:
                 param = split_str[i][1:-1]
-                errors += [(self, e[0], e[1]) for e in self.check_for_errors(param)]
+                errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(param)]
                 if data or not has_data:
                     post_params.append(param)
                 else:
                     pre_params.append(param)
 
-        last_split = RE_COMMENT.split(split_str[-1], 1)
+        last_split = RE_COMMENT.split(split_str[-1].strip(), 1)
         if last_split[0].strip():
             if data:
-                errors.append((self, 'CSV-4', last_split[0].strip()))
+                # data already found
+                errors.append((self, WCError('CSV-4', last_split[0].strip())))
             else:
-                errors += [(self, e[0], e[1]) for e in self.check_for_errors(data)]
                 data = last_split[0].strip()
 
         if len(last_split) > 1:
             comment = last_split[1][1:-1]
-            errors += [(self, e[0], e[1]) for e in self.check_for_errors(comment)]
             if last_split[2] or len(last_split) > 3:
-                errors.append((self, 'CSV-5'))
+                errors.append((self, WCError('CSV-5', last_split[2:])))
 
         result = []
 
         if has_pre_params:
-            result.append(pre_params)
+            result.append(pre_params or '')
         else:
             if pre_params:
-                errors.append((self, 'CSV-1', str(pre_params)))
+                errors.append((self, WCError('CSV-1', str(pre_params))))
 
         if has_data:
+            errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(data)]
             result.append(data)
             if not data:
-                errors.append((self, 'CSV-2'))
+                errors.append((self, WCError('CSV-2')))
         else:
             if data:
-                errors.append((self, 'CSV-3', data))
+                errors.append((self, WCError('CSV-3', data)))
 
-        result.append(post_params)
+        result.append(post_params or '')
 
         if has_comment:
+            errors += [(self, e[0], e[1]) for e in self.check_for_errors(comment)]
             result.append(comment)
         else:
             if comment:
-                errors.append((self, 'CSV-6', comment))
+                errors.append((self, WCError('CSV-6', comment)))
 
         result.append(errors)
 

@@ -5,40 +5,18 @@ from wordengine import models
 from wordengine.global_const import *
 
 
-def split_header(self, str_to_split):
-    errors = []
-
-    writing_system = ''
-    dialect = ''
-
-    col_split = str_to_split.strip().split('[', 1)
-    if len(col_split) == 2:
-        writing_system = col_split.pop().strip('] ')
-    lang_dialect = col_split.pop().split('(', 1)
-    if len(lang_dialect) == 2:
-        dialect = lang_dialect.pop().strip(') ')
-    language = lang_dialect.pop().strip()
-
-    errors.extend(self.check_for_errors(language))
-    errors.extend(self.check_for_errors(dialect))
-    errors.extend(self.check_for_errors(writing_system))
-
-    return language, dialect, writing_system, errors
-
-models.CSVCell.split_header = split_header
-
-
 class CSVRow():
-    last_lexeme = None
+    last_lexeme_src = None
 
     def __init__(self, project, num, data):
         self.project = project
         self.num = num
         self.data = data
         self.errors = []
-        self.lexeme_src = None
-        self.new_lexeme = False
-        self.ext_comments = None
+        self.ext_comments = {}
+
+    def set_last_lexeme(self, new_lexeme):
+        self.__class__.last_lexeme_src = new_lexeme
 
     def parse_csv_header(self):
 
@@ -83,7 +61,7 @@ class CSVRow():
 
             ext_comm_split = RE_EXT_COMM.split(self.data[-1])
             if ext_comm_split[0]:
-                errors.append((str(csvcell), 'CSV-10', ext_comm_split[0]))
+                errors.append((str(csvcell), WCError('CSV-10', ext_comm_split[0])))
 
             for i in range(1, len(ext_comm_split), 2):
                 self.ext_comments[ext_comm_split[i]] = '"'+ext_comm_split[i+1].strip()+'"'
@@ -106,17 +84,15 @@ class CSVRow():
                                               state='N', col=self.project.lang_src_cols[0][1], csvcell=csvcell)
             lexeme_src.save()
 
-            self.last_lexeme = lexeme_src
-
-        self.lexeme_src = self.last_lexeme
+            self.set_last_lexeme(lexeme_src)
 
         return errors
 
     def use_ext_comments(self, text):
-        for ext_comment_marker, ext_comment in self.ext_comments.items():
-            if text.find(ext_comment_marker):
+        for ext_comment_marker in list(self.ext_comments):
+            if text.find(ext_comment_marker) > -1:
+                ext_comment = self.ext_comments.pop(ext_comment_marker)
                 text = text.replace(ext_comment_marker, ext_comment, 1)
-                del self.ext_comments[ext_comment_marker]
         return text
 
     def produce_wordforms(self):
@@ -129,7 +105,7 @@ class CSVRow():
 
             if lexeme_wordforms:
 
-                csvcell = models.CSVCell(rownum=self.num, col=colnum, value=lexeme_wordforms, project=self.project)
+                csvcell = models.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
                 csvcell.save()
 
                 lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
@@ -138,7 +114,7 @@ class CSVRow():
                     for current_wordform in lexeme_wordforms.split('|'):
                         spelling, params, comment, errors = csvcell.split_data(current_wordform, False, True, True)
 
-                        wordform = models.ProjectWordform(lexeme=self.lexeme_src, comment=comment,
+                        wordform = models.ProjectWordform(lexeme=self.last_lexeme_src, comment=comment,
                                                           params=params, project=self.project, state='N',
                                                           col=column_literal, csvcell=csvcell)
                         wordform.save()
@@ -156,7 +132,7 @@ class CSVRow():
                         try:
                             wordform = first_col_wordforms[wf_num]
                         except IndexError:
-                            errors.append((csvcell, 'CSV-12'))
+                            errors.append((csvcell, WCError('CSV-12')))
                             continue
 
                         errors.extend(csvcell.check_for_errors(spelling))
@@ -167,11 +143,11 @@ class CSVRow():
                         wordform_spell.save()
 
                     if wf_num + 1 < len(first_col_wordforms):
-                        errors.append((csvcell, 'CSV-13'))
+                        errors.append((csvcell, WCError('CSV-13')))
 
             else:
                 if self.data[0]:
-                    errors.append(('Row ' + str(self.num) + ' (source cols)', 'CSV-11'))
+                    errors.append(('Row ' + str(self.num) + ' (source cols)', WCError('CSV-11')))
 
         # TODO Add param deduplication ????
 
@@ -187,7 +163,8 @@ class CSVRow():
             if lexeme_translations:
                 translations_found = True
 
-                csvcell = models.CSVCell(row=self.num, col=colnum, value=lexeme_translations, project=self.project)
+                csvcell = models.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations,
+                                         project=self.project)
                 csvcell.save()
 
                 lexeme_translations = self.use_ext_comments(lexeme_translations)
@@ -197,7 +174,7 @@ class CSVRow():
                 if len(lex_transl_split) == 2:
                     group_params, group_comment, errors = csvcell.split_data(lex_transl_split[0], False, False, True)
                 else:
-                    group_params = ()
+                    group_params = ''
                     group_comment = ''
 
                 semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
@@ -209,7 +186,7 @@ class CSVRow():
                     params, spelling, transl_dialect, transl_comment, errors =\
                         csvcell.split_data(current_transl, True, True, True)
 
-                    lexeme_trg = models.ProjectLexeme(syntactic_category=self.lexeme_src.syntactic_category,
+                    lexeme_trg = models.ProjectLexeme(syntactic_category=self.last_lexeme_src.syntactic_category,
                                                       params=params, project=self.project, state='N',
                                                       col=column_literal, csvcell=csvcell)
 
@@ -232,7 +209,7 @@ class CSVRow():
                     semantic_gr_trg.save()
 
                 # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped - proof
-                    translation = models.ProjectTranslation(lexeme_1=self.lexeme_src, lexeme_2=lexeme_trg,
+                    translation = models.ProjectTranslation(lexeme_1=self.last_lexeme_src, lexeme_2=lexeme_trg,
                                                             direction=1, semantic_group_1=semantic_gr_src,
                                                             semantic_group_2=semantic_gr_trg,
                                                             project=self.project, state='N')
@@ -240,7 +217,7 @@ class CSVRow():
                     translation.save()
 
         if not translations_found:
-            errors.append(('Row ' + str(self.num) + ' (translations)', 'CSV-14'))
+            errors.append(('Row ' + str(self.num) + ' (translations)', WCError('CSV-14')))
 
         # TODO Add wordform deduplication ????
 
@@ -270,8 +247,8 @@ def parse_csv(csvreader, project):
 
             project.errors.extend(row.produce_lexeme())
 
-            if not (row.last_lexeme or row.lexeme_src):
-                project.errors.append(('Row ' + str(row.num) + ' (lexemes)', 'CSV-9'))
+            if not row.last_lexeme_src:
+                project.errors.append(('Row ' + str(row.num+1) + ' (lexemes)', WCError('CSV-9')))
                 continue
 
             project.errors.extend(row.produce_wordforms())
