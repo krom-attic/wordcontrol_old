@@ -3,7 +3,7 @@
 {% block pagebody %}
 <h1>Project setup</h1>
     <h2>General setup</h2>
-    # TODO: project description
+    {{ project }}
     <form action="" method="post">
         {% csrf_token %}
         <input type="hidden" value="{{ project }}" name="project" />

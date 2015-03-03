@@ -664,6 +664,7 @@ class ProjectDictionary(ProjectedEntity):
 
 
 class ProjectColumn(ProjectedEntity):
+    # TODO State field seems to be redundant
     language_l = models.CharField(max_length=256)
     dialect_l = models.CharField(max_length=256, blank=True)
     # source_l = models.CharField(max_length=256, null=True, blank=True)
