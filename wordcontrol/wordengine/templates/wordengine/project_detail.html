@@ -27,9 +27,11 @@
     </form>
 
     <h2>Project dictionary</h2>
+    {% if untyped_param_form_set.total_form_count > 0 %}
     <form action="" method="post">
         {{ untyped_param_form_set.management_form }}
         {% csrf_token %}
+
         <h3>Untyped parameters</h3>
         {% for untyped_param_form in untyped_param_form_set %}
             <p>Parameter: {{ untyped_param_form.instance.value }}<br/>
@@ -39,7 +41,7 @@
         {% endfor %}
         <input type="submit" value="Save" name="_types_save" />
     </form>
-
+    {% endif %}
     <form action="" method="post">
         {{ param_setup_form_set.management_form }}
         {% csrf_token %}

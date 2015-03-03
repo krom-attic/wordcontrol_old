@@ -221,6 +221,9 @@ class SyntCatsInLanguage(models.Model):
     syntactic_category = models.ForeignKey(SyntacticCategory)
     main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
 
+    def __str__(self):
+        return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
+
 
 class Inflection(LanguageEntity):
 
@@ -484,7 +487,13 @@ class Project(models.Model):
 
     def produce_project(self):
         transaction.set_autocommit(False)
-        # TODO Check if syntactic categories present in language
+        for synt_cat in ProjectDictionary.objects.filter(project=self, term_type='SyntacticCategory').values('term_id')\
+                .distinct():
+            for language in ProjectColumn.objects.filter(project=self).values('language_id').distinct():
+                try:
+                    print(SyntCatsInLanguage.objects.get(language=language['language_id'], syntactic_category=synt_cat['term_id']))
+                except ObjectDoesNotExist:
+                    print('No', synt_cat, language)
         if self.state == 'N':
             produce_project_model(self, ProjectLexeme)
             produce_project_model(self, ProjectWordform)

@@ -406,31 +406,36 @@ class ProjectSetupView(DetailView):
         context['untyped_param_form_set'] = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
                                                                      filter(term_type='').order_by('value'))
         context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                                 exclude(term_type='').filter(term_id=None))
+                                                                 exclude(term_type='').filter(term_id=None).
+                                                                 order_by('value'))
         return context
 
     def post(self, request, *args, **kwargs):
+        project_id = kwargs['pk']
         if '_column_save' in request.POST:
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
                 pr_col_setup_set.save()
+            return redirect('wordengine:project_setup', pk=project_id)
 
         if '_types_save' in request.POST:
             untyped_param_form_set = self.UntypedParamFormSet(request.POST)
             if untyped_param_form_set.is_valid():
                 untyped_param_form_set.save()
+            return redirect('wordengine:project_setup', pk=project_id)
 
         if '_terms_save' in request.POST:
             param_setup_form_set = self.ParamSetupFormSet(request.POST)
             if param_setup_form_set.is_valid():
                 param_setup_form_set.save()
+            return redirect('wordengine:project_setup', pk=project_id)
 
         if '_produce' in request.POST:
-            project = models.Project.objects.get(pk=kwargs['project_id'])
+            project = models.Project.objects.get(pk=project_id)
             project.produce_project()
+            return redirect('wordengine:project_list')
 
         if '_delete' in request.POST:
-            project = models.Project.objects.get(pk=kwargs['project_id'])
+            project = models.Project.objects.get(pk=project_id)
             project.delete()
-
-        return redirect('wordengine:project_list')  # TODO Redirect to some sensible direction
+            return redirect('wordengine:project_list')
