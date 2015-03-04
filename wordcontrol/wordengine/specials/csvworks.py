@@ -27,7 +27,7 @@ class CSVRow():
 
         for colnum, value in enumerate(self.data[1:-1], 1):
 
-            csvcell = models.CSVCell(rownum=self.num, colnum=colnum, value=value, project=self.project)
+            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=value, project=self.project)
             csvcell.save()
 
             language, dialect, writing_system, errors = csvcell.split_header(value)
@@ -55,13 +55,13 @@ class CSVRow():
 
         # Last column must be an extended comment column
         if self.data[-1]:
-            csvcell = models.CSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
+            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
                                      project=self.project)
             csvcell.save()
 
             ext_comm_split = RE_EXT_COMM.split(self.data[-1])
             if ext_comm_split[0]:
-                errors.append((str(csvcell), WCError('CSV-10', ext_comm_split[0])))
+                errors.append((str(csvcell), CSVError('CSV-10', ext_comm_split[0])))
 
             for i in range(1, len(ext_comm_split), 2):
                 self.ext_comments[ext_comm_split[i]] = '"'+ext_comm_split[i+1].strip()+'"'
@@ -75,7 +75,7 @@ class CSVRow():
 
         if self.data[0]:  # Check if a new lexeme is in the row
 
-            csvcell = models.CSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
+            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
             csvcell.save()
 
             synt_cat, params, errors = csvcell.split_data(self.data[0], False, True, False)
@@ -105,7 +105,7 @@ class CSVRow():
 
             if lexeme_wordforms:
 
-                csvcell = models.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
+                csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
                 csvcell.save()
 
                 lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
@@ -132,7 +132,7 @@ class CSVRow():
                         try:
                             wordform = first_col_wordforms[wf_num]
                         except IndexError:
-                            errors.append((csvcell, WCError('CSV-12')))
+                            errors.append((csvcell, CSVError('CSV-12')))
                             continue
 
                         errors.extend(csvcell.check_for_errors(spelling))
@@ -143,11 +143,11 @@ class CSVRow():
                         wordform_spell.save()
 
                     if wf_num + 1 < len(first_col_wordforms):
-                        errors.append((csvcell, WCError('CSV-13')))
+                        errors.append((csvcell, CSVError('CSV-13')))
 
             else:
                 if self.data[0]:
-                    errors.append(('Row ' + str(self.num) + ' (source cols)', WCError('CSV-11')))
+                    errors.append(('Row ' + str(self.num) + ' (source cols)', CSVError('CSV-11')))
 
         # TODO Add param deduplication ????
 
@@ -163,7 +163,7 @@ class CSVRow():
             if lexeme_translations:
                 translations_found = True
 
-                csvcell = models.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations,
+                csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations,
                                          project=self.project)
                 csvcell.save()
 
@@ -217,7 +217,7 @@ class CSVRow():
                     translation.save()
 
         if not translations_found:
-            errors.append(('Row ' + str(self.num) + ' (translations)', WCError('CSV-14')))
+            errors.append(('Row ' + str(self.num) + ' (translations)', CSVError('CSV-14')))
 
         # TODO Add wordform deduplication ????
 
@@ -248,7 +248,7 @@ def parse_csv(csvreader, project):
             project.errors.extend(row.produce_lexeme())
 
             if not row.last_lexeme_src:
-                project.errors.append(('Row ' + str(row.num+1) + ' (lexemes)', WCError('CSV-9')))
+                project.errors.append(('Row ' + str(row.num+1) + ' (lexemes)', CSVError('CSV-9')))
                 continue
 
             project.errors.extend(row.produce_wordforms())

@@ -221,6 +221,13 @@ class SyntCatsInLanguage(models.Model):
     syntactic_category = models.ForeignKey(SyntacticCategory)
     main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
 
+    @staticmethod
+    def is_in(synt_cat, language):
+        try:
+            return SyntCatsInLanguage.objects.get(language=language, syntactic_category=synt_cat)
+        except ObjectDoesNotExist:
+            return None
+
     def __str__(self):
         return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
 
@@ -487,26 +494,26 @@ class Project(models.Model):
 
     def produce_project(self):
         transaction.set_autocommit(False)
-        for synt_cat in ProjectDictionary.objects.filter(project=self, term_type='SyntacticCategory').values('term_id')\
-                .distinct():
-            for language in ProjectColumn.objects.filter(project=self).values('language_id').distinct():
-                try:
-                    print(SyntCatsInLanguage.objects.get(language=language['language_id'], syntactic_category=synt_cat['term_id']))
-                except ObjectDoesNotExist:
-                    print('No', synt_cat, language)
+        errors = []
         if self.state == 'N':
+            for synt_cat in ProjectDictionary.objects.filter(project=self, term_type='SyntacticCategory').\
+                    values('term_id').distinct():
+                for language in ProjectColumn.objects.filter(project=self).values('language_id').distinct():
+                    if not SyntCatsInLanguage.is_in(synt_cat['term_id'], language['language_id']):
+                        errors.append((' '.join([synt_cat, language]), TermError('T-1')))
             produce_project_model(self, ProjectLexeme)
             produce_project_model(self, ProjectWordform)
             produce_project_model(self, ProjectWordformSpell)
             produce_project_model(self, ProjectSemanticGroup)
             produce_project_model(self, ProjectTranslation)
-            self.state = 'P'
-            self.save()
+            if not errors:
+                self.state = 'P'
+                self.save()
         transaction.set_autocommit(True)
-        return None
+        return errors
 
 
-class CSVCell(models.Model):
+class ProjectCSVCell(models.Model):
     rownum = models.PositiveIntegerField()
     colnum = models.PositiveSmallIntegerField()
     value = models.TextField(blank=True)
@@ -573,12 +580,12 @@ class CSVCell(models.Model):
                 if split_str[i].strip():
                     if data:
                         # data already found
-                        errors.append((self, WCError('CSV-3', split_str[i].strip())))
+                        errors.append((self, CSVError('CSV-3', split_str[i].strip())))
                     else:
                         data = split_str[i].strip()
             else:
                 param = split_str[i][1:-1]
-                errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(param)]
+                errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(param)]
                 if data or not has_data:
                     post_params.append(param)
                 else:
@@ -588,14 +595,14 @@ class CSVCell(models.Model):
         if last_split[0].strip():
             if data:
                 # data already found
-                errors.append((self, WCError('CSV-4', last_split[0].strip())))
+                errors.append((self, CSVError('CSV-4', last_split[0].strip())))
             else:
                 data = last_split[0].strip()
 
         if len(last_split) > 1:
             comment = last_split[1][1:-1]
             if last_split[2] or len(last_split) > 3:
-                errors.append((self, WCError('CSV-5', last_split[2:])))
+                errors.append((self, CSVError('CSV-5', last_split[2:])))
 
         result = []
 
@@ -603,16 +610,16 @@ class CSVCell(models.Model):
             result.append(pre_params or '')
         else:
             if pre_params:
-                errors.append((self, WCError('CSV-1', str(pre_params))))
+                errors.append((self, CSVError('CSV-1', str(pre_params))))
 
         if has_data:
-            errors += [(self, WCError(e[0], e[1])) for e in self.check_for_errors(data)]
+            errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(data)]
             result.append(data)
             if not data:
-                errors.append((self, WCError('CSV-2')))
+                errors.append((self, CSVError('CSV-2')))
         else:
             if data:
-                errors.append((self, WCError('CSV-3', data)))
+                errors.append((self, CSVError('CSV-3', data)))
 
         result.append(post_params or '')
 
@@ -621,7 +628,7 @@ class CSVCell(models.Model):
             result.append(comment)
         else:
             if comment:
-                errors.append((self, WCError('CSV-6', comment)))
+                errors.append((self, CSVError('CSV-6', comment)))
 
         result.append(errors)
 
@@ -679,7 +686,7 @@ class ProjectColumn(ProjectedEntity):
     # source_l = models.CharField(max_length=256, null=True, blank=True)
     writing_system_l = models.CharField(max_length=256, blank=True)
     num = models.SmallIntegerField()
-    csvcell = models.ForeignKey(CSVCell)
+    csvcell = models.ForeignKey(ProjectCSVCell)
 
     language = models.ForeignKey(Language, null=True, blank=True)
     dialect = models.ForeignKey(Dialect, null=True, blank=True)
@@ -744,7 +751,7 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
     col = models.ForeignKey(ProjectColumn)
-    csvcell = models.ForeignKey(CSVCell)
+    csvcell = models.ForeignKey(ProjectCSVCell)
     result = models.ForeignKey(Lexeme, null=True, blank=True)
 
     # def __str__(self):
@@ -777,7 +784,7 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
     col = models.ForeignKey(ProjectColumn)
-    csvcell = models.ForeignKey(CSVCell)
+    csvcell = models.ForeignKey(ProjectCSVCell)
     result = models.ForeignKey(Wordform, null=True, blank=True)
 
     # def __str__(self):
@@ -820,7 +827,7 @@ class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     is_processed = models.BooleanField()
     spelling = models.CharField(max_length=256)
     col = models.ForeignKey(ProjectColumn)
-    csvcell = models.ForeignKey(CSVCell)
+    csvcell = models.ForeignKey(ProjectCSVCell)
     result = models.ForeignKey(WordformSpell, null=True, blank=True)
 
     @staticmethod
@@ -837,7 +844,7 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     dialect = models.CharField(max_length=256, blank=True)  # For the target side it is only a dialect possible
     comment = models.TextField(blank=True)
     # col = models.ForeignKey(ProjectColumn, null=True, blank=True)
-    csvcell = models.ForeignKey(CSVCell)
+    csvcell = models.ForeignKey(ProjectCSVCell)
     result = models.ForeignKey(SemanticGroup, null=True, blank=True)
 
     # def __str__(self):

@@ -60,7 +60,21 @@ RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
 
 
-class WCError():
+# Errors
+class WordcontrolException(Exception):
+    ERRORS = {
+        'UNK': 'Unknown error'
+    }
+
+    def __init__(self, errorcode='UNK', errordetails='No details'):
+        self.errorcode = errorcode
+        self.errordetails = errordetails
+
+    def __str__(self):
+        return 'Error #{}. {} {}.'.format(self.errorcode, self.ERRORS[self.errorcode], self.errordetails)
+
+
+class CSVError(WordcontrolException):
     ERRORS = {
         'CSV-1': 'Unexpected parameters at the beginning: ',
         'CSV-2': 'No essential data.',
@@ -78,9 +92,8 @@ class WCError():
         'CSV-14': 'Translations expected, but not found.'
     }
 
-    def __init__(self, errorcode, errordetails='No details'):
-        self.errorcode = errorcode
-        self.errordetails = errordetails
 
-    def __str__(self):
-        return 'Error #{}. {} {}.'.format(self.errorcode, self.ERRORS[self.errorcode], self.errordetails)
+class TermError(WordcontrolException):
+    ERRORS = {
+        'T-1': 'Syntactic category is not in the language.'
+    }

@@ -28,11 +28,3 @@ Any new CR's effect is evaluated, then:
 After work item is done, solution is documented to corresponding UC or other model/requirement.
 Hence documentation reflect current release.
 Models and requirement are kept in wiki.
-
-Deployment process
-------------------
-Migrations:
-python manage.py makemigrations
-python manage.py migrate
-
-This project will use Fabric as soon as it is updated for Python 3 (http://www.fabfile.org/).

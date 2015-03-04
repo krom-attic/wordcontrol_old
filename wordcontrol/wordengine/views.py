@@ -1,15 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
-from django.views.generic.base import TemplateView
+
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.models import Q
 from django.contrib import messages
 from django.forms.models import modelformset_factory
-from django.views.generic import DetailView
+from django.views.generic.base import TemplateView, View
+from django.views.generic import UpdateView, DetailView
+from django import template
 
 from wordengine import forms, models
 from wordengine.views_ex.dictworks import *
 
+register = template.Library()
 
 # Actual views here
 
@@ -399,19 +402,46 @@ class ProjectSetupView(DetailView):
     ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
     def get_context_data(self, **kwargs):
-        # TODO: allow modification of untyped parameters if project stage allows
         context = super(ProjectSetupView, self).get_context_data(**kwargs)
+        project = self.get_object()
+
         context['pr_col_setup_form_set'] = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.
-                                                                  filter(project=context['project']))
+                                                                  filter(project=project))
         context['untyped_param_form_set'] = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
                                                                      filter(term_type='').order_by('value'))
         context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                                 exclude(term_type='').filter(term_id=None).
-                                                                 order_by('value'))
+                                                                 exclude(term_type='').order_by('value'))
+        # TODO: allow modification of untyped parameters if project stage allows
+        # TODO pass errors
+        print(kwargs)
+        context['errors'] = kwargs.get('errors', None)
+
         return context
 
     def post(self, request, *args, **kwargs):
+        project = self.get_object()
+
+        if '_produce' in request.POST:
+            # errors = project.produce_project()
+            # if errors:
+            #     render(request, )
+            # return redirect('wordengine:project_list')
+
+
+        if '_delete' in request.POST:
+            project.delete()
+            return redirect('wordengine:project_list')
+
+
+class ProjectDictionaryUpdateView(View):
+
+    PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
+    UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
+    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
+
+    def post(self, request, *args, **kwargs):
         project_id = kwargs['pk']
+
         if '_column_save' in request.POST:
             pr_col_setup_set = self.PrColSetupFormSet(request.POST)
             if pr_col_setup_set.is_valid():
@@ -429,13 +459,3 @@ class ProjectSetupView(DetailView):
             if param_setup_form_set.is_valid():
                 param_setup_form_set.save()
             return redirect('wordengine:project_setup', pk=project_id)
-
-        if '_produce' in request.POST:
-            project = models.Project.objects.get(pk=project_id)
-            project.produce_project()
-            return redirect('wordengine:project_list')
-
-        if '_delete' in request.POST:
-            project = models.Project.objects.get(pk=project_id)
-            project.delete()
-            return redirect('wordengine:project_list')
