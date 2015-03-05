@@ -402,8 +402,8 @@ class ProjectSetupView(DetailView):
     ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
 
     def get_context_data(self, **kwargs):
-        context = super(ProjectSetupView, self).get_context_data(**kwargs)
         project = self.get_object()
+        context = super(ProjectSetupView, self).get_context_data(**kwargs)
 
         context['pr_col_setup_form_set'] = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.
                                                                   filter(project=project))
@@ -412,20 +412,21 @@ class ProjectSetupView(DetailView):
         context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
                                                                  exclude(term_type='').order_by('value'))
         # TODO: allow modification of untyped parameters if project stage allows
-        # TODO pass errors
-        print(kwargs)
+
         context['errors'] = kwargs.get('errors', None)
 
         return context
 
     def post(self, request, *args, **kwargs):
         project = self.get_object()
+        self.object = project
 
         if '_produce' in request.POST:
-            # errors = project.produce_project()
+            errors = project.produce_project()
             # if errors:
             #     render(request, )
             # return redirect('wordengine:project_list')
+            return self.render_to_response(self.get_context_data(errors=errors))
 
 
         if '_delete' in request.POST:
@@ -433,7 +434,7 @@ class ProjectSetupView(DetailView):
             return redirect('wordengine:project_list')
 
 
-class ProjectDictionaryUpdateView(View):
+class ProjectDictionaryUpdateView(UpdateView):
 
     PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
     UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
