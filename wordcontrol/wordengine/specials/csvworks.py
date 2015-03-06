@@ -12,7 +12,7 @@ class CSVRow():
         self.project = project
         self.num = num
         self.data = data
-        self.errors = []
+        # self.errors = []
         self.ext_comments = {}
 
     def set_last_lexeme(self, new_lexeme):
@@ -30,7 +30,8 @@ class CSVRow():
             csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=value, project=self.project)
             csvcell.save()
 
-            language, dialect, writing_system, errors = csvcell.split_header(value)
+            language, dialect, writing_system, split_errors = csvcell.split_header(value)
+            errors += split_errors
 
             column_literal = models.ProjectColumn(language_l=language, dialect_l=dialect, num=colnum,
                                                   writing_system_l=writing_system,
@@ -56,7 +57,7 @@ class CSVRow():
         # Last column must be an extended comment column
         if self.data[-1]:
             csvcell = models.ProjectCSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
-                                     project=self.project)
+                                            project=self.project)
             csvcell.save()
 
             ext_comm_split = RE_EXT_COMM.split(self.data[-1])
@@ -95,6 +96,40 @@ class CSVRow():
                 text = text.replace(ext_comment_marker, ext_comment, 1)
         return text
 
+    def save_fst_wordforms(self, csvcell, current_wordform, column_literal):
+
+        spelling, params, comment, errors = csvcell.split_data(current_wordform, False, True, True)
+
+        wordform = models.ProjectWordform(lexeme=self.last_lexeme_src, comment=comment,
+                                          params=params, project=self.project, state='N',
+                                          col=column_literal, csvcell=csvcell)
+        wordform.save()
+
+        wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
+                                                     col=column_literal, csvcell=csvcell,
+                                                     project=self.project, state='N',
+                                                     is_processed=False)
+        wordform_spell.save()
+
+        return wordform, errors
+
+    def save_other_wordforms(self, csvcell, current_wordform, column_literal, first_col_wordforms, wf_num):
+        errors = []
+
+        spelling = current_wordform.strip()
+
+        # This may cause IndexError
+        wordform = first_col_wordforms[wf_num]
+
+        errors += [(self, CSVError(e[0], e[1])) for e in csvcell.check_for_errors(spelling)]
+
+        wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
+                                                     col=column_literal, csvcell=csvcell,
+                                                     project=self.project, state='N', is_processed=True)
+        wordform_spell.save()
+
+        return errors
+
     def produce_wordforms(self):
 
         errors = []
@@ -103,53 +138,72 @@ class CSVRow():
         for colnum, column_literal in self.project.lang_src_cols:
             lexeme_wordforms = self.data[colnum]
 
-            if lexeme_wordforms:
-
-                csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
-                csvcell.save()
-
-                lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
-
-                if colnum == 1:
-                    for current_wordform in lexeme_wordforms.split('|'):
-                        spelling, params, comment, errors = csvcell.split_data(current_wordform, False, True, True)
-
-                        wordform = models.ProjectWordform(lexeme=self.last_lexeme_src, comment=comment,
-                                                          params=params, project=self.project, state='N',
-                                                          col=column_literal, csvcell=csvcell)
-                        wordform.save()
-                        first_col_wordforms.append(wordform)
-
-                        wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
-                                                                     col=column_literal, csvcell=csvcell,
-                                                                     project=self.project, state='N',
-                                                                     is_processed=False)
-                        wordform_spell.save()
-                else:
-                    wf_num = -1
-                    for wf_num, current_wordform in enumerate(lexeme_wordforms.split('|')):
-                        spelling = current_wordform.strip()
-                        try:
-                            wordform = first_col_wordforms[wf_num]
-                        except IndexError:
-                            errors.append((csvcell, CSVError('CSV-12')))
-                            continue
-
-                        errors.extend(csvcell.check_for_errors(spelling))
-
-                        wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
-                                                                     col=column_literal, csvcell=csvcell,
-                                                                     project=self.project, state='N', is_processed=True)
-                        wordform_spell.save()
-
-                    if wf_num + 1 < len(first_col_wordforms):
-                        errors.append((csvcell, CSVError('CSV-13')))
-
-            else:
+            if not lexeme_wordforms:
                 if self.data[0]:
-                    errors.append(('Row ' + str(self.num) + ' (source cols)', CSVError('CSV-11')))
+                    errors.append(('Row {} (source cols)'.format(self.num), CSVError('CSV-11')))
+                continue
+
+            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms,
+                                            project=self.project)
+            csvcell.save()
+
+            lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
+
+            if colnum == 1:
+                for current_wordform in lexeme_wordforms.split('|'):
+                    wordform, split_errors = self.save_fst_wordforms(csvcell, current_wordform, column_literal)
+                    errors += split_errors
+                    first_col_wordforms.append(wordform)
+            else:
+                wf_num = -1
+                for wf_num, current_wordform in enumerate(lexeme_wordforms.split('|')):
+                    try:
+                        errors += self.save_other_wordforms(csvcell, current_wordform, column_literal,
+                                                            first_col_wordforms, wf_num)
+                    except IndexError:
+                        errors.append((csvcell, CSVError('CSV-12')))
+                        continue
+
+                if wf_num + 1 < len(first_col_wordforms):
+                    errors.append((csvcell, CSVError('CSV-13')))
 
         # TODO Add param deduplication ????
+
+        return errors
+
+    def save_translations(self, csvcell, current_transl, column_literal, semantic_gr_src):
+
+        params, spelling, transl_dialect, transl_comment, errors = csvcell.split_data(current_transl, True, True, True)
+
+        lexeme_trg = models.ProjectLexeme(syntactic_category=self.last_lexeme_src.syntactic_category,
+                                          params=params, project=self.project, state='N',
+                                          col=column_literal, csvcell=csvcell)
+
+        lexeme_trg.save()
+
+        wordform = models.ProjectWordform(lexeme=lexeme_trg, project=self.project, state='N',
+                                          col=column_literal, csvcell=csvcell)
+
+        wordform.save()
+
+        wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
+                                                     project=self.project, state='N', col=column_literal,
+                                                     csvcell=csvcell, is_processed=False)
+
+        wordform_spell.save()
+
+        semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
+                                                      project=self.project, state='N', csvcell=csvcell)
+
+        semantic_gr_trg.save()
+
+    # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped - proof
+        translation = models.ProjectTranslation(lexeme_1=self.last_lexeme_src, lexeme_2=lexeme_trg,
+                                                direction=1, semantic_group_1=semantic_gr_src,
+                                                semantic_group_2=semantic_gr_trg,
+                                                project=self.project, state='N')
+
+        translation.save()
 
         return errors
 
@@ -160,64 +214,36 @@ class CSVRow():
 
         for colnum, column_literal in self.project.lang_trg_cols:  # Iterate through multiple target languages
             lexeme_translations = self.data[colnum]
-            if lexeme_translations:
-                translations_found = True
+            if not lexeme_translations:
+                continue
 
-                csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations,
-                                         project=self.project)
-                csvcell.save()
+            translations_found = True
 
-                lexeme_translations = self.use_ext_comments(lexeme_translations)
+            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum,
+                                            value=lexeme_translations,
+                                            project=self.project)
+            csvcell.save()
 
-                lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
+            lexeme_translations = self.use_ext_comments(lexeme_translations)
+            lex_transl_split = lexeme_translations.split('@', 1)  # (group_params ), ( translations, ...)
 
-                if len(lex_transl_split) == 2:
-                    group_params, group_comment, errors = csvcell.split_data(lex_transl_split[0], False, False, True)
-                else:
-                    group_params = ''
-                    group_comment = ''
+            if len(lex_transl_split) == 2:
+                group_params, group_comment, split_errors = csvcell.split_data(lex_transl_split[0], False, False,
+                                                                               True)
+                errors += split_errors
+            else:
+                group_params, group_comment = '', ''
 
-                semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
-                                                              project=self.project, state='N', csvcell=csvcell)
+            semantic_gr_src = models.ProjectSemanticGroup(params=group_params, comment=group_comment,
+                                                          project=self.project, state='N', csvcell=csvcell)
 
-                semantic_gr_src.save()
+            semantic_gr_src.save()
 
-                for current_transl in lex_transl_split.pop().split('|'):
-                    params, spelling, transl_dialect, transl_comment, errors =\
-                        csvcell.split_data(current_transl, True, True, True)
-
-                    lexeme_trg = models.ProjectLexeme(syntactic_category=self.last_lexeme_src.syntactic_category,
-                                                      params=params, project=self.project, state='N',
-                                                      col=column_literal, csvcell=csvcell)
-
-                    lexeme_trg.save()
-
-                    wordform = models.ProjectWordform(lexeme=lexeme_trg, project=self.project, state='N',
-                                                      col=column_literal, csvcell=csvcell)
-
-                    wordform.save()
-
-                    wordform_spell = models.ProjectWordformSpell(wordform=wordform, spelling=spelling,
-                                                                 project=self.project, state='N', col=column_literal,
-                                                                 csvcell=csvcell, is_processed=False)
-
-                    wordform_spell.save()
-
-                    semantic_gr_trg = models.ProjectSemanticGroup(dialect=transl_dialect, comment=transl_comment,
-                                                                  project=self.project, state='N', csvcell=csvcell)
-
-                    semantic_gr_trg.save()
-
-                # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped - proof
-                    translation = models.ProjectTranslation(lexeme_1=self.last_lexeme_src, lexeme_2=lexeme_trg,
-                                                            direction=1, semantic_group_1=semantic_gr_src,
-                                                            semantic_group_2=semantic_gr_trg,
-                                                            project=self.project, state='N')
-
-                    translation.save()
+            for current_transl in lex_transl_split.pop().split('|'):
+                errors += self.save_translations(csvcell, current_transl, column_literal, semantic_gr_src)
 
         if not translations_found:
-            errors.append(('Row ' + str(self.num) + ' (translations)', CSVError('CSV-14')))
+            errors.append(('Row {} (translations)'.format(self.num), CSVError('CSV-14')))
 
         # TODO Add wordform deduplication ????
 
@@ -243,17 +269,17 @@ def parse_csv(csvreader, project):
 
         else:
 
-            project.errors.extend(row.get_ext_comments())
+            project.errors += row.get_ext_comments()
 
-            project.errors.extend(row.produce_lexeme())
+            project.errors += row.produce_lexeme()
 
             if not row.last_lexeme_src:
                 project.errors.append(('Row ' + str(row.num+1) + ' (lexemes)', CSVError('CSV-9')))
                 continue
 
-            project.errors.extend(row.produce_wordforms())
+            project.errors += row.produce_wordforms()
 
-            project.errors.extend(row.produce_translations())
+            project.errors += row.produce_translations()
 
     return project
 

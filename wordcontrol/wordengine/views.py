@@ -392,15 +392,13 @@ class ProjectListView(TemplateView):
         return super(ProjectListView, self).dispatch(*args, **kwargs)
 
 
-class ProjectSetupMixIn():
+class ProjectSetupView(UpdateView):
+    model = models.Project
+    fields = []
+
     pr_col_setup_formset_class = forms.PrColSetupFormSet
     untyped_param_formset_class = forms.UntypedParamFormSet
     param_setup_formset_class = forms.ParamSetupFormSet
-
-
-class ProjectSetupView(UpdateView, ProjectSetupMixIn):
-    model = models.Project
-    fields = []
 
     def get_context_data(self, **kwargs):
         context = super(ProjectSetupView, self).get_context_data(**kwargs)
@@ -444,5 +442,8 @@ class ProjectSetupView(UpdateView, ProjectSetupMixIn):
                 return self.render_to_response(self.get_context_data(errors=errors))
             else:
                 return redirect('wordengine:project_list')
+        elif '_delete' in request.POST:
+            project.delete()
+            return redirect('wordengine:project_list')
         else:
             return super(ProjectSetupView, self).post(request, *args, **kwargs)

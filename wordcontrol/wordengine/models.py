@@ -530,6 +530,11 @@ class ProjectCSVCell(models.Model):
 
     @staticmethod
     def check_for_errors(checked_value):
+        """
+
+        :param checked_value:
+        :return: [(error_code, error_details), ...]
+        """
         unexpected_chars = [('CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
                             if char in SPECIAL_CHARS]
         ext_comment_marks = RE_EXT_COMM.findall(checked_value)
@@ -554,9 +559,8 @@ class ProjectCSVCell(models.Model):
             dialect = lang_dialect.pop().strip(') ')
         language = lang_dialect.pop().strip()
 
-        errors.extend(self.check_for_errors(language))
-        errors.extend(self.check_for_errors(dialect))
-        errors.extend(self.check_for_errors(writing_system))
+        errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(language) +
+                   self.check_for_errors(dialect) + self.check_for_errors(writing_system)]
 
         return language, dialect, writing_system, errors
 
