@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.models import Q
 from django.contrib import messages
-from django.forms.models import modelformset_factory
 from django.views.generic.base import TemplateView, View
 from django.views.generic import UpdateView, DetailView
 from django import template
@@ -12,9 +11,8 @@ from django import template
 from wordengine import forms, models
 from wordengine.views_ex.dictworks import *
 
-register = template.Library()
-
 # Actual views here
+
 
 def index(requst):
     return redirect('wordengine:show_wordlist')
@@ -357,7 +355,7 @@ class ProjectListView(TemplateView):
     template_name = 'wordengine/project_list.html'
     project_list_form_class = forms.ProjectListForm
     project_upload_form_class = forms.ProjectUploadForm
-
+    # TODO Exclude "Processed" from the list
     def get(self, request, *args, **kwargs):
         project_upload_form = self.project_upload_form_class()
         if '_setup' in request.GET:
@@ -394,69 +392,57 @@ class ProjectListView(TemplateView):
         return super(ProjectListView, self).dispatch(*args, **kwargs)
 
 
-class ProjectSetupView(DetailView):
-    model = models.Project
+class ProjectSetupMixIn():
+    pr_col_setup_formset_class = forms.PrColSetupFormSet
+    untyped_param_formset_class = forms.UntypedParamFormSet
+    param_setup_formset_class = forms.ParamSetupFormSet
 
-    PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
-    UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
-    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
+
+class ProjectSetupView(UpdateView, ProjectSetupMixIn):
+    model = models.Project
+    fields = []
 
     def get_context_data(self, **kwargs):
-        project = self.get_object()
         context = super(ProjectSetupView, self).get_context_data(**kwargs)
+        project = context['object']
 
-        context['pr_col_setup_form_set'] = self.PrColSetupFormSet(queryset=models.ProjectColumn.objects.
-                                                                  filter(project=project))
-        context['untyped_param_form_set'] = self.UntypedParamFormSet(queryset=models.ProjectDictionary.objects.
-                                                                     filter(term_type='').order_by('value'))
-        context['param_setup_form_set'] = self.ParamSetupFormSet(queryset=models.ProjectDictionary.objects.
-                                                                 exclude(term_type='').order_by('value'))
+        context['pr_col_setup_form_set'] = self.pr_col_setup_formset_class(instance=project)
+        context['untyped_param_form_set'] = self.untyped_param_formset_class(instance=project, queryset=models.
+                                                                             ProjectDictionary.objects.
+                                                                             filter(term_type='').order_by('value'))
+        context['param_setup_form_set'] = self.param_setup_formset_class(instance=project, queryset=models.
+                                                                         ProjectDictionary.objects.
+                                                                         exclude(term_type='').order_by('value'))
         # TODO: allow modification of untyped parameters if project stage allows
 
         context['errors'] = kwargs.get('errors', None)
 
         return context
 
+    def form_valid(self, form):
+        project = self.object
+
+        pr_col_setup_set = self.pr_col_setup_formset_class(self.request.POST, instance=project)
+        if pr_col_setup_set.is_valid():
+            pr_col_setup_set.save()
+
+        untyped_param_form_set = self.untyped_param_formset_class(self.request.POST, instance=project)
+        if untyped_param_form_set.is_valid():
+            untyped_param_form_set.save()
+
+        param_setup_form_set = self.param_setup_formset_class(self.request.POST, instance=project)
+        if param_setup_form_set.is_valid():
+            param_setup_form_set.save()
+
+        return super(ProjectSetupView, self).form_valid(form)
+
     def post(self, request, *args, **kwargs):
         project = self.get_object()
-        self.object = project
-
         if '_produce' in request.POST:
             errors = project.produce_project()
-            # if errors:
-            #     render(request, )
-            # return redirect('wordengine:project_list')
-            return self.render_to_response(self.get_context_data(errors=errors))
-
-
-        if '_delete' in request.POST:
-            project.delete()
-            return redirect('wordengine:project_list')
-
-
-class ProjectDictionaryUpdateView(UpdateView):
-
-    PrColSetupFormSet = modelformset_factory(models.ProjectColumn, forms.ProjectColumnSetupForm, extra=0)
-    UntypedParamFormSet = modelformset_factory(models.ProjectDictionary, form=forms.UntypedParamForm, extra=0)
-    ParamSetupFormSet = modelformset_factory(models.ProjectDictionary, form=forms.ParamSetupForm, extra=0)
-
-    def post(self, request, *args, **kwargs):
-        project_id = kwargs['pk']
-
-        if '_column_save' in request.POST:
-            pr_col_setup_set = self.PrColSetupFormSet(request.POST)
-            if pr_col_setup_set.is_valid():
-                pr_col_setup_set.save()
-            return redirect('wordengine:project_setup', pk=project_id)
-
-        if '_types_save' in request.POST:
-            untyped_param_form_set = self.UntypedParamFormSet(request.POST)
-            if untyped_param_form_set.is_valid():
-                untyped_param_form_set.save()
-            return redirect('wordengine:project_setup', pk=project_id)
-
-        if '_terms_save' in request.POST:
-            param_setup_form_set = self.ParamSetupFormSet(request.POST)
-            if param_setup_form_set.is_valid():
-                param_setup_form_set.save()
-            return redirect('wordengine:project_setup', pk=project_id)
+            if errors:
+                return self.render_to_response(self.get_context_data(errors=errors))
+            else:
+                return redirect('wordengine:project_list')
+        else:
+            return super(ProjectSetupView, self).post(request, *args, **kwargs)

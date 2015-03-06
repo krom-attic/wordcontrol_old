@@ -1,5 +1,6 @@
 from django import forms
 from django.db.models.loading import get_model
+from django.forms.models import modelformset_factory, inlineformset_factory
 
 from wordengine import models
 from wordengine.global_const import *
@@ -92,10 +93,14 @@ class ProjectColumnSetupForm(forms.ModelForm):
                    'dialect_l': forms.HiddenInput, 'writing_system_l': forms.HiddenInput,
                    'num': forms.HiddenInput, 'csvcell': forms.HiddenInput}
 
+PrColSetupFormSet = inlineformset_factory(models.Project, models.ProjectColumn, ProjectColumnSetupForm, extra=0,
+                                          can_delete=False)
+
 
 class UntypedParamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
+        print(self.initial)
         model = get_model(APP_NAME, self.initial['src_obj'])
         params = model.project_fields()['params']
         available_terms = ((None, '---------'), )
@@ -106,6 +111,9 @@ class UntypedParamForm(forms.ModelForm):
         model = models.ProjectDictionary
         exclude = ['state', 'project', 'term_id']
         widgets = {'value': forms.HiddenInput, 'src_obj': forms.HiddenInput}
+
+UntypedParamFormSet = inlineformset_factory(models.Project, models.ProjectDictionary, form=UntypedParamForm, extra=0,
+                                            can_delete=False)
 
 
 class ParamSetupForm(forms.ModelForm):
@@ -124,3 +132,7 @@ class ParamSetupForm(forms.ModelForm):
         model = models.ProjectDictionary
         exclude = ['project', 'src_field', 'src_obj']
         widgets = {'term_type': forms.HiddenInput, 'value': forms.HiddenInput, 'state': forms.HiddenInput}
+
+ParamSetupFormSet = inlineformset_factory(models.Project, models.ProjectDictionary, form=ParamSetupForm, extra=0,
+                                          can_delete=False)
+

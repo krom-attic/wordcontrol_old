@@ -26,6 +26,6 @@ urlpatterns = patterns('',
                        url(r'^view/projects/(?P<pk>\d+)$', views.ProjectSetupView.as_view(),
                            name='project_setup'),
                        url(r'^view/projects/?$', views.ProjectListView.as_view(), name='project_list'),
-                       url(r'^update/project/(?P<pk>\d+)$', views.ProjectDictionaryUpdateView.as_view(),
-                           name='project_dict_update')
+                       # url(r'^update/project/(?P<pk>\d+)$', views.ProjectDictionaryUpdateView.as_view(),
+                       #     name='project_dict_update')
                        )

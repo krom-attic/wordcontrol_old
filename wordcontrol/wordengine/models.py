@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 
 from .commonworks import *
 from .models_ex.projectworks import *
@@ -473,6 +474,9 @@ class Project(models.Model):
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
+
+    def get_absolute_url(self):
+        return reverse('wordengine:project_setup', kwargs={'pk': self.pk})
 
     def fill_project_dict(self):
         project_models = (ProjectLexeme, ProjectWordform, ProjectSemanticGroup)

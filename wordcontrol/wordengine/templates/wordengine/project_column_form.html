@@ -1,5 +1,5 @@
 <h2>Column setup</h2>
-<form action="{% url 'wordengine:project_dict_update' project.id %}" method="post">
+
     {{ pr_col_setup_form_set.management_form }}
     {% csrf_token %}
     {% for pr_col_setup_form in pr_col_setup_form_set %}
@@ -11,5 +11,3 @@
         </ul>
     {{ pr_col_setup_form.as_p }}
     {% endfor %}
-    <input type="submit" value="Save" name="_column_save" />
-</form>
