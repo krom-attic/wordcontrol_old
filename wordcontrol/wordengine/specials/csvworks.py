@@ -12,7 +12,6 @@ class CSVRow():
         self.project = project
         self.num = num
         self.data = data
-        # self.errors = []
         self.ext_comments = {}
 
     def set_last_lexeme(self, new_lexeme):
@@ -52,7 +51,6 @@ class CSVRow():
     def get_ext_comments(self):
 
         errors = []
-        self.ext_comments = {}
 
         # Last column must be an extended comment column
         if self.data[-1]:

@@ -100,7 +100,6 @@ PrColSetupFormSet = inlineformset_factory(models.Project, models.ProjectColumn, 
 class UntypedParamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(UntypedParamForm, self).__init__(*args, **kwargs)
-        print(self.initial)
         model = get_model(APP_NAME, self.initial['src_obj'])
         params = model.project_fields()['params']
         available_terms = ((None, '---------'), )
