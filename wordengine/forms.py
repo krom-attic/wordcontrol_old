@@ -61,6 +61,8 @@ class LanguageSetupForm(forms.ModelForm):
 
     class Meta:
         model = models.Language
+        exclude = []
+        # TODO Need a sensible exclude!
 
 
 class GrammCategorySetForm(forms.ModelForm):

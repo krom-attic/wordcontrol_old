@@ -7,8 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
-from .commonworks import *
-from .models_ex.projectworks import *
+from wordengine.commonworks import *
+from wordengine.models_ex.projectworks import *
 
 
 # System globals. Abstract

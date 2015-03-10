@@ -1,8 +1,5 @@
 import unittest
-import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wordcontrol.test_settings")
 from wordengine import models
-from wordengine.global_const import *
 
 
 class SplitCSVTest(unittest.TestCase):

@@ -1,4 +1,4 @@
-from wordcontrol.settings import *
+from wordcontrol.settings.base_settings import *
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
