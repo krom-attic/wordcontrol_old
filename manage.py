@@ -3,8 +3,10 @@ import os
 import sys
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wordcontrol.dev_settings")
-    # The above is disabled, because settings are split for different environments
+    # Production settings must be set via environmental variable
+    # Running production with dev settings should fail due to lack of dev modules, which are
+    # not listed in requirements.txt
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wordcontrol.settings.dev_settings")
 
     from django.core.management import execute_from_command_line
 
