@@ -16,4 +16,5 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^', include('wordengine.urls', namespace='wordengine')),
     url(r'^wordcontrol/', include('wordengine.urls', namespace='wordengine')),
+    # TODO Add specific login URL
 )

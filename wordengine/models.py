@@ -78,9 +78,6 @@ class ChangeTrackMixIn(object):
         # dict_change.save()
 
 
-
-
-
 class Settings(models.Model):
 
     pass
@@ -545,24 +542,6 @@ class ProjectCSVCell(models.Model):
         else:
             return unexpected_chars
 
-    def split_header(self, str_to_split):
-        errors = []
-
-        writing_system = ''
-        dialect = ''
-
-        col_split = str_to_split.strip().split('[', 1)
-        if len(col_split) == 2:
-            writing_system = col_split.pop().strip('] ')
-        lang_dialect = col_split.pop().split('(', 1)
-        if len(lang_dialect) == 2:
-            dialect = lang_dialect.pop().strip(') ')
-        language = lang_dialect.pop().strip()
-
-        errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(language) +
-                   self.check_for_errors(dialect) + self.check_for_errors(writing_system)]
-
-        return language, dialect, writing_system, errors
 
     def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
         """

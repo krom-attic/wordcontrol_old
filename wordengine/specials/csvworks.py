@@ -5,6 +5,30 @@ from wordengine import models
 from wordengine.global_const import *
 
 
+class CSVCell(models.ProjectCSVCell):
+    class Meta:
+        proxy = True
+
+    def split_header(self, str_to_split):
+        errors = []
+
+        writing_system = ''
+        dialect = ''
+
+        col_split = str_to_split.strip().split('[', 1)
+        if len(col_split) == 2:
+            writing_system = col_split.pop().strip('] ')
+        lang_dialect = col_split.pop().split('(', 1)
+        if len(lang_dialect) == 2:
+            dialect = lang_dialect.pop().strip(') ')
+        language = lang_dialect.pop().strip()
+
+        errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(language) +
+                   self.check_for_errors(dialect) + self.check_for_errors(writing_system)]
+
+        return language, dialect, writing_system, errors
+
+
 class CSVRow():
     last_lexeme_src = None
 
@@ -26,7 +50,7 @@ class CSVRow():
 
         for colnum, value in enumerate(self.data[1:-1], 1):
 
-            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=value, project=self.project)
+            csvcell = CSVCell(rownum=self.num, colnum=colnum, value=value, project=self.project)
             csvcell.save()
 
             language, dialect, writing_system, split_errors = csvcell.split_header(value)

@@ -2,7 +2,7 @@
 import os
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(os.path.dirname(PROJECT_DIR))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 # SECRET_KEY - see environment specific settings
 
@@ -41,11 +41,13 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware'
+    # TODO Enable after 1.8
+    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware'
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    # TODO Enable after 1.8
+    # 'django.middleware.security.SecurityMiddleware',
 )
 
 ROOT_URLCONF = 'wordcontrol.urls'
@@ -206,5 +208,5 @@ STATIC_URL = '/static/'
 # New TEST_RUNNER in 1.7
 # TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-# TODO Do we need sites?
-# SITE_ID = 1
+# TODO Do we need sites framework?
+SITE_ID = 1

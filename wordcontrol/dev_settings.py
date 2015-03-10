@@ -13,7 +13,7 @@ INSTALLED_APPS.append('debug_toolbar')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(BASE_DIR, 'testdata',
+        'NAME': os.path.join(BASE_DIR, '_testdata',
                              'sqlite3_test.db'),  # Database with test data
     }
 }
