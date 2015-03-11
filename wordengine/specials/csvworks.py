@@ -28,6 +28,101 @@ class CSVCell(models.ProjectCSVCell):
 
         return language, dialect, writing_system, errors
 
+    @staticmethod
+    def check_for_errors(checked_value):
+        """
+
+        :param checked_value:
+        :return: [(error_code, error_details), ...]
+        """
+        unexpected_chars = [('CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
+                            if char in SPECIAL_CHARS]
+        ext_comment_marks = RE_EXT_COMM.findall(checked_value)
+        if ext_comment_marks:
+            unexpected_ext_comments = [('CSV-8', mark + ' in "' + checked_value + '"')
+                                       for mark in ext_comment_marks]
+            return unexpected_chars + unexpected_ext_comments
+        else:
+            return unexpected_chars
+
+    def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
+        """
+        Splits str_to_split against pattern:
+            [pre_params] data [post_params] "comment"
+        Post params may present in any case
+        :param str_to_split: Original string
+        :param has_pre_params: Pre params MAY present
+        :param has_data: Indicates whether data MUST present or MUST be empty
+        :param has_comment: Comment MAY present
+        :return: list of list for each part that may or must present
+        """
+
+        errors = []
+        data = ''
+        pre_params = []
+        post_params = []
+        comment = ''
+
+        split_str = RE_PARAM.split(str_to_split)
+        for i in range(len(split_str)-1):
+            if i % 2 == 0:
+                if split_str[i].strip():
+                    if data:
+                        # data already found
+                        errors.append((self, CSVError('CSV-3', split_str[i].strip())))
+                    else:
+                        data = split_str[i].strip()
+            else:
+                param = split_str[i][1:-1]
+                errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(param)]
+                if data or not has_data:
+                    post_params.append(param)
+                else:
+                    pre_params.append(param)
+
+        last_split = RE_COMMENT.split(split_str[-1].strip(), 1)
+        if last_split[0].strip():
+            if data:
+                # data already found
+                errors.append((self, CSVError('CSV-4', last_split[0].strip())))
+            else:
+                data = last_split[0].strip()
+
+        if len(last_split) > 1:
+            comment = last_split[1][1:-1]
+            if last_split[2] or len(last_split) > 3:
+                errors.append((self, CSVError('CSV-5', last_split[2:])))
+
+        result = []
+
+        if has_pre_params:
+            result.append(pre_params or '')
+        else:
+            if pre_params:
+                errors.append((self, CSVError('CSV-1', str(pre_params))))
+
+        if has_data:
+            errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(data)]
+            result.append(data)
+            if not data:
+                errors.append((self, CSVError('CSV-2')))
+        else:
+            if data:
+                errors.append((self, CSVError('CSV-3', data)))
+
+        result.append(post_params or '')
+
+        if has_comment:
+            errors += [(self, e[0], e[1]) for e in self.check_for_errors(comment)]
+            result.append(comment)
+        else:
+            if comment:
+                errors.append((self, CSVError('CSV-6', comment)))
+
+        result.append(errors)
+
+        return result
+
 
 class CSVRow():
     last_lexeme_src = None
@@ -78,8 +173,7 @@ class CSVRow():
 
         # Last column must be an extended comment column
         if self.data[-1]:
-            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
-                                            project=self.project)
+            csvcell = CSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1], project=self.project)
             csvcell.save()
 
             ext_comm_split = RE_EXT_COMM.split(self.data[-1])
@@ -98,7 +192,7 @@ class CSVRow():
 
         if self.data[0]:  # Check if a new lexeme is in the row
 
-            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
+            csvcell = CSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
             csvcell.save()
 
             synt_cat, params, errors = csvcell.split_data(self.data[0], False, True, False)
@@ -165,8 +259,7 @@ class CSVRow():
                     errors.append(('Row {} (source cols)'.format(self.num), CSVError('CSV-11')))
                 continue
 
-            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms,
-                                            project=self.project)
+            csvcell = CSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
             csvcell.save()
 
             lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
@@ -241,9 +334,7 @@ class CSVRow():
 
             translations_found = True
 
-            csvcell = models.ProjectCSVCell(rownum=self.num, colnum=colnum,
-                                            value=lexeme_translations,
-                                            project=self.project)
+            csvcell = CSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations, project=self.project)
             csvcell.save()
 
             lexeme_translations = self.use_ext_comments(lexeme_translations)
