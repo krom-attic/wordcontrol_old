@@ -9,6 +9,7 @@ from django.views.generic import UpdateView, DetailView
 from django import template
 
 from wordengine import forms, models
+from wordengine.specials.projectworks import *
 from wordengine.views_ex.dictworks import *
 
 # Actual views here
@@ -393,7 +394,7 @@ class ProjectListView(TemplateView):
 
 
 class ProjectSetupView(UpdateView):
-    model = models.Project
+    model = specials.ProjectProxy
     fields = []
 
     pr_col_setup_formset_class = forms.PrColSetupFormSet

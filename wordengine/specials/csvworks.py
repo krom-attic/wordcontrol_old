@@ -2,126 +2,8 @@ import codecs
 import csv
 
 from wordengine import models
+from wordengine import models_ex
 from wordengine.global_const import *
-
-
-class CSVCell(models.ProjectCSVCell):
-    class Meta:
-        proxy = True
-
-    def split_header(self, str_to_split):
-        errors = []
-
-        writing_system = ''
-        dialect = ''
-
-        col_split = str_to_split.strip().split('[', 1)
-        if len(col_split) == 2:
-            writing_system = col_split.pop().strip('] ')
-        lang_dialect = col_split.pop().split('(', 1)
-        if len(lang_dialect) == 2:
-            dialect = lang_dialect.pop().strip(') ')
-        language = lang_dialect.pop().strip()
-
-        errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(language) +
-                   self.check_for_errors(dialect) + self.check_for_errors(writing_system)]
-
-        return language, dialect, writing_system, errors
-
-    @staticmethod
-    def check_for_errors(checked_value):
-        """
-
-        :param checked_value:
-        :return: [(error_code, error_details), ...]
-        """
-        unexpected_chars = [('CSV-7', char + ' in "' + checked_value + '"') for char in checked_value
-                            if char in SPECIAL_CHARS]
-        ext_comment_marks = RE_EXT_COMM.findall(checked_value)
-        if ext_comment_marks:
-            unexpected_ext_comments = [('CSV-8', mark + ' in "' + checked_value + '"')
-                                       for mark in ext_comment_marks]
-            return unexpected_chars + unexpected_ext_comments
-        else:
-            return unexpected_chars
-
-    def split_data(self, str_to_split, has_pre_params, has_data, has_comment):
-        """
-        Splits str_to_split against pattern:
-            [pre_params] data [post_params] "comment"
-        Post params may present in any case
-        :param str_to_split: Original string
-        :param has_pre_params: Pre params MAY present
-        :param has_data: Indicates whether data MUST present or MUST be empty
-        :param has_comment: Comment MAY present
-        :return: list of list for each part that may or must present
-        """
-
-        errors = []
-        data = ''
-        pre_params = []
-        post_params = []
-        comment = ''
-
-        split_str = RE_PARAM.split(str_to_split)
-        for i in range(len(split_str)-1):
-            if i % 2 == 0:
-                if split_str[i].strip():
-                    if data:
-                        # data already found
-                        errors.append((self, CSVError('CSV-3', split_str[i].strip())))
-                    else:
-                        data = split_str[i].strip()
-            else:
-                param = split_str[i][1:-1]
-                errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(param)]
-                if data or not has_data:
-                    post_params.append(param)
-                else:
-                    pre_params.append(param)
-
-        last_split = RE_COMMENT.split(split_str[-1].strip(), 1)
-        if last_split[0].strip():
-            if data:
-                # data already found
-                errors.append((self, CSVError('CSV-4', last_split[0].strip())))
-            else:
-                data = last_split[0].strip()
-
-        if len(last_split) > 1:
-            comment = last_split[1][1:-1]
-            if last_split[2] or len(last_split) > 3:
-                errors.append((self, CSVError('CSV-5', last_split[2:])))
-
-        result = []
-
-        if has_pre_params:
-            result.append(pre_params or '')
-        else:
-            if pre_params:
-                errors.append((self, CSVError('CSV-1', str(pre_params))))
-
-        if has_data:
-            errors += [(self, CSVError(e[0], e[1])) for e in self.check_for_errors(data)]
-            result.append(data)
-            if not data:
-                errors.append((self, CSVError('CSV-2')))
-        else:
-            if data:
-                errors.append((self, CSVError('CSV-3', data)))
-
-        result.append(post_params or '')
-
-        if has_comment:
-            errors += [(self, e[0], e[1]) for e in self.check_for_errors(comment)]
-            result.append(comment)
-        else:
-            if comment:
-                errors.append((self, CSVError('CSV-6', comment)))
-
-        result.append(errors)
-
-        return result
 
 
 class CSVRow():
@@ -173,7 +55,8 @@ class CSVRow():
 
         # Last column must be an extended comment column
         if self.data[-1]:
-            csvcell = CSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1], project=self.project)
+            csvcell = models_ex.CSVCell(rownum=self.num, colnum=self.project.colsnum-1, value=self.data[-1],
+                                        project=self.project)
             csvcell.save()
 
             ext_comm_split = RE_EXT_COMM.split(self.data[-1])
@@ -192,7 +75,7 @@ class CSVRow():
 
         if self.data[0]:  # Check if a new lexeme is in the row
 
-            csvcell = CSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
+            csvcell = models_ex.CSVCell(rownum=self.num, colnum=0, value=self.data[0], project=self.project)
             csvcell.save()
 
             synt_cat, params, errors = csvcell.split_data(self.data[0], False, True, False)
@@ -259,7 +142,7 @@ class CSVRow():
                     errors.append(('Row {} (source cols)'.format(self.num), CSVError('CSV-11')))
                 continue
 
-            csvcell = CSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
+            csvcell = models_ex.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_wordforms, project=self.project)
             csvcell.save()
 
             lexeme_wordforms = self.use_ext_comments(lexeme_wordforms)
@@ -334,7 +217,7 @@ class CSVRow():
 
             translations_found = True
 
-            csvcell = CSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations, project=self.project)
+            csvcell = models_ex.CSVCell(rownum=self.num, colnum=colnum, value=lexeme_translations, project=self.project)
             csvcell.save()
 
             lexeme_translations = self.use_ext_comments(lexeme_translations)
@@ -361,40 +244,6 @@ class CSVRow():
         # TODO Add wordform deduplication ????
 
         return errors
-
-
-def parse_csv(csvreader, project):
-
-    project.errors = []
-    # Errors storage format: whole data, error code, erroneous fragment (optional)
-    project.save()  # Required
-
-    for num, data in enumerate(csvreader):
-
-        row = CSVRow(project, num, data)
-
-        if row.num == 0:
-
-            # Header must present, nothing to check
-            project.lang_src_cols, project.lang_trg_cols, project.errors = row.parse_csv_header()
-            project.colsnum = len(row.data)
-            continue
-
-        else:
-
-            project.errors += row.get_ext_comments()
-
-            project.errors += row.produce_lexeme()
-
-            if not row.last_lexeme_src:
-                project.errors.append(('Row ' + str(row.num+1) + ' (lexemes)', CSVError('CSV-9')))
-                continue
-
-            project.errors += row.produce_wordforms()
-
-            project.errors += row.produce_translations()
-
-    return project
 
 
 def get_csv(csvfile):

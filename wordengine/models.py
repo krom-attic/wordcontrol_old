@@ -8,7 +8,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 from wordengine.commonworks import *
-from wordengine.models_ex.projectworks import *
 
 
 # System globals. Abstract
@@ -474,44 +473,6 @@ class Project(models.Model):
 
     def get_absolute_url(self):
         return reverse('wordengine:project_setup', kwargs={'pk': self.pk})
-
-    def fill_project_dict(self):
-        project_models = (ProjectLexeme, ProjectWordform, ProjectSemanticGroup)
-        for model in project_models:
-            src_obj = model.__name__
-            for field, term_type in model.project_fields().items():
-                if type(term_type) == tuple:
-                    term_type = ''
-                values = set()
-                for value in model.objects.filter(project=self).values(field).distinct():
-                    if value[field]:
-                        real_value = restore_list(value[field])
-                        for sg_value in real_value:
-                            values.add(sg_value)
-                ProjectDictionary.objects.bulk_create([ProjectDictionary(value=val, src_obj=src_obj, project=self,
-                                                                         state='N', term_type=term_type) for val
-                                                       in values])
-        return None
-
-    def produce_project(self):
-        transaction.set_autocommit(False)
-        errors = []
-        if self.state == 'N':
-            for synt_cat in ProjectDictionary.objects.filter(project=self, term_type='SyntacticCategory').\
-                    values('term_id').distinct():
-                for language in ProjectColumn.objects.filter(project=self).values('language_id').distinct():
-                    if not SyntCatsInLanguage.is_in(synt_cat['term_id'], language['language_id']):
-                        errors.append((' '.join([synt_cat, language]), TermError('T-1')))
-            produce_project_model(self, ProjectLexeme)
-            produce_project_model(self, ProjectWordform)
-            produce_project_model(self, ProjectWordformSpell)
-            produce_project_model(self, ProjectSemanticGroup)
-            produce_project_model(self, ProjectTranslation)
-            if not errors:
-                self.state = 'P'
-                self.save()
-        transaction.set_autocommit(True)
-        return errors
 
 
 class ProjectCSVCell(models.Model):

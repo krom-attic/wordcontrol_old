@@ -1,10 +1,7 @@
-import datetime
-
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
 
 from wordengine import models
-from wordengine.specials import csvworks
 
 
 # Common functions here
@@ -83,24 +80,6 @@ def find_lexemes_wordforms(word_search, exact, with_translations=False):
     else:
         # TODO Add error message
         return {}
-
-
-def parse_upload(request):
-    transaction.set_autocommit(False)
-
-    project = models.Project(user_uploader=request.user, timestamp_upload=datetime.datetime.now(),  # Always use UTC
-                             filename=request.FILES['file'].name, source_id=request.POST['source'])
-    csv_file = csvworks.get_csv(request.FILES['file'])
-    project = csvworks.parse_csv(csv_file, project)
-
-    project.fill_project_dict()
-
-    if project.errors:
-        transaction.rollback()
-
-    transaction.set_autocommit(True)
-
-    return project.id, project.errors
 
 
 @login_required
