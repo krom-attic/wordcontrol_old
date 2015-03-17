@@ -466,7 +466,7 @@ class Project(models.Model):
     timestamp_upload = models.DateTimeField(auto_now_add=True, editable=False)
     filename = models.CharField(max_length=512)
     source = models.ForeignKey(Source, null=True, blank=True)
-    state = models.CharField(choices=PRJ_STATE, max_length=2)  # Project state is excessive, but can't be removed now
+    state = models.CharField(choices=PRJ_STATE, max_length=2, default='N')
 
     def __str__(self):
         return 'Project #{0} by {1} @ {2}'.format(str(self.id), self.user_uploader, self.timestamp_upload)
@@ -492,7 +492,7 @@ class ProjectCSVCell(models.Model):
 
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
-    state = models.CharField(choices=PRJ_STATE, max_length=2)
+    state = models.CharField(choices=PRJ_STATE, max_length=2, default='N')
 
     class Meta:
         abstract = True
@@ -549,57 +549,7 @@ class ProjectColumn(ProjectedEntity):
         return 'Col #{0}: {1}'.format(str(self.num), self.csvcell)
 
 
-class ProjectedModel (models.Model):
-
-    @property
-    def params_list(self):
-        if self.params:
-            return restore_tuple(self.params)
-        else:
-            return ()
-
-    def fields(self):
-        return {}
-
-    def m2m_fields(self):
-        return {}
-
-    def m2m_thru_fields(self):
-        return {}
-
-    class Meta:
-        abstract = True
-
-
-def get_from_project_dict(obj, value, term_type, escape_list=False):
-    if value:
-        src_obj = type(obj).__name__
-        project = obj.project
-        if escape_list:
-            value = value[0]
-
-        if isinstance(value, list):
-            dict_items = []
-            for real_value in value:
-                try:
-                    dict_items.append(ProjectDictionary.objects.get(value=real_value, src_obj=src_obj,
-                                                                    term_type=term_type, project=project).term_id)
-                except ObjectDoesNotExist:
-                    pass  # Really nothing to do
-        else:
-            try:
-                dict_items = ProjectDictionary.objects.get(value=value, src_obj=src_obj,
-                                                           term_type=term_type, project=project).term_id
-            except ObjectDoesNotExist:
-                return None
-
-    else:
-        return None
-
-    return dict_items
-
-
-class ProjectLexeme(ProjectedEntity, ProjectedModel):
+class ProjectLexeme(ProjectedEntity):
     syntactic_category = models.CharField(max_length=256)
     params = models.CharField(max_length=512, blank=True)
     col = models.ForeignKey(ProjectColumn)
@@ -609,29 +559,8 @@ class ProjectLexeme(ProjectedEntity, ProjectedModel):
     # def __str__(self):
     #     return ' | '.join([self.syntactic_category, str(self.params)])
 
-    @staticmethod
-    def real_model():
-        return Lexeme
 
-    @staticmethod
-    def project_fields():
-        return {'syntactic_category': 'SyntacticCategory', 'params': ('Inflection', 'LexemeParameter')}
-
-    def fields(self):
-        fields = {'syntactic_category_id': get_from_project_dict(self, self.syntactic_category, 'SyntacticCategory'),
-                  'language': self.col.language}
-        if self.params_list:
-            fields['inflection'] = get_from_project_dict(self, self.params_list, 'Inflection', True)
-        return fields
-
-    def m2m_fields(self):
-        m2m_fields = {}
-        if self.params_list:
-            m2m_fields['lexeme_parameter_m'] = get_from_project_dict(self, self.params_list, 'LexemeParameter')
-        return m2m_fields
-
-
-class ProjectWordform(ProjectedEntity, ProjectedModel):
+class ProjectWordform(ProjectedEntity):
     lexeme = models.ForeignKey(ProjectLexeme)
     comment = models.TextField(blank=True)
     params = models.CharField(max_length=512, blank=True)
@@ -642,39 +571,8 @@ class ProjectWordform(ProjectedEntity, ProjectedModel):
     # def __str__(self):
     #     return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
 
-    @staticmethod
-    def real_model():
-        return Wordform
 
-    @staticmethod
-    def project_fields():
-        return {'params': ('GrammCategorySet', 'Dialect')}
-
-    def fields(self):
-        fields = {'lexeme': self.lexeme.result}
-        if self.params_list:
-            fields['gramm_category_set_id'] = get_from_project_dict(self, self.params_list, 'GrammCategorySet', True)
-        if not fields.get('gramm_category_set_id'):
-            fields['gramm_category_set'] = self.col.language.get_main_gr_cat(self.lexeme.result.syntactic_category)
-            if 'gramm_category_set_id' in fields.keys():
-                del fields['gramm_category_set_id']  # Without deletion conflicting keys present
-
-        return fields
-
-    def m2m_fields(self):
-        m2m_fields = {}
-        if self.params_list:
-            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list, 'Dialect')
-        if not m2m_fields.get('dialect_m'):
-            m2m_fields['dialect_m'] = [self.col.dialect_id]
-        return m2m_fields
-
-    def m2m_thru_fields(self):
-        return {DictWordform: {'source': self.project.source, 'wordform': self.result, 'comment': self.comment,
-                               'is_deleted': False}}
-
-
-class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
+class ProjectWordformSpell(ProjectedEntity):
     wordform = models.ForeignKey(ProjectWordform)
     is_processed = models.BooleanField()
     spelling = models.CharField(max_length=256)
@@ -682,16 +580,8 @@ class ProjectWordformSpell(ProjectedEntity, ProjectedModel):
     csvcell = models.ForeignKey(ProjectCSVCell)
     result = models.ForeignKey(WordformSpell, null=True, blank=True)
 
-    @staticmethod
-    def real_model():
-        return WordformSpell
 
-    def fields(self):
-        return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system,
-                'is_processed': self.is_processed}
-
-
-class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
+class ProjectSemanticGroup(ProjectedEntity):
     params = models.CharField(max_length=256, blank=True)  # For the source side there can be a dialect or a theme
     dialect = models.CharField(max_length=256, blank=True)  # For the target side it is only a dialect possible
     comment = models.TextField(blank=True)
@@ -702,39 +592,8 @@ class ProjectSemanticGroup(ProjectedEntity, ProjectedModel):
     # def __str__(self):
     #     return ' | '.join([str(self.params), self.dialect, self.comment])
 
-    @staticmethod
-    def real_model():
-        return SemanticGroup
 
-    @staticmethod
-    def project_fields():
-        return {'params': ('Dialect', 'Theme', 'UsageConstraint'), 'dialect': 'Dialect'}
-
-    @property
-    def dialect_list(self):
-        if self.dialect:
-            return restore_tuple(self.dialect)
-        else:
-            return []
-
-    def fields(self):
-        return {'comment': self.comment}
-
-    def m2m_fields(self):
-        m2m_fields = {}
-        if self.dialect_list:
-            m2m_fields['dialect_m'] = get_from_project_dict(self, self.dialect_list, 'Dialect')
-        if self.params_list:
-            m2m_fields['dialect_m'] = get_from_project_dict(self, self.params_list, 'Dialect')
-            m2m_fields['theme_m'] = get_from_project_dict(self, self.params_list, 'Theme')
-            m2m_fields['usage_constraint_m'] = get_from_project_dict(self, self.params_list, 'UsageConstraint')
-        return m2m_fields
-
-    def m2m_thru_fields(self):
-        return {DictSemanticGroup: {'source': self.project.source, 'semantic_group': self.result, 'is_deleted': False}}
-
-
-class ProjectTranslation(ProjectedEntity, ProjectedModel):
+class ProjectTranslation(ProjectedEntity):
     lexeme_1 = models.ForeignKey(ProjectLexeme, related_name='translation_fst_set')
     lexeme_2 = models.ForeignKey(ProjectLexeme, related_name='translation_snd_set')
     direction = models.SmallIntegerField()
@@ -747,14 +606,3 @@ class ProjectTranslation(ProjectedEntity, ProjectedModel):
     # def __str__(self):
     #     return ' | '.join([str(self.lexeme_1), str(self.lexeme_2), str(self.direction), str(self.semantic_group_1),
     #                        str(self.semantic_group_2), str(self.bind_wf_1), str(self.bind_wf_2)])
-
-    @staticmethod
-    def real_model():
-        return Translation
-
-    def fields(self):
-        return {'lexeme_1': self.lexeme_1.result, 'lexeme_2': self.lexeme_2.result, 'direction': self.direction,
-                'semantic_group_1': self.semantic_group_1.result, 'semantic_group_2': self.semantic_group_2.result}
-
-    def m2m_thru_fields(self):
-        return {DictTranslation: {'source': self.project.source, 'translation': self.result, 'is_deleted': False}}

@@ -1,15 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
-
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.models import Q
 from django.contrib import messages
-from django.views.generic.base import TemplateView, View
-from django.views.generic import UpdateView, DetailView
-from django import template
+from django.views.generic.base import TemplateView
+from django.views.generic import UpdateView
 
-from wordengine import forms, models
-from wordengine.specials.projectworks import *
+from wordengine import forms
+from wordengine import models_ext_project
 from wordengine.views_ex.dictworks import *
 
 # Actual views here
@@ -357,6 +354,7 @@ class ProjectListView(TemplateView):
     project_list_form_class = forms.ProjectListForm
     project_upload_form_class = forms.ProjectUploadForm
     # TODO Exclude "Processed" from the list
+
     def get(self, request, *args, **kwargs):
         project_upload_form = self.project_upload_form_class()
         if '_setup' in request.GET:
@@ -373,18 +371,18 @@ class ProjectListView(TemplateView):
         project_list_form = self.project_list_form_class()
         project_upload_form = self.project_upload_form_class(request.POST, request.FILES)
         if project_upload_form.is_valid():
-            project_id, errors = parse_upload(request)
-            if errors:
-                # models.Project.objects.get(pk=project_id).delete()
+            project = models_ext_project.ProjectFromCSV(request=request)
+            project.prepare()
+            if project.errors:
                 return render(request, self.template_name, {'project_list_form': project_list_form,
                                                             'project_upload_form': project_upload_form,
-                                                            'errors': errors})
+                                                            'errors': project.errors})
             else:
-                return redirect('wordengine:project_setup', project_id)
+                return redirect('wordengine:project_setup', project.id)
 
         else:
             # TODO Add error message
-            # TODO Upload form not saved on fail
+            # FIXME Upload form not saved on fail
             return render(request, self.template_name, {'project_list_form': project_list_form,
                                                         'project_upload_form': project_upload_form})
 
@@ -394,7 +392,7 @@ class ProjectListView(TemplateView):
 
 
 class ProjectSetupView(UpdateView):
-    model = specials.ProjectProxy
+    model = models_ext_project.ProjectFromCSV
     fields = []
 
     pr_col_setup_formset_class = forms.PrColSetupFormSet
@@ -438,7 +436,7 @@ class ProjectSetupView(UpdateView):
     def post(self, request, *args, **kwargs):
         project = self.get_object()
         if '_produce' in request.POST:
-            errors = project.produce_project()
+            errors = project.produce()
             if errors:
                 return self.render_to_response(self.get_context_data(errors=errors))
             else:

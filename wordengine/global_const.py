@@ -89,7 +89,8 @@ class CSVError(WordcontrolException):
         'CSV-11': 'Wordforms expected, but not found.',
         'CSV-12': "Number of processed wordforms is more than the number of unprocessed.",
         'CSV-13': "Number of processed wordforms is less than the number of unprocessed.",
-        'CSV-14': 'Translations expected, but not found.'
+        'CSV-14': 'Translations expected, but not found.',
+        'CSV-15': 'Number of columns in the differ from that is in the first row.',
     }
 
 

@@ -5,15 +5,15 @@
     <h2>General setup</h2>
 
     <form action="" method="post">
-        {{ project }}<br />
+        {{ projectfromcsv }}<br />
         {% if errors %}
         Project produced with errors:
-            {{ errors }}
-        {% endif %}<br />
+            {{ errors }}<br />
+        {% endif %}
         {% csrf_token %}
 
         {{ form }}
-        <input type="hidden" value="{{ project }}" name="project" />
+        <input type="hidden" value="{{ projectfromcsv }}" name="project" />
         <!-- TODO Disable Produce if setup forms are not completed -->
         <input type="submit" value="Produce" name="_produce" />
         <input type="submit" value="Delete" name="_delete" />
