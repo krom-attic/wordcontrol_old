@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import TemplateView
 from django.views.generic import UpdateView
+from django.contrib import admin
 
 from wordengine import forms
 from wordengine import models_ext_project
@@ -434,15 +435,20 @@ class ProjectSetupView(UpdateView):
         return super(ProjectSetupView, self).form_valid(form)
 
     def post(self, request, *args, **kwargs):
-        project = self.get_object()
+        self.object = self.get_object()
+        project = self.object
         if '_produce' in request.POST:
-            errors = project.produce()
-            if errors:
-                return self.render_to_response(self.get_context_data(errors=errors))
+            project.produce()
+            if project.errors:
+                return self.render_to_response(self.get_context_data(errors=project.errors))
             else:
                 return redirect('wordengine:project_list')
         elif '_delete' in request.POST:
             project.delete()
             return redirect('wordengine:project_list')
+        elif '_clear' in request.POST:
+            project.clear_produced()
+            return self.render_to_response(self.get_context_data())
         else:
             return super(ProjectSetupView, self).post(request, *args, **kwargs)
+

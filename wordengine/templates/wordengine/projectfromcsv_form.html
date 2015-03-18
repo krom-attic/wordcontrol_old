@@ -7,8 +7,11 @@
     <form action="" method="post">
         {{ projectfromcsv }}<br />
         {% if errors %}
-        Project produced with errors:
-            {{ errors }}<br />
+        Project produced with errors:<br />
+            {% for subject, error in errors %}
+                <p>{{ subject }}<br />
+                {{ error }}</p>
+            {% endfor %}
         {% endif %}
         {% csrf_token %}
 
@@ -16,7 +19,9 @@
         <input type="hidden" value="{{ projectfromcsv }}" name="project" />
         <!-- TODO Disable Produce if setup forms are not completed -->
         <input type="submit" value="Produce" name="_produce" />
+        <input type="submit" value="Clear produced" name="_clear" />
         <input type="submit" value="Delete" name="_delete" />
+
 
 
     {% include "wordengine/project_column_form.html" %}

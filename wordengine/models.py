@@ -278,6 +278,7 @@ class Lexeme(LanguageEntity):
             return '[No wordform attached]'
         return lexeme_title
 
+    # FIXME: It reads [No wordform attached] in admin
     def __str__(self):
         return ' | '.join(str(s) for s in [self.lexeme_short,  self.language, self.syntactic_category])
 
@@ -493,6 +494,7 @@ class ProjectCSVCell(models.Model):
 class ProjectedEntity(models.Model):
     project = models.ForeignKey(Project)
     state = models.CharField(choices=PRJ_STATE, max_length=2, default='N')
+    # TODO It seems that state is excessive for project objects
 
     class Meta:
         abstract = True

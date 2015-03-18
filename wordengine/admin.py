@@ -1,21 +1,33 @@
 from django.contrib import admin
 
-import wordengine.models
+from wordengine import models
+from wordengine import views
+
+# Inline admin views
 
 
-admin.site.register(wordengine.models.SyntacticCategory)
-admin.site.register(wordengine.models.UsageConstraint)
-admin.site.register(wordengine.models.GrammCategory)
-admin.site.register(wordengine.models.GrammCategorySet)
-admin.site.register(wordengine.models.Language)
-admin.site.register(wordengine.models.Dialect)
-admin.site.register(wordengine.models.WritingSystem)
-admin.site.register(wordengine.models.Lexeme)
-admin.site.register(wordengine.models.Wordform)
-admin.site.register(wordengine.models.Translation)
-admin.site.register(wordengine.models.TranslatedTerm)
-admin.site.register(wordengine.models.Source)
-admin.site.register(wordengine.models.GrammCategoryType)
-admin.site.register(wordengine.models.LexemeParameter)
-admin.site.register(wordengine.models.SyntCatsInLanguage)
-admin.site.register(wordengine.models.Theme)
+class SyntCatsInLanguageInline(admin.TabularInline):
+    model = models.SyntCatsInLanguage
+    extra = 1
+
+
+class LanguageAdmin(admin.ModelAdmin):
+    inlines = (SyntCatsInLanguageInline, )
+
+
+admin.site.register(models.SyntacticCategory)
+admin.site.register(models.UsageConstraint)
+admin.site.register(models.GrammCategory)
+admin.site.register(models.GrammCategorySet)
+admin.site.register(models.Language, LanguageAdmin)
+admin.site.register(models.Dialect)
+admin.site.register(models.WritingSystem)
+admin.site.register(models.Lexeme)
+admin.site.register(models.Wordform)
+admin.site.register(models.Translation)
+admin.site.register(models.TranslatedTerm)
+admin.site.register(models.Source)
+admin.site.register(models.GrammCategoryType)
+admin.site.register(models.LexemeParameter)
+admin.site.register(models.SyntCatsInLanguage)
+admin.site.register(models.Theme)

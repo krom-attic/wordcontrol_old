@@ -18,7 +18,12 @@ class SearchDetails():
 
 
 def find_translations(lexeme):
-    # TODO Numbering of Lexemes and SemanticCategories in Translations are swapped
+    """
+    Return structured translations for the lexeme
+    :param lexeme:
+    :return: {language2A: {sem_gr1X: (lexeme2K, lexeme2M), sem_gr1Y: (lexeme2N, ...), ...}, language2B: ...}
+    """
+    # FIXME Numbering of Lexemes and SemanticCategories in Translations are swapped
 
     translation_result = {}
     # This is a workaround for non-symmetric relation (it isn't possible with "through")

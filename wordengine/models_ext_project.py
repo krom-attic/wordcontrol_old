@@ -108,26 +108,29 @@ class ProjectFromCSV(models.Project):
                                 objects.filter(project=self).values('language_id').distinct():
                             if not models.SyntCatsInLanguage.is_in(synt_cat['term_id'], language['language_id']):
                                 self.errors.append((' '.join([str(synt_cat), str(language)]), TermError('T-1')))
-                    self.produce_project_model(ProjectLexemeEx)
-                    self.produce_project_model(ProjectWordformEx)
-                    self.produce_project_model(ProjectWordformSpellEx)
-                    self.produce_project_model(ProjectSemanticGroupEx)
-                    self.produce_project_model(ProjectTranslationEx)
-                if self.errors:
-                    raise ProjectError()
-                else:
-                    self.state = 'P'
-                    self.save()
+                    if self.errors:
+                        raise ProjectError()
+                    else:
+                        self.produce_project_model(ProjectLexemeProxy)
+                        self.produce_project_model(ProjectWordformProxy)
+                        self.produce_project_model(ProjectWordformSpellProxy)
+                        self.produce_project_model(ProjectSemanticGroupProxy)
+                        self.produce_project_model(ProjectTranslationProxy)
+                        if self.errors:
+                            raise ProjectError()
+                        else:
+                            self.state = 'P'
+                            self.save()
         except ProjectError:
             pass  # Just rollback the transaction
 
     def produce_project_model(self, model):
         created_objects = []
 
-        for project_object in model.objects.filter(state='N', project=self):
+        for project_object in model.objects.filter(result_id=None, project=self):
 
             fields = project_object.fields()
-            model_object = model.real_model()(**fields)
+            model_object = model.real_model(**fields)
             model_object.save()
             project_object.result = model_object
 
@@ -149,6 +152,22 @@ class ProjectFromCSV(models.Project):
             created_objects.append(model_object)
 
         return created_objects
+
+    def clear_produced(self):
+        self.delete_produced_object(ProjectTranslationProxy)
+        self.delete_produced_object(ProjectSemanticGroupProxy)
+        self.delete_produced_object(ProjectWordformSpellProxy)
+        self.delete_produced_object(ProjectWordformProxy)
+        self.delete_produced_object(ProjectLexemeProxy)
+        self.state = 'N'
+        self.save()
+
+    def delete_produced_object(self, model):
+        for project_object in model.objects.filter(project=self).exclude(result_id=None):
+            object_pk = project_object.result_id
+            project_object.result_id = None
+            project_object.save()
+            model.real_model(pk=object_pk).delete()
 
 
 class CSVRow():
@@ -512,7 +531,7 @@ class ProjectedModelMixIn():
     @property
     def params_list(self):
         if self.params:
-            return restore_tuple(self.params)
+            return restore_list(self.params)
         else:
             return ()
 
@@ -536,7 +555,7 @@ class ProjectedModelMixIn():
         :return: ID of a term object (Term subclass) or None if not found
         """
         if value:
-            src_obj = type(self).__name__
+            src_obj = self._meta.proxy_for_model.__name__
             project = self.project
             if escape_list:
                 value = value[0]
@@ -568,14 +587,11 @@ class ProjectedModelMixIn():
         abstract = True
 
 
-class ProjectLexemeEx(models.ProjectLexeme, ProjectedModelMixIn):
+class ProjectLexemeProxy(models.ProjectLexeme, ProjectedModelMixIn):
+    real_model = models.Lexeme
 
     class Meta:
         proxy = True
-
-    @staticmethod
-    def real_model():
-        return models.Lexeme
 
     @staticmethod
     def project_fields():
@@ -595,21 +611,18 @@ class ProjectLexemeEx(models.ProjectLexeme, ProjectedModelMixIn):
         return m2m_fields
 
 
-class ProjectWordformEx(models.ProjectWordform, ProjectedModelMixIn):
+class ProjectWordformProxy(models.ProjectWordform, ProjectedModelMixIn):
+    real_model = models.Wordform
 
     class Meta:
         proxy = True
-
-    @staticmethod
-    def real_model():
-        return models.Wordform
 
     @staticmethod
     def project_fields():
         return {'params': ('GrammCategorySet', 'Dialect')}
 
     def fields(self):
-        fields = {'lexeme': self.lexeme.result}
+        fields = {'lexeme': self.lexeme.result, 'writing_type': self.col.writing_system.writing_type}
         if self.params_list:
             fields['gramm_category_set_id'] = self.get_from_project_dict(self.params_list, 'GrammCategorySet', True)
         if not fields.get('gramm_category_set_id'):
@@ -632,28 +645,22 @@ class ProjectWordformEx(models.ProjectWordform, ProjectedModelMixIn):
                                       'is_deleted': False}}
 
 
-class ProjectWordformSpellEx(models.ProjectWordformSpell, ProjectedModelMixIn):
+class ProjectWordformSpellProxy(models.ProjectWordformSpell, ProjectedModelMixIn):
+    real_model = models.WordformSpell
 
     class Meta:
         proxy = True
-
-    @staticmethod
-    def real_model():
-        return models.WordformSpell
 
     def fields(self):
         return {'wordform': self.wordform.result, 'spelling': self.spelling, 'writing_system': self.col.writing_system,
                 'is_processed': self.is_processed}
 
 
-class ProjectSemanticGroupEx(models.ProjectSemanticGroup, ProjectedModelMixIn):
+class ProjectSemanticGroupProxy(models.ProjectSemanticGroup, ProjectedModelMixIn):
+    real_model = models.SemanticGroup
 
     class Meta:
         proxy = True
-
-    @staticmethod
-    def real_model():
-        return models.SemanticGroup
 
     @staticmethod
     def project_fields():
@@ -684,13 +691,11 @@ class ProjectSemanticGroupEx(models.ProjectSemanticGroup, ProjectedModelMixIn):
                                            'is_deleted': False}}
 
 
-class ProjectTranslationEx(models.ProjectTranslation, ProjectedModelMixIn):
+class ProjectTranslationProxy(models.ProjectTranslation, ProjectedModelMixIn):
+    real_model = models.Translation
+
     class Meta:
         proxy = True
-
-    @staticmethod
-    def real_model():
-        return models.Translation
 
     def fields(self):
         return {'lexeme_1': self.lexeme_1.result, 'lexeme_2': self.lexeme_2.result, 'direction': self.direction,
