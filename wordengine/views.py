@@ -14,7 +14,7 @@ from wordengine.views_ex.dictworks import *
 
 
 def index(requst):
-    return redirect('wordengine:show_wordlist')
+    return redirect('wordengine:view_words')
 
 
 class DoSmthWordformView(TemplateView):
@@ -140,7 +140,7 @@ class AddWordformView(TemplateView):
             first_lexeme = models.Lexeme.objects.get(pk=request.POST['first_lexeme'])
             return redirect('wordengine:add_translation', first_lexeme.id, lexeme.id)
         else:
-            return redirect('wordengine:show_wordlist', lexeme.id)
+            return redirect('wordengine:view_word', lexeme.id)
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -442,10 +442,10 @@ class ProjectSetupView(UpdateView):
             if project.errors:
                 return self.render_to_response(self.get_context_data(errors=project.errors))
             else:
-                return redirect('wordengine:project_list')
+                return redirect('wordengine:view_projects')
         elif '_delete' in request.POST:
             project.delete()
-            return redirect('wordengine:project_list')
+            return redirect('wordengine:view_projects')
         elif '_clear' in request.POST:
             project.clear_produced()
             return self.render_to_response(self.get_context_data())

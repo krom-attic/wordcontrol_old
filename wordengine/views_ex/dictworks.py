@@ -21,18 +21,16 @@ def find_translations(lexeme):
     """
     Return structured translations for the lexeme
     :param lexeme:
-    :return: {language2A: {sem_gr1X: (lexeme2K, lexeme2M), sem_gr1Y: (lexeme2N, ...), ...}, language2B: ...}
+    :return: {language2A: {sem_gr1X: ((lexeme2K, sem_gr2K), (lexeme2M, sem_gr2M)), sem_gr1Y: ...}, language2B: ...}
     """
-    # FIXME Numbering of Lexemes and SemanticCategories in Translations are swapped
-
     translation_result = {}
     # This is a workaround for non-symmetric relation (it isn't possible with "through")
     for translation in models.Translation.objects.filter(lexeme_1=lexeme):
         translation_result.setdefault(translation.lexeme_2.language, {}).\
-            setdefault(translation.semantic_group_1, set()).add(translation.lexeme_2)
+            setdefault(translation.semantic_group_1, set()).add((translation.lexeme_2, translation.semantic_group_2))
     for translation in models.Translation.objects.filter(lexeme_2=lexeme):
         translation_result.setdefault(translation.lexeme_1.language, {}).\
-            setdefault(translation.semantic_group_2, set()).add(translation.lexeme_1)
+            setdefault(translation.semantic_group_2, set()).add((translation.lexeme_1, translation.semantic_group_1))
 
     return translation_result
 
@@ -103,6 +101,6 @@ def delete_wordform(request, wordform_id):
         messages.add_message(request, messages.SUCCESS, "The word has been deleted")
 
     if taken_lexeme.wordform_set.filter(is_deleted__exact=False).count() == 0:
-        return redirect('wordengine:show_wordlist')
+        return redirect('wordengine:view_words')
     else:
-        return redirect('wordengine:show_wordlist', taken_lexeme.id)
+        return redirect('wordengine:view_word', taken_lexeme.id)

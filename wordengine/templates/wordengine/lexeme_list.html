@@ -6,7 +6,7 @@
     {% for language, lexemes in languages.items %}
         <h3>{{ language }}</h3>
     {% for lexeme, details in lexemes.items %}
-        <p> <a href="{% url 'wordengine:show_wordlist' lexeme.id %}"><strong>
+        <p> <a href="{% url 'wordengine:view_word' lexeme.id %}"><strong>
             {{ lexeme.lexeme_short }}
             </strong></a>
             <br />
@@ -29,7 +29,7 @@
                             <li>
                                 <em>{{ semantic_group }}</em>
                                 {% for translation in translations %}
-                                <a href="{% url 'wordengine:show_wordlist' translation.id %}">
+                                <a href="{% url 'wordengine:view_word' translation.id %}">
                                 <strong>{{ translation.lexeme_short }}</strong></a>{% if not forloop.last %},
                                 {% endif %}
                                 {% endfor %}
