@@ -1,0 +1,9 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}{{ lexemeentry }}{% endblock %}
+{% block pagebody %}
+    <h1>{{ lexemeentry }}</h1>
+    <p>{{ lexemeentry.forms_text|linebreaks }}</p>
+    <p>{{ lexemeentry.relations_text|linebreaks }}</p>
+    <p>{{ lexemeentry.translations_text|linebreaks }}</p>
+    <p>{{ lexemeentry.sources_text|linebreaks }}</p>
+{% endblock %}

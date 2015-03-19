@@ -235,7 +235,7 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class LexemeEntry():
+class LexemeEntry(LanguageEntity):
     """
     New style lexeme class
     """
@@ -243,6 +243,21 @@ class LexemeEntry():
     forms_text = models.TextField(blank=True)
     relations_text = models.TextField(blank=True)
     translations_text = models.TextField(blank=True)
+    sources_text = models.TextField(blank=True)
+
+    def get_absolute_url(self):
+        return reverse('wordengine:view_lexeme_entry', kwargs={'pk': self.pk})
+
+    @property
+    def lexeme_short(self):
+        return '[No wordform attached]'
+
+    @property
+    def lexeme_full(self):
+        return self.forms_text + '\n' + self.relations_text + '\n' + self.translations_text + '\n' + self.sources_text
+
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.lexeme_short,  self.language, self.syntactic_category])
 
 
 class Lexeme(LanguageEntity):
@@ -252,9 +267,9 @@ class Lexeme(LanguageEntity):
     syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
     lexeme_parameter_m = models.ManyToManyField(LexemeParameter, null=True, blank=True)
-    translation_m = models.ManyToManyField('self', symmetrical=False, through='Translation', null=True, blank=True,
+    translation_m = models.ManyToManyField('self', symmetrical=False, through='Translation', blank=True,
                                            related_name='translation_set')
-    lexeme_relation_m = models.ManyToManyField('self', symmetrical=False, through='Relation', null=True, blank=True,
+    lexeme_relation_m = models.ManyToManyField('self', symmetrical=False, through='Relation', blank=True,
                                                related_name='relation_set')
     # TODO Add field for a dictionary wordform
     # Absence of a dialectical dependency is intentional

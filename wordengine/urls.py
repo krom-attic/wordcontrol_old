@@ -28,5 +28,7 @@ urlpatterns = \
                  name='project_setup'),
              url(r'^view/projects/?$', views.ProjectListView.as_view(), name='view_projects'),
              # url(r'^update/project/(?P<pk>\d+)$', views.ProjectDictionaryUpdateView.as_view(),
-             #     name='project_dict_update')
+             #     name='project_dict_update'),
+             url(r'^add$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
+             url(r'^words/(?P<pk>\d+)$', views.LexemeEntryDetailView.as_view(), name='view_lexeme_entry'),
              )
