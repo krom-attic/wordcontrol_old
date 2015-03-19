@@ -235,6 +235,16 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
+class LexemeEntry():
+    """
+    New style lexeme class
+    """
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    forms_text = models.TextField(blank=True)
+    relations_text = models.TextField(blank=True)
+    translations_text = models.TextField(blank=True)
+
+
 class Lexeme(LanguageEntity):
     """Class representing current lexemes
     """
