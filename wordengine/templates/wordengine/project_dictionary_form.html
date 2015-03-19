@@ -1,0 +1,26 @@
+<h2>Project dictionary</h2>
+
+    {% if untyped_param_form_set.total_form_count > 0 %}
+        <h3>Untyped parameters</h3>
+
+                {{ untyped_param_form_set.management_form }}
+                {% csrf_token %}
+
+                {% for untyped_param_form in untyped_param_form_set %}
+                    <p>Parameter: {{ untyped_param_form.instance.value }}<br/>
+                       From: {{ untyped_param_form.instance.src_obj }}
+                    </p>
+                    {{ untyped_param_form.as_p }}
+                {% endfor %}
+
+    {% endif %}
+
+    <h3>Parameter values</h3>
+
+            {{ param_setup_form_set.management_form }}
+            {% csrf_token %}
+
+            {% for param_setup_form in param_setup_form_set %}
+                {{ param_setup_form.instance.value }} ({{ param_setup_form.instance.term_type }})
+                {{ param_setup_form.as_p }}
+            {% endfor %}

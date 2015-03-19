@@ -1,0 +1,52 @@
+{% if searchtype %}
+<hr />
+
+    {% for synt_cat, languages in lexeme_result.items %}
+        <h2>{{ synt_cat }}</h2>
+    {% for language, lexemes in languages.items %}
+        <h3>{{ language }}</h3>
+    {% for lexeme, details in lexemes.items %}
+        <p> <a href="{% url 'wordengine:view_word' lexeme.id %}"><strong>
+            {{ lexeme.lexeme_short }}
+            </strong></a>
+            <br />
+            (found:{% for found_word in details.found_forms %} {{ found_word }}{% endfor %})
+            <br />
+            <!--    <button name="_find_translation_lexeme" value="{{ lexeme.id }}" type="submit">Find translation</button> -->
+            <!-- {% if searchtype == "regular" %}
+                <button name="_add_wordform" value="{{ lexeme.id }}" type="submit">Add word</button>
+                <button name="_add_translation" value="{{ lexeme.id }}" type="submit">Add translation</button>
+            {% elif searchtype == "in_translation" %}
+                <button name="_add_as_translation" value="{{ lexeme.id }}" type="submit">Add as translation</button>
+            {% endif %} -->
+            {% if translation_search %}
+                {% if details.translations %}
+                    <ul>
+                    {% for language, semantic_groups in details.translations.items %}
+                        {{ language }}
+                        <ol>
+                            {% for semantic_group, translations in semantic_groups.items %}
+                            <li>
+                                <em>{{ semantic_group }}</em>
+                                {% for translation in translations %}
+                                <a href="{% url 'wordengine:view_word' translation.id %}">
+                                <strong>{{ translation.lexeme_short }}</strong></a>{% if not forloop.last %},
+                                {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endfor %}
+                        </ol>
+
+                    {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>This word has no translations.</p>
+                    {% endif %}
+            {% endif %}
+        </p>
+    {% empty %}
+        <p>Search returned no results.</p>
+    {% endfor %}
+    {% endfor %}
+    {% endfor %}
+{% endif %}
