@@ -460,3 +460,6 @@ class LexemeEntryCreateView(CreateView):
 
 class LexemeEntryDetailView(DetailView):
     model = models.LexemeEntry
+
+class LexemeEntryUpdateView(UpdateView):
+    model = models.LexemeEntry

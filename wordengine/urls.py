@@ -31,4 +31,7 @@ urlpatterns = \
              #     name='project_dict_update'),
              url(r'^add$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
              url(r'^words/(?P<pk>\d+)$', views.LexemeEntryDetailView.as_view(), name='view_lexeme_entry'),
+             url(r'^words/(?P<lang>\w+)/(?P<spelling>\w+)$', views.LexemeEntryDetailView.as_view(),
+                 name='view_lexeme_entry'),
+             url(r'^words/(?P<pk>\d+)/edit$', views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
              )

@@ -2,7 +2,17 @@
 {% block pagetitle %}{{ lexemeentry }}{% endblock %}
 {% block pagebody %}
     <h1>{{ lexemeentry }}</h1>
-    <p>{{ lexemeentry.forms_text|linebreaks }}</p>
+    <p>
+    {% for wordform in lexemeentry.mainform_full %}
+        {% for wf_ws in wordform.1 %}
+            {{ wf_ws }}
+        {% endfor %}
+        {% for dialect in wordform.0 %}
+            <em>{{ dialect }}</em>,
+        {% endfor %} ,
+    {% endfor %}
+    </p>
+    <p><em>{{ lexemeentry.forms.comment|linebreaks }}</em></p>
     <p>{{ lexemeentry.relations_text|linebreaks }}</p>
     <p>{{ lexemeentry.translations_text|linebreaks }}</p>
     <p>{{ lexemeentry.sources_text|linebreaks }}</p>
