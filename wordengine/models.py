@@ -37,6 +37,7 @@ class DictChange(Change):
 
     user_reviewer = models.ForeignKey(User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
+    # TODO Add source reference
 
 
 class FieldChange(Change):
@@ -417,14 +418,21 @@ class LexemeRelation(models.Model):
 
 # Dictionary classes. Concrete
 
+class Dictionary(models.Model):
+    writing_systems = models.ForeignKey(WritingSystem)
 
-class Wordform(WritingRelated):
+
+class Wordform(models.Model):
     """Class representing current wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-    source_m = models.ManyToManyField(Source, through='DictWordform')
+    # source_m = models.ManyToManyField(Source, through='DictWordform')
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    spelling = models.CharField(max_length=512)
+    dictionary = models.ForeignKey(Dictionary)
+    comment = models.TextField(blank=True)
+    # is_processed = models.BooleanField()
     # informant = models.CharField(max_length=256, blank=True)
 
     @property
@@ -466,25 +474,12 @@ class Wordform(WritingRelated):
     # TODO Include dialects into description
 
 
-class WordformSpell(models.Model):
-    wordform = models.ForeignKey(Wordform)
-    spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
-    is_processed = models.BooleanField()
-
     @property
     def formatted(self):
         if self.writing_system.writing_type == 'O':
             return self.spelling
         else:
             return TRANSCRIPT_BRACKETS[self.writing_system.writing_type].format(self.spelling)
-
-    def __str__(self):
-        return self.formatted
-
-class DictWordform(DictEntity):
-    wordform = models.ForeignKey(Wordform)
-    comment = models.TextField(blank=True)
 
 
 class WordformOrder:
