@@ -1,4 +1,5 @@
 import string
+import slugify
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
@@ -6,6 +7,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+
 
 from wordengine.commonworks import *
 
@@ -236,108 +238,6 @@ class Inflection(LanguageEntity):
     value = models.CharField(max_length=512)
 
 
-class LexemeEntry(LanguageEntity):
-    """
-    New style lexeme class
-    """
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    forms_text = models.TextField(blank=True)
-    relations_text = models.TextField(blank=True)
-    translations_text = models.TextField(blank=True)
-    sources_text = models.TextField(blank=True)
-    index = models.CharField(max_length=256, db_index=True)
-    # disambig = models.CharField()
-
-    class Meta:
-        unique_together = ('language', 'index')
-
-    def get_absolute_url(self):
-        return reverse('wordengine:view_lexeme_entry', kwargs={'pk': self.pk})
-
-    @property
-    def lexeme_short(self):
-        return '[No wordform attached]'
-
-    @staticmethod
-    def split_wf(wf_literal):
-        wordforms = []
-        RE_DIALECT = re.compile(r'<(.*?)>')
-        for wordform in wf_literal.split(';'):
-            dialects = []
-            spellings = []
-            wf_dialect = RE_DIALECT.split(wordform.strip())
-            if len(wf_dialect) > 1:
-                # TODO Check that [0] is empty
-                while len(wf_dialect) > 2:
-                    dialects.append(wf_dialect.pop(-2))
-            for num, wf_spell in enumerate(wf_dialect.pop().split('=')):
-                # TODO Format according to dictionary's WS's
-                spellings.append('/{}/'.format(wf_spell))
-            wordforms.append([dialects, spellings])
-        return wordforms
-
-    @property
-    def forms(self):
-        # print(self.forms_text)
-        oblique_forms = []
-        comment = ''
-
-        RE_FORM = re.compile(r'\{(.*?)\}')
-        RE_COMMENT = re.compile(r'"""(.*?)"""')
-        forms_split = RE_FORM.split(self.forms_text.strip())
-        for i in range(1, len(forms_split), 2):
-            oblique_forms.append([forms_split[i].strip(), self.split_wf(forms_split[i+1].strip())])
-        main_comment = RE_COMMENT.split(forms_split[0].strip())
-        # TODO Check that [-1] is empty
-        main_comment.pop()
-
-        if len(main_comment) == 2:
-            comment = main_comment.pop()
-        main_form = self.split_wf(main_comment.pop())
-
-        forms = {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
-
-        return forms
-
-    @property
-    def mainform_full(self):
-        return self.forms['main']
-
-    @property
-    def mainform_short(self):
-        return self.mainform_full[0]
-
-    @property
-    def mainform_caption(self):
-        return self.mainform_short[1][0]
-
-    @property
-    def relations(self):
-        RELATION_TYPES = {
-            'pl': 'Plurale tantum',
-            'phr': 'Phrase'
-        }
-        relations = self.relations_text.split(':', 1)
-        rel_type = RELATION_TYPES[relations[0].lower()]
-        rel_dests = (rel.strip() for rel in relations.split('+'))
-        return {rel_type: rel_dests}
-
-    def save(self, *args, **kwargs):
-        # Get an original object
-        old_entry = LexemeEntry.objects.get(pk=self.id)
-        print(self)
-        print(old_entry)
-        # Compare
-        if not self == old_entry:
-            pass
-            # Update lookup field if needed
-            # Check other links
-        return super(LexemeEntry, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
-
-
 class Lexeme(LanguageEntity):
     """Class representing current lexemes
     """
@@ -422,6 +322,104 @@ class Dictionary(models.Model):
     writing_systems = models.ForeignKey(WritingSystem)
 
 
+class LexemeEntry(LanguageEntity):
+    """
+    New style lexeme class
+    """
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    forms_text = models.TextField(blank=True)
+    relations_text = models.TextField(blank=True)
+    translations_text = models.TextField(blank=True)
+    sources_text = models.TextField(blank=True)
+    slug = models.SlugField(max_length=128)
+    dictionary = models.ForeignKey(Dictionary, null=True)
+    # disambig = models.CharField()
+
+    def get_absolute_url(self):
+        return reverse('wordengine:view_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
+
+    @property
+    def lexeme_short(self):
+        return '[No wordform attached]'
+
+    @staticmethod
+    def split_wf(wf_literal):
+        wordforms = []
+        RE_DIALECT = re.compile(r'<(.*?)>')
+        for wordform in wf_literal.split(';'):
+            dialects = []
+            wf_dialect = RE_DIALECT.split(wordform.strip())
+            if len(wf_dialect) > 1:
+                # TODO Check that [0] is empty
+                while len(wf_dialect) > 2:
+                    dialects.append(wf_dialect.pop(-2))
+            spellings = wf_dialect.pop().split('=')
+            wordforms.append([dialects, spellings])
+        print(wordforms)
+        return wordforms
+
+    @property
+    def forms(self):
+        # print(self.forms_text)
+        oblique_forms = []
+        comment = ''
+
+        RE_FORM = re.compile(r'\{(.*?)\}')
+        RE_COMMENT = re.compile(r'"""(.*?)"""')
+        forms_split = RE_FORM.split(self.forms_text.strip())
+        for i in range(1, len(forms_split), 2):
+            oblique_forms.append([forms_split[i].strip(), self.split_wf(forms_split[i+1].strip())])
+        main_comment = RE_COMMENT.split(forms_split[0].strip())
+        # TODO Check that [-1] is empty
+        main_comment.pop()
+
+        if len(main_comment) == 2:
+            comment = main_comment.pop()
+        main_form = self.split_wf(main_comment.pop())
+
+        forms = {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
+        print(forms)
+        return forms
+
+    @property
+    def mainform_full(self):
+        return self.forms['main']
+
+    @property
+    def mainform_short(self):
+        return self.mainform_full[0]
+
+    @property
+    def mainform_caption(self):
+        return self.mainform_short[1][0]
+
+    @property
+    def relations(self):
+        RELATION_TYPES = {
+            'pl': 'Plurale tantum',
+            'phr': 'Phrase'
+        }
+        relations = self.relations_text.split(':', 1)
+        rel_type = RELATION_TYPES[relations[0].lower()]
+        rel_dests = (rel.strip() for rel in relations.split('+'))
+        return {rel_type: rel_dests}
+
+    def save(self, *args, **kwargs):
+        # Get an original object
+        old_entry = LexemeEntry.objects.get(pk=self.id)
+        print(old_entry)
+        # Compare
+        if not self == old_entry:
+            pass
+            # Update lookup field if needed
+            # Check other links
+        self.slug = slugify.slugify(self.mainform_caption)
+        return super(LexemeEntry, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
+
+
 class Wordform(models.Model):
     """Class representing current wordforms"""
 
@@ -430,8 +428,8 @@ class Wordform(models.Model):
     # source_m = models.ManyToManyField(Source, through='DictWordform')
     dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
     spelling = models.CharField(max_length=512)
-    dictionary = models.ForeignKey(Dictionary)
-    comment = models.TextField(blank=True)
+    dictionary = models.ForeignKey(Dictionary, null=True)
+    # comment = models.TextField(blank=True)
     # is_processed = models.BooleanField()
     # informant = models.CharField(max_length=256, blank=True)
 
@@ -669,6 +667,11 @@ class ProjectWordform(ProjectedEntity):
 
     # def __str__(self):
     #     return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
+
+
+
+class WordformSpell(models.Model):
+    pass
 
 
 class ProjectWordformSpell(ProjectedEntity):

@@ -453,13 +453,23 @@ class ProjectSetupView(UpdateView):
             return super(ProjectSetupView, self).post(request, *args, **kwargs)
 
 
+class LanguageSlugFilterMixIn():
+
+    def get_queryset(self):
+        queryset = super(type(self), self).get_queryset()
+        language = models.Language.objects.get(pk=self.kwargs['language_slug'])
+        return queryset.filter(language=language)
+
+
 class LexemeEntryCreateView(CreateView):
     model = models.LexemeEntry
     fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
 
 
-class LexemeEntryDetailView(DetailView):
+class LexemeEntryDetailView(DetailView, LanguageSlugFilterMixIn):
     model = models.LexemeEntry
 
-class LexemeEntryUpdateView(UpdateView):
+
+class LexemeEntryUpdateView(UpdateView, LanguageSlugFilterMixIn):
     model = models.LexemeEntry
+    fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
