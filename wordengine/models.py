@@ -319,7 +319,24 @@ class LexemeRelation(models.Model):
 # Dictionary classes. Concrete
 
 class Dictionary(models.Model):
-    writing_systems = models.ForeignKey(WritingSystem)
+    DICT_TYPES = (('U', 'User'), ('D', 'Digitized'), ('P', 'Public'))
+    writing_systems = models.ManyToManyField(WritingSystem, through='WSInDict')
+    type = models.CharField(choices=DICT_TYPES, max_length=1)
+    maintainer = models.ForeignKey(User)
+    caption = models.CharField(max_length=128, blank=True, null=True)
+
+    def __str__(self):
+        return '{} dictionary "{}" by {}'.format(
+            self.get_type_display(),
+            self.caption or 'Unnamed dictionary',
+            str(self.maintainer),
+        )
+
+
+class WSInDict(models.Model):
+    writing_system = models.ForeignKey(WritingSystem)
+    dictionary = models.ForeignKey(Dictionary)
+    order = models.SmallIntegerField()
 
 
 class LexemeEntry(LanguageEntity):
@@ -355,7 +372,7 @@ class LexemeEntry(LanguageEntity):
                     dialects.append(wf_dialect.pop(-2))
             spellings = wf_dialect.pop().split('=')
             wordforms.append([dialects, spellings])
-        print(wordforms)
+        # print(wordforms)
         return wordforms
 
     @property
@@ -378,7 +395,7 @@ class LexemeEntry(LanguageEntity):
         main_form = self.split_wf(main_comment.pop())
 
         forms = {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
-        print(forms)
+        # print(forms)
         return forms
 
     @property
@@ -400,14 +417,30 @@ class LexemeEntry(LanguageEntity):
             'phr': 'Phrase'
         }
         relations = self.relations_text.split(':', 1)
-        rel_type = RELATION_TYPES[relations[0].lower()]
-        rel_dests = (rel.strip() for rel in relations.split('+'))
+        rel_dests = (rel.strip() for rel in relations.pop().split('+'))
+        rel_type = RELATION_TYPES[relations.pop().lower()]
         return {rel_type: rel_dests}
+
+    @property
+    def translations(self):
+        RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
+        RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
+        semanitc_groups = RE_SEM_GR.split(self.translations_text.strip())
+        translations = []
+        for sem_gr_spl in semanitc_groups[1:]:
+            trans_spl = RE_TRANSL.split(sem_gr_spl)
+            comm_dial = trans_spl[0].strip()
+            translation_entries = []
+            for i in range(1, len(trans_spl), 2):
+                transl_entr_spl = tuple(trans.strip() for trans in trans_spl[i+1].split(';'))
+                translation_entries.append({'language': trans_spl[i], 'entries': transl_entr_spl})
+            translations.append({'comment_dialect': comm_dial, 'translations': translation_entries})
+        return translations
 
     def save(self, *args, **kwargs):
         # Get an original object
         old_entry = LexemeEntry.objects.get(pk=self.id)
-        print(old_entry)
+        # print(old_entry)
         # Compare
         if not self == old_entry:
             pass

@@ -13,7 +13,21 @@
     {% endfor %}
     </p>
     <p><em>{{ lexemeentry.forms.comment|linebreaks }}</em></p>
-    <p>{{ lexemeentry.relations_text|linebreaks }}</p>
-    <p>{{ lexemeentry.translations_text|linebreaks }}</p>
+    <p>
+    {% for rel_type, rel_dests in lexemeentry.relations.items %}
+    {{ rel_type }}: {% for rel_dest in rel_dests %}{{ rel_dest }}, {% endfor %}
+    {% endfor %}
+    </p>
+    <ol>
+    {% for semantic_group in lexemeentry.translations %}
+        <li>{{ semantic_group.comment_dialect }}
+        <ul>{% for language_group in semantic_group.translations %}
+            <li>{{ language_group.language }}
+            <ul>{% for entry in language_group.entries %}
+                <li>{{ entry|linebreaks }}</li>
+            {% endfor %}</ul></li>
+        {% endfor %}</ul></li>
+    {% endfor %}
+    </ol>
     <p>{{ lexemeentry.sources_text|linebreaks }}</p>
 {% endblock %}
