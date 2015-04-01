@@ -435,6 +435,7 @@ class LexemeEntry(LanguageEntity):
                 transl_entr_spl = tuple(trans.strip() for trans in trans_spl[i+1].split(';'))
                 translation_entries.append({'language': trans_spl[i], 'entries': transl_entr_spl})
             translations.append({'comment_dialect': comm_dial, 'translations': translation_entries})
+        print(translations)
         return translations
 
     def save(self, *args, **kwargs):
