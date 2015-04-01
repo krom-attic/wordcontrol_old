@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import TemplateView
-from django.views.generic import UpdateView, CreateView, DetailView
+from django.views.generic import UpdateView, CreateView, DetailView, ListView
 from django.contrib import admin
 
 from wordengine import forms
@@ -473,3 +473,7 @@ class LexemeEntryDetailView(DetailView, LanguageSlugFilterMixIn):
 class LexemeEntryUpdateView(UpdateView, LanguageSlugFilterMixIn):
     model = models.LexemeEntry
     fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
+
+
+class LexemeEntryListView(ListView):
+    model = models.LexemeEntry

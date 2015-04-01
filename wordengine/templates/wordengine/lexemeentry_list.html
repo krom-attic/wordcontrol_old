@@ -1,0 +1,12 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}Add a word{% endblock %}
+{% block pagebody %}
+    <h1>Word entries</h1>
+        <ul>
+        {% for entry in lexemeentry_list %}
+        <li><a href = "{% url 'wordengine:view_lexeme_entry' entry.language entry.slug %}">{{ entry }}</a></li>
+        {% empty %}
+        No entries
+        {% endfor %}
+        </ul>
+{% endblock %}
