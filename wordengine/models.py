@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 
 
 from wordengine.commonworks import *
+from wordengine.utils import parser
 
 
 # System globals. Abstract
@@ -359,44 +360,9 @@ class LexemeEntry(LanguageEntity):
     def lexeme_short(self):
         return '[No wordform attached]'
 
-    @staticmethod
-    def split_wf(wf_literal):
-        wordforms = []
-        RE_DIALECT = re.compile(r'<(.*?)>')
-        for wordform in wf_literal.split(';'):
-            dialects = []
-            wf_dialect = RE_DIALECT.split(wordform.strip())
-            if len(wf_dialect) > 1:
-                # TODO Check that [0] is empty
-                while len(wf_dialect) > 2:
-                    dialects.append(wf_dialect.pop(-2))
-            spellings = wf_dialect.pop().split('=')
-            wordforms.append([dialects, spellings])
-        # print(wordforms)
-        return wordforms
-
     @property
     def forms(self):
-        # print(self.forms_text)
-        oblique_forms = []
-        comment = ''
-
-        RE_FORM = re.compile(r'\{(.*?)\}')
-        RE_COMMENT = re.compile(r'"""(.*?)"""')
-        forms_split = RE_FORM.split(self.forms_text.strip())
-        for i in range(1, len(forms_split), 2):
-            oblique_forms.append([forms_split[i].strip(), self.split_wf(forms_split[i+1].strip())])
-        main_comment = RE_COMMENT.split(forms_split[0].strip())
-        # TODO Check that [-1] is empty
-        main_comment.pop()
-
-        if len(main_comment) == 2:
-            comment = main_comment.pop()
-        main_form = self.split_wf(main_comment.pop())
-
-        forms = {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
-        # print(forms)
-        return forms
+        return parser.split_forms(self.forms_text.strip())
 
     @property
     def mainform_full(self):
@@ -411,32 +377,16 @@ class LexemeEntry(LanguageEntity):
         return self.mainform_short[1][0]
 
     @property
+    def oblique_forms(self):
+        return self.forms['oblique']
+
+    @property
     def relations(self):
-        RELATION_TYPES = {
-            'pl': 'Plurale tantum',
-            'phr': 'Phrase'
-        }
-        relations = self.relations_text.split(':', 1)
-        rel_dests = (rel.strip() for rel in relations.pop().split('+'))
-        rel_type = RELATION_TYPES[relations.pop().lower()]
-        return {rel_type: rel_dests}
+        return parser.split_relations(self.relations_text)
 
     @property
     def translations(self):
-        RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
-        RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
-        semanitc_groups = RE_SEM_GR.split(self.translations_text.strip())
-        translations = []
-        for sem_gr_spl in semanitc_groups[1:]:
-            trans_spl = RE_TRANSL.split(sem_gr_spl)
-            comm_dial = trans_spl[0].strip()
-            translation_entries = []
-            for i in range(1, len(trans_spl), 2):
-                transl_entr_spl = tuple(trans.strip() for trans in trans_spl[i+1].split(';'))
-                translation_entries.append({'language': trans_spl[i], 'entries': transl_entr_spl})
-            translations.append({'comment_dialect': comm_dial, 'translations': translation_entries})
-        print(translations)
-        return translations
+        return parser.split_translations(self.translations_text.strip())
 
     def save(self, *args, **kwargs):
         # Get an original object

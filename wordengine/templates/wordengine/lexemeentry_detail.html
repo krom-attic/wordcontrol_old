@@ -2,6 +2,8 @@
 {% block pagetitle %}{{ lexemeentry }}{% endblock %}
 {% block pagebody %}
     <h1>{{ lexemeentry }}</h1>
+    <p><a href="{% url 'wordengine:edit_lexeme_entry' lexemeentry.language lexemeentry.slug %}">edit</a></p>
+    <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
     <p>
     {% for wordform in lexemeentry.mainform_full %}
         {% for wf_ws in wordform.1 %}
@@ -13,6 +15,20 @@
     {% endfor %}
     </p>
     <p><em>{{ lexemeentry.forms.comment|linebreaks }}</em></p>
+    <ul>
+    {% for form in lexemeentry.oblique_forms %}
+        <li>{{ form.0 }}:
+        {% for wordform in form.1 %}
+            {% for wf_ws in wordform.1 %}
+                {{ wf_ws }}
+            {% endfor %}
+            {% for dialect in wordform.0 %}
+                <em>{{ dialect }}</em>,
+            {% endfor %} ,
+        {% endfor %}
+        </li>
+    {% endfor %}
+    </ul>
     <p>
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
     {{ rel_type }}: {% for rel_dest in rel_dests %}{{ rel_dest }}, {% endfor %}
