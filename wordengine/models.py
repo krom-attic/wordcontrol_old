@@ -365,6 +365,10 @@ class LexemeEntry(LanguageEntity):
         return parser.split_forms(self.forms_text.strip())
 
     @property
+    def forms_cl(self):
+        return parser.classy_forms(self.forms)
+
+    @property
     def mainform_full(self):
         return self.forms['main']
 

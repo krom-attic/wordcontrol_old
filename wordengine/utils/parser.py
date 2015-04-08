@@ -65,3 +65,11 @@ def split_relations(relations_text):
     rel_dests = (rel.strip() for rel in relations.pop().split('+'))
     rel_type = RELATION_TYPES[relations.pop().lower()]
     return {rel_type: rel_dests}
+
+
+class Wordform():
+    def __init__(self):
+        pass
+
+
+def split_forms_2:

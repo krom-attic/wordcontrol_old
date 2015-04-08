@@ -7,10 +7,12 @@
     <p>
     {% for wordform in lexemeentry.mainform_full %}
         {% for wf_ws in wordform.1 %}
+            {% if forloop.counter == 2 %}({% endif %}
             {{ wf_ws }}
+            {% if forloop.counter > 1 and forloop.last %}){% endif %}
         {% endfor %}
         {% for dialect in wordform.0 %}
-            <em>{{ dialect }}</em>,
+            <em>({{ dialect }})</em>,
         {% endfor %} ,
     {% endfor %}
     </p>
