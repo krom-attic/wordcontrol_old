@@ -378,7 +378,11 @@ class LexemeEntry(LanguageEntity):
 
     @property
     def mainform_caption(self):
-        return self.mainform_short[1][0]
+        return self.mainform_short[0][0]
+
+    @property
+    def comment(self):
+        return self.forms['comment']
 
     @property
     def oblique_forms(self):

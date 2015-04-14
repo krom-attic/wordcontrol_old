@@ -9,32 +9,47 @@ RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
 
 
 def split_wf(wf_literal):
+    """
+    Splits a string of wordforms, separated by comma.
+    Then pops a dialect mark from the wordform.
+    :param wf_literal: 'Wordform1=Wordform1_alt, Wordform2=Wordform2_alt <Dialect>, ..., WordformN'
+    :return: [([Wordform1, Wordform1_alt], []), ([Wordform2, Wordform2_alt], [Dialect]), ([WordformN], [])]
+    """
+
     wordforms = []
 
-    for wordform in wf_literal.split(';'):
+    for wordform in wf_literal.split(','):
         dialects = []
         wf_dialect = RE_DIALECT.split(wordform.strip())
-        if len(wf_dialect) > 1:
-            # TODO Check that [0] is empty
-            while len(wf_dialect) > 2:
-                dialects.append(wf_dialect.pop(-2))
+        # TODO Check that the first element is not empty
+        # TODO Check that there is nothing between dialects
+        while len(wf_dialect) > 1:
+            wf_dialect.pop()
+            dialects.append(wf_dialect.pop())
         spellings = wf_dialect.pop().split('=')
-        wordforms.append([dialects, spellings])
+        wordforms.append((spellings, dialects))
+
     return wordforms
 
 
 def split_forms(forms_text):
-    oblique_forms = []
+    """
+    Splits a "forms" string into main form, oblique forms and word comment
+    :param forms_text:
+    :return:
+    """
+    oblique_forms = {}
     comment = ''
 
     forms_split = RE_FORM.split(forms_text)
     for i in range(1, len(forms_split), 2):
-        oblique_forms.append([forms_split[i].strip(), split_wf(forms_split[i+1].strip())])
-    main_comment = RE_COMMENT.split(forms_split[0].strip())
-    # TODO Check that [-1] is empty
-    main_comment.pop()
+        oblique_forms[forms_split[i].strip()] = split_wf(forms_split[i+1].strip())
+    # TODO Check that the first element is not empty
+    main_comment = RE_COMMENT.split(forms_split[0].strip(), 1)
 
-    if len(main_comment) == 2:
+    if len(main_comment) == 3:
+        # TODO Check that the last element is empty
+        main_comment.pop()
         comment = main_comment.pop()
     main_form = split_wf(main_comment.pop())
 
@@ -45,14 +60,24 @@ def split_forms(forms_text):
 def split_translations(translations_text):
     semanitc_groups = RE_SEM_GR.split(translations_text)
     translations = []
+    # TODO Check that the first element is empty
     for sem_gr_spl in semanitc_groups[1:]:
         trans_spl = RE_TRANSL.split(sem_gr_spl)
-        comm_dial = trans_spl[0].strip()
+        comment_dialect = RE_DIALECT.split(trans_spl[0].strip())
+        dialects = []
+        comment = comment_dialect[0].strip('"""')
+        while len(comment_dialect) > 1:
+            # TODO Check if there are too many non-empty elements between dialect marks
+            comment_temp = comment_dialect.pop().strip('"""')
+            if comment_temp:
+                comment = comment_temp
+            dialects.append(comment_dialect.pop())
         translation_entries = []
         for i in range(1, len(trans_spl), 2):
             transl_entr_spl = tuple(trans.strip() for trans in trans_spl[i+1].split(';'))
+            print(transl_entr_spl)
             translation_entries.append({'language': trans_spl[i], 'entries': transl_entr_spl})
-        translations.append({'comment_dialect': comm_dial, 'translations': translation_entries})
+        translations.append({'comment': comment, 'dialects': dialects, 'translations': translation_entries})
     return translations
 
 
@@ -71,5 +96,3 @@ class Wordform():
     def __init__(self):
         pass
 
-
-def split_forms_2:

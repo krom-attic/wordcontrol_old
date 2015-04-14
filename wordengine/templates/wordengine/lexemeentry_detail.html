@@ -6,39 +6,50 @@
     <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
     <p>
     {% for wordform in lexemeentry.mainform_full %}
-        {% for wf_ws in wordform.1 %}
+        {% for wf_ws in wordform.0 %}
             {% if forloop.counter == 2 %}({% endif %}
             {{ wf_ws }}
             {% if forloop.counter > 1 and forloop.last %}){% endif %}
         {% endfor %}
-        {% for dialect in wordform.0 %}
-            <em>({{ dialect }})</em>,
-        {% endfor %} ,
+        {% for dialect in wordform.1 %}
+            <em>({{ dialect }})</em>
+        {% endfor %}
+        {% if not forloop.last %}, {% endif %}
     {% endfor %}
     </p>
-    <p><em>{{ lexemeentry.forms.comment|linebreaks }}</em></p>
+    <p><em>{{ lexemeentry.comment|linebreaks }}</em></p>
     <ul>
-    {% for form in lexemeentry.oblique_forms %}
-        <li>{{ form.0 }}:
-        {% for wordform in form.1 %}
-            {% for wf_ws in wordform.1 %}
+    {% for form, wf_list in lexemeentry.oblique_forms.items %}
+        <li>
+        {{ form }}:
+        {% for wordform in wf_list %}
+            {% for wf_ws in wordform.0 %}
+                {% if forloop.counter == 2 %}({% endif %}
                 {{ wf_ws }}
+                {% if forloop.counter > 1 and forloop.last %}){% endif %}
             {% endfor %}
-            {% for dialect in wordform.0 %}
-                <em>{{ dialect }}</em>,
-            {% endfor %} ,
+            {% for dialect in wordform.1 %}
+                <em>({{ dialect }})</em>
+            {% endfor %}
+            {% if not forloop.last %}, {% endif %}
         {% endfor %}
         </li>
     {% endfor %}
     </ul>
+
     <p>
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
-    {{ rel_type }}: {% for rel_dest in rel_dests %}{{ rel_dest }}, {% endfor %}
+    {{ rel_type }}:
+    {% for rel_dest in rel_dests %}
+        <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language rel_dest %}">{{ rel_dest }}</a>
+        {% if not forloop.last %}+{% endif %}
+    {% endfor %}
     {% endfor %}
     </p>
+
     <ol>
     {% for semantic_group in lexemeentry.translations %}
-        <li>{{ semantic_group.comment_dialect }}
+        <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect }})</em>{% endfor %}
         <ul>{% for language_group in semantic_group.translations %}
             <li>{{ language_group.language }}
             <ul>{% for entry in language_group.entries %}
