@@ -6,6 +6,7 @@ RE_FORM = re.compile(r'\{(.*?)\}')
 RE_COMMENT = re.compile(r'"""(.*?)"""')
 RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
 RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
+RE_EXAMPLE = re.compile(r'>>(.*?)', re.M)
 
 
 def split_wf(wf_literal):
@@ -75,7 +76,7 @@ def split_translations(translations_text):
         translation_entries = []
         for i in range(1, len(trans_spl), 2):
             transl_entr_spl = tuple(trans.strip() for trans in trans_spl[i+1].split(';'))
-            print(transl_entr_spl)
+
             translation_entries.append({'language': trans_spl[i], 'entries': transl_entr_spl})
         translations.append({'comment': comment, 'dialects': dialects, 'translations': translation_entries})
     return translations

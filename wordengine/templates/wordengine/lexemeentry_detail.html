@@ -39,11 +39,11 @@
 
     <p>
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
-    {{ rel_type }}:
-    {% for rel_dest in rel_dests %}
-        <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language rel_dest %}">{{ rel_dest }}</a>
-        {% if not forloop.last %}+{% endif %}
-    {% endfor %}
+        {{ rel_type }}:
+        {% for rel_dest in rel_dests %}
+            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language rel_dest %}">{{ rel_dest }}</a>
+            {% if not forloop.last %}+{% endif %}
+        {% endfor %}
     {% endfor %}
     </p>
 
@@ -53,7 +53,8 @@
         <ul>{% for language_group in semantic_group.translations %}
             <li>{{ language_group.language }}
             <ul>{% for entry in language_group.entries %}
-                <li>{{ entry|linebreaks }}</li>
+                <li><a href="{% url 'wordengine:view_lexeme_entry' language_group.language entry %}">
+                    {{ entry|linebreaks }}</a></li>
             {% endfor %}</ul></li>
         {% endfor %}</ul></li>
     {% endfor %}
