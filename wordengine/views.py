@@ -463,7 +463,7 @@ class LanguageSlugFilterMixIn():
 
 class LexemeEntryCreateView(CreateView):
     model = models.LexemeEntry
-    fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
+    fields = ['language', 'syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
 
 
 class LexemeEntryDetailView(DetailView, LanguageSlugFilterMixIn):

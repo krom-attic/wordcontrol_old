@@ -365,10 +365,6 @@ class LexemeEntry(LanguageEntity):
         return parser.split_forms(self.forms_text.strip())
 
     @property
-    def forms_cl(self):
-        return parser.classy_forms(self.forms)
-
-    @property
     def mainform_full(self):
         return self.forms['main']
 
@@ -390,11 +386,16 @@ class LexemeEntry(LanguageEntity):
 
     @property
     def relations(self):
-        return parser.split_relations(self.relations_text)
+        return parser.split_relations(self.relations_text.strip())
 
     @property
     def translations(self):
+        print(parser.split_translations(self.translations_text.strip()))
         return parser.split_translations(self.translations_text.strip())
+
+    @property
+    def sources(self):
+        return parser.split_sources(self.sources_text.strip())
 
     def save(self, *args, **kwargs):
         # Get an original object

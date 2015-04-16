@@ -47,17 +47,36 @@
     {% endfor %}
     </p>
 
-    <ol>
-    {% for semantic_group in lexemeentry.translations %}
-        <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect }})</em>{% endfor %}
-        <ul>{% for language_group in semantic_group.translations %}
-            <li>{{ language_group.language }}
-            <ul>{% for entry in language_group.entries %}
-                <li><a href="{% url 'wordengine:view_lexeme_entry' language_group.language entry %}">
-                    {{ entry|linebreaks }}</a></li>
-            {% endfor %}</ul></li>
-        {% endfor %}</ul></li>
+    <p>Translations:</p>
+    <ul>{% for language, semantic_groups in lexemeentry.translations.items %}
+        <li>{{ language }}:
+        <ol>{% for semantic_group in semantic_groups %}
+            <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect }})</em>{% endfor %}
+            <ul>{% for translation in semantic_group.translations %}
+                <li>
+                    <a href="{% url 'wordengine:view_lexeme_entry' language translation.word %}">
+                    {{ translation.word }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
+                    {% if translation.is_reverse %}<sup>[reverse]</sup>{% endif %}
+                    {% if translation.examples %}{% for example in translation.examples %}<br /><em>{{ example }}</em>{% endfor %}{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            </li>
+            {% endfor %}
+        </ol>
+        </li>
     {% endfor %}
-    </ol>
-    <p>{{ lexemeentry.sources_text|linebreaks }}</p>
+    </ul>
+
+
+
+    <p>Sources:</p>
+    <ul>
+    {% for source in lexemeentry.sources %}
+        <li>
+            <a href="TODO SOURCES / {{ source.source }} / {{ source.entry }}">{{ source.entry }}</a>
+            <a href="TODO SOURCES / {{ source.source }}"><sup>[{{ source.source }}]</sup></a>
+        </li>
+    {% endfor %}
+    </ul>
 {% endblock %}
