@@ -5,7 +5,7 @@
         <form action="" method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <input type="submit" value="Добавить" />
+            <input type="submit" value="{% if form.instance.pk %}Save{% else %}Add{% endif %}" />
         </form>
 
 {% endblock %}

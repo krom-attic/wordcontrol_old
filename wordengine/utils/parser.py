@@ -17,7 +17,8 @@ def split_wf(wf_literal):
     Splits a string of wordforms, separated by comma.
     Then pops a dialect mark from the wordform.
     :param wf_literal: 'Wordform1=Wordform1_alt, Wordform2=Wordform2_alt <Dialect>, ..., WordformN'
-    :return: [([Wordform1, Wordform1_alt], []), ([Wordform2, Wordform2_alt], [Dialect]), ([WordformN], [])]
+    :return: [{'spellings': [Wordform1, Wordform1_alt], 'dialects': []}, {'spellings': [Wordform2, Wordform2_alt],
+              'dialects': [Dialect]}, {'spellings': [WordformN], 'dialects': []}]
     """
 
     wordforms = []
@@ -31,7 +32,7 @@ def split_wf(wf_literal):
             wf_dialect.pop()
             dialects.append(wf_dialect.pop())
         spellings = wf_dialect.pop().split('=')
-        wordforms.append((spellings, dialects))
+        wordforms.append({'spellings': spellings, 'dialects': dialects})
 
     return wordforms
 
@@ -40,7 +41,8 @@ def split_forms(forms_text):
     """
     Splits a "forms" string into main form, oblique forms and word comment
     :param forms_text:
-    :return:
+    :return: {'main': split_wf(forms), 'comment': comment,
+              'oblique': {'formN': split_wf(forms), 'formM': split_wf(forms), ...}}
     """
     oblique_forms = {}
     comment = ''
@@ -57,8 +59,7 @@ def split_forms(forms_text):
         comment = main_comment.pop()
     main_form = split_wf(main_comment.pop())
 
-    forms = {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
-    return forms
+    return {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
 
 
 def split_transl_entry(transl_entry):
@@ -108,17 +109,19 @@ def split_semantic_groups(language_group):
                                     'translations': translations})
     return translation_entries
 
+
 def split_translations(translations_text):
     # TODO Check that the first element is empty
     transl_spl = RE_TRANSL.split(translations_text)
     translations = {}
     for i in range(1, len(transl_spl), 2):
         translations[transl_spl[i]] = split_semantic_groups(transl_spl[i+1])
-    print(translations)
     return translations
 
 
 def split_relations(relations_text):
+    if not relations_text:
+        return {}
     relations = relations_text.split(':', 1)
     rel_dests = (rel.strip() for rel in relations.pop().split('+'))
     rel_type = RELATION_TYPES[relations.pop().lower()]
@@ -126,5 +129,7 @@ def split_relations(relations_text):
 
 
 def split_sources(sources_text):
+    if not sources_text:
+        return ()
     sources = (source.strip().split(':') for source in sources_text.split(';'))
     return ({'source': source[0].strip(), 'entry': source[1].strip()} for source in sources)

@@ -1,17 +1,17 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}{{ lexemeentry }}{% endblock %}
 {% block pagebody %}
-    <h1>{{ lexemeentry }}</h1>
-    <p><a href="{% url 'wordengine:edit_lexeme_entry' lexemeentry.language lexemeentry.slug %}">edit</a></p>
+    <h1>{{ lexemeentry.mainform_caption }}</h1>
+    <p><a href="{{ lexemeentry.edit_url }}">edit</a></p>
     <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
     <p>
     {% for wordform in lexemeentry.mainform_full %}
-        {% for wf_ws in wordform.0 %}
+        {% for wf_ws in wordform.spellings %}
             {% if forloop.counter == 2 %}({% endif %}
             {{ wf_ws }}
             {% if forloop.counter > 1 and forloop.last %}){% endif %}
         {% endfor %}
-        {% for dialect in wordform.1 %}
+        {% for dialect in wordform.dialects %}
             <em>({{ dialect }})</em>
         {% endfor %}
         {% if not forloop.last %}, {% endif %}
@@ -23,12 +23,12 @@
         <li>
         {{ form }}:
         {% for wordform in wf_list %}
-            {% for wf_ws in wordform.0 %}
+            {% for wf_ws in wordform.spellings %}
                 {% if forloop.counter == 2 %}({% endif %}
                 {{ wf_ws }}
                 {% if forloop.counter > 1 and forloop.last %}){% endif %}
             {% endfor %}
-            {% for dialect in wordform.1 %}
+            {% for dialect in wordform.dialects %}
                 <em>({{ dialect }})</em>
             {% endfor %}
             {% if not forloop.last %}, {% endif %}
@@ -68,8 +68,7 @@
     {% endfor %}
     </ul>
 
-
-
+    {% if lexemeentry.sources %}
     <p>Sources:</p>
     <ul>
     {% for source in lexemeentry.sources %}
@@ -79,4 +78,5 @@
         </li>
     {% endfor %}
     </ul>
+    {% endif %}
 {% endblock %}

@@ -13,6 +13,276 @@ from wordengine.commonworks import *
 from wordengine.utils import parser
 
 
+# V2 Classes
+# Global lists. Abstract
+
+
+class Term(models.Model):
+    """Abstract base class for all terms in dictionary."""
+
+    term_full = models.CharField(max_length=256)
+    term_abbr = models.CharField(max_length=64, blank=True)  # TODO May be it should be unique???
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.term_full
+
+    class Meta:
+        abstract = True
+
+
+# Global lists. Concrete
+
+
+class SyntacticCategory(Term):
+    """Class represents syntactic category (used in lexemes) list"""
+
+    pass
+
+
+class Language(Term):
+    """Class represents languages present in the system"""
+
+    syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
+                                                  through_fields=('language', 'syntactic_category'),
+                                                  null=True, blank=True, related_name='synt_cat_set')
+    iso_code = models.CharField(max_length=8)  # ISO 639-3
+
+    def get_main_gr_cat(self, synt_cat):
+        return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
+
+
+class GrammCategoryType(Term):
+    """Class represents types of grammatical categories"""
+
+    pass
+
+
+class GrammCategory(Term):
+    """Class represents values list for grammatical categories"""
+
+    gramm_category_type = models.ForeignKey(GrammCategoryType)
+    position = models.SmallIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return ' '.join([self.term_full, str(self.gramm_category_type)])
+
+
+# Language-dependant classes. Abstract
+
+
+class LanguageEntity(models.Model):
+    """Abstract base class used to tie an entity to a language"""
+
+    language = models.ForeignKey(Language)
+
+    class Meta:
+        abstract = True
+
+
+# Language-dependant classes. Concrete
+
+
+class Dialect(Term, LanguageEntity):
+    """Class represents dialect present in the system"""
+
+    parent_dialect = models.ForeignKey('self', null=True, blank=True)
+
+    class Meta:
+        unique_together = ('term_abbr', 'language')
+
+    def __str__(self):
+        return ' '.join([self.term_full, str(self.language)])
+
+    @classmethod
+    def get_dialect_by_abbr(cls, abbr, language):
+        return cls.objects.get(term_abbr=abbr, language=language)
+
+
+class WritingRelated(models.Model):
+    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
+
+    class Meta:
+        abstract = True
+
+
+class WritingSystem(Term, WritingRelated):
+    """Class represents a writing systems used to spell a word form"""
+
+    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
+
+
+class GrammCategorySet(LanguageEntity):
+    """Class represents possible composite sets of grammar categories and its order in a given language
+    """
+
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    gramm_category_m = models.ManyToManyField(GrammCategory)
+    position = models.SmallIntegerField(null=True, blank=True)
+    abbr_name = models.CharField(max_length=32, db_index=True)
+
+    class Meta:
+        unique_together = ('language', 'position')
+
+    def __str__(self):
+            return ' '.join(str(s) for s in self.gramm_category_m.all())
+
+    @classmethod
+    def get_gr_cat_set_by_abbr(cls, abbr):
+        return cls.objects.get(abbr_name=abbr)
+
+
+class SyntCatsInLanguage(models.Model):
+    language = models.ForeignKey(Language)
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
+
+    def __str__(self):
+        return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
+
+    @classmethod
+    def is_in(cls, synt_cat, language):
+        try:
+            return cls.objects.get(language=language, syntactic_category=synt_cat)
+        except ObjectDoesNotExist:
+            return None
+
+    @classmethod
+    def main_gr_cat_set(cls, synt_cat, language):
+        try:
+            return cls.objects.get(language=language, syntactic_category=synt_cat).main_gramm_category_set
+        except ObjectDoesNotExist:
+            return None
+
+
+# Concrete dictionary classes
+
+
+class Dictionary(models.Model):
+    DICT_TYPES = (('U', 'User'), ('D', 'Digitized'), ('P', 'Public'))
+    writing_systems = models.ManyToManyField(WritingSystem, through='WSInDict')
+    type = models.CharField(choices=DICT_TYPES, max_length=1)
+    maintainer = models.ForeignKey(User)
+    caption = models.CharField(max_length=128, blank=True, null=True)
+
+    def __str__(self):
+        return '{} dictionary "{}" by {}'.format(
+            self.get_type_display(),
+            self.caption or 'Unnamed dictionary',
+            str(self.maintainer),
+        )
+
+
+class LexemeEntry(LanguageEntity):
+    """
+    New style lexeme class
+    """
+    syntactic_category = models.ForeignKey(SyntacticCategory)
+    forms_text = models.TextField()
+    relations_text = models.TextField(blank=True)
+    translations_text = models.TextField(blank=True)
+    sources_text = models.TextField(blank=True)
+    slug = models.SlugField(max_length=128)
+    dictionary = models.ForeignKey(Dictionary)
+    # disambig = models.CharField()
+
+    def get_absolute_url(self):
+        return reverse('wordengine:view_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
+
+    def save(self, *args, **kwargs):
+        # Determine if the object is new or not
+        wordforms = self.all_forms
+        for form in wordforms:
+            gramm_cat_set = GrammCategorySet.get_gr_cat_set_by_abbr(form)
+            for wordform in wordforms[form]:
+                dialects = None
+                for spelling in wordform['spellings']:
+                    wf_spell = WordformSpelling(spelling=spelling, writing_system=None, dialects=dialects,
+                                                gramm_category_set=gramm_cat_set, lexeme_entry=self)
+        if self.pk:
+            # Get an original object
+            old_entry = LexemeEntry.objects.get(pk=self.id)
+            # print(old_entry)
+            # Compare
+            if not self == old_entry:
+                pass
+                # Update lookup field if needed
+                # Check other links
+        else:
+            # Create wordform spellings for the entry
+            pass
+        self.slug = slugify.slugify(self.mainform_caption)
+        return super(LexemeEntry, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
+
+    @property
+    def lexeme_short(self):
+        return '[No wordform attached]'
+
+    @property
+    def forms(self):
+        return parser.split_forms(self.forms_text.strip())
+
+    @property
+    def all_forms(self):
+        all_forms = {SyntCatsInLanguage.main_gr_cat_set(self.syntactic_category, self.language): self.mainform_full}
+        all_forms.update(self.oblique_forms)
+        return all_forms
+
+    @property
+    def mainform_full(self):
+        return self.forms['main']
+
+    @property
+    def mainform_short(self):
+        return self.mainform_full[0]
+
+    @property
+    def mainform_caption(self):
+        return self.mainform_short['spellings'][0]
+
+    @property
+    def comment(self):
+        return self.forms['comment']
+
+    @property
+    def oblique_forms(self):
+        return self.forms['oblique']
+
+    @property
+    def relations(self):
+        return parser.split_relations(self.relations_text.strip())
+
+    @property
+    def translations(self):
+        return parser.split_translations(self.translations_text.strip())
+
+    @property
+    def sources(self):
+        return parser.split_sources(self.sources_text.strip())
+
+    @property
+    def view_url(self):
+        return self.get_absolute_url()
+
+    @property
+    def edit_url(self):
+        return reverse('wordengine:edit_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
+
+
+class WordformSpelling(models.Model):
+    lexeme_entry = models.ForeignKey(LexemeEntry, editable=False)
+    spelling = models.CharField(max_length=512, editable=False)
+    gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True, editable=False)
+    dialects = models.ManyToManyField(Dialect, null=True, blank=True, editable=False)
+    comment = models.TextField(blank=True, editable=False)
+    writing_system = models.ForeignKey(WritingSystem, editable=False)
+
+# V1-only Classes
+
+
 # System globals. Abstract
 
 
@@ -86,34 +356,11 @@ class Settings(models.Model):
     pass
 
 
-# Global lists. Abstract
-
-
-class Term(models.Model):
-    """Abstract base class for all terms in dictionary."""
-
-    term_full = models.CharField(max_length=256)
-    term_abbr = models.CharField(max_length=64, blank=True)  # TODO May be it should be unique???
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.term_full
-
-    class Meta:
-        abstract = True
-
-
 # Global lists. Concrete
 
 
 class LexemeParameter(Term):
     """Temporary class for lexeme parameters"""
-
-    pass
-
-
-class SyntacticCategory(Term):
-    """Class represents syntactic category (used in lexemes) list"""
 
     pass
 
@@ -131,106 +378,13 @@ class Theme(Term):
     pass
 
 
-class GrammCategoryType(Term):
-    """Class represents types of grammatical categories"""
-
-    pass
-
-
-class GrammCategory(Term):
-    """Class represents values list for grammatical categories"""
-
-    gramm_category_type = models.ForeignKey(GrammCategoryType)
-    position = models.SmallIntegerField(null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.gramm_category_type)])
-
-
-class Language(Term):
-    """Class represents languages present in the system"""
-
-    syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
-                                                  through_fields=('language', 'syntactic_category'),
-                                                  null=True, blank=True, related_name='synt_cat_set')
-    iso_code = models.CharField(max_length=8)  # ISO 639-3
-
-    def get_main_gr_cat(self, synt_cat):
-        return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
-
-
-# Language-dependant classes. Abstract
-
-
-class LanguageEntity(models.Model):
-    """Abstract base class used to tie an entity to a language"""
-
-    language = models.ForeignKey(Language)
-
-    class Meta:
-        abstract = True
-
-
 # Language-dependant classes. Concrete
-
-
-class Dialect(Term, LanguageEntity):
-    """Class represents dialect present in the system"""
-
-    parent_dialect = models.ForeignKey('self', null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.language)])
-
-
-class WritingRelated(models.Model):
-    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
-
-    class Meta:
-        abstract = True
-
-
-class WritingSystem(Term, WritingRelated):
-    """Class represents a writing systems used to spell a word form"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
 
 
 class Source(Term, LanguageEntity):
     """Class representing sources of language information"""
 
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
-
-
-class GrammCategorySet(LanguageEntity):
-    """Class represents possible composite sets of grammar categories and its order in a given language
-    """
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_m = models.ManyToManyField(GrammCategory)
-    position = models.SmallIntegerField(null=True, blank=True)
-
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_m.all())
-
-    class Meta:
-        unique_together = ('language', 'position')
-
-
-class SyntCatsInLanguage(models.Model):
-    language = models.ForeignKey(Language)
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-
-    @staticmethod
-    def is_in(synt_cat, language):
-        try:
-            return SyntCatsInLanguage.objects.get(language=language, syntactic_category=synt_cat)
-        except ObjectDoesNotExist:
-            return None
-
-    def __str__(self):
-        return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
 
 
 class Inflection(LanguageEntity):
@@ -319,98 +473,11 @@ class LexemeRelation(models.Model):
 
 # Dictionary classes. Concrete
 
-class Dictionary(models.Model):
-    DICT_TYPES = (('U', 'User'), ('D', 'Digitized'), ('P', 'Public'))
-    writing_systems = models.ManyToManyField(WritingSystem, through='WSInDict')
-    type = models.CharField(choices=DICT_TYPES, max_length=1)
-    maintainer = models.ForeignKey(User)
-    caption = models.CharField(max_length=128, blank=True, null=True)
-
-    def __str__(self):
-        return '{} dictionary "{}" by {}'.format(
-            self.get_type_display(),
-            self.caption or 'Unnamed dictionary',
-            str(self.maintainer),
-        )
-
 
 class WSInDict(models.Model):
     writing_system = models.ForeignKey(WritingSystem)
     dictionary = models.ForeignKey(Dictionary)
     order = models.SmallIntegerField()
-
-
-class LexemeEntry(LanguageEntity):
-    """
-    New style lexeme class
-    """
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    forms_text = models.TextField(blank=True)
-    relations_text = models.TextField(blank=True)
-    translations_text = models.TextField(blank=True)
-    sources_text = models.TextField(blank=True)
-    slug = models.SlugField(max_length=128)
-    dictionary = models.ForeignKey(Dictionary, null=True)
-    # disambig = models.CharField()
-
-    def get_absolute_url(self):
-        return reverse('wordengine:view_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
-
-    @property
-    def lexeme_short(self):
-        return '[No wordform attached]'
-
-    @property
-    def forms(self):
-        return parser.split_forms(self.forms_text.strip())
-
-    @property
-    def mainform_full(self):
-        return self.forms['main']
-
-    @property
-    def mainform_short(self):
-        return self.mainform_full[0]
-
-    @property
-    def mainform_caption(self):
-        return self.mainform_short[0][0]
-
-    @property
-    def comment(self):
-        return self.forms['comment']
-
-    @property
-    def oblique_forms(self):
-        return self.forms['oblique']
-
-    @property
-    def relations(self):
-        return parser.split_relations(self.relations_text.strip())
-
-    @property
-    def translations(self):
-        print(parser.split_translations(self.translations_text.strip()))
-        return parser.split_translations(self.translations_text.strip())
-
-    @property
-    def sources(self):
-        return parser.split_sources(self.sources_text.strip())
-
-    def save(self, *args, **kwargs):
-        # Get an original object
-        old_entry = LexemeEntry.objects.get(pk=self.id)
-        # print(old_entry)
-        # Compare
-        if not self == old_entry:
-            pass
-            # Update lookup field if needed
-            # Check other links
-        self.slug = slugify.slugify(self.mainform_caption)
-        return super(LexemeEntry, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
 
 
 class Wordform(models.Model):
