@@ -12,7 +12,7 @@
             {% if forloop.counter > 1 and forloop.last %}){% endif %}
         {% endfor %}
         {% for dialect in wordform.dialects %}
-            <em>({{ dialect }})</em>
+            <em>({{ dialect.term_full }})</em>
         {% endfor %}
         {% if not forloop.last %}, {% endif %}
     {% endfor %}
@@ -29,7 +29,7 @@
                 {% if forloop.counter > 1 and forloop.last %}){% endif %}
             {% endfor %}
             {% for dialect in wordform.dialects %}
-                <em>({{ dialect }})</em>
+                <em>({{ dialect.term_full }})</em>
             {% endfor %}
             {% if not forloop.last %}, {% endif %}
         {% endfor %}
@@ -51,7 +51,7 @@
     <ul>{% for language, semantic_groups in lexemeentry.translations.items %}
         <li>{{ language }}:
         <ol>{% for semantic_group in semantic_groups %}
-            <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect }})</em>{% endfor %}
+            <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect.term_full }})</em>{% endfor %}
             <ul>{% for translation in semantic_group.translations %}
                 <li>
                     <a href="{% url 'wordengine:view_lexeme_entry' language translation.word %}">

@@ -1,5 +1,8 @@
 import string
+import sys
+
 import slugify
+from lazy import lazy
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
@@ -10,7 +13,7 @@ from django.core.urlresolvers import reverse
 
 
 from wordengine.commonworks import *
-from wordengine.utils import parser
+from wordengine.utils import lexeme_entry_parser
 
 
 # V2 Classes
@@ -45,7 +48,7 @@ class Language(Term):
 
     syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
                                                   through_fields=('language', 'syntactic_category'),
-                                                  null=True, blank=True, related_name='synt_cat_set')
+                                                  blank=True, related_name='synt_cat_set')
     iso_code = models.CharField(max_length=8)  # ISO 639-3
 
     def get_main_gr_cat(self, synt_cat):
@@ -93,10 +96,6 @@ class Dialect(Term, LanguageEntity):
 
     def __str__(self):
         return ' '.join([self.term_full, str(self.language)])
-
-    @classmethod
-    def get_dialect_by_abbr(cls, abbr, language):
-        return cls.objects.get(term_abbr=abbr, language=language)
 
 
 class WritingRelated(models.Model):
@@ -186,19 +185,17 @@ class LexemeEntry(LanguageEntity):
     dictionary = models.ForeignKey(Dictionary)
     # disambig = models.CharField()
 
+    parser = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parser = lexeme_entry_parser.LexemeEnrtyParser(self, sys.modules[__name__])
+
     def get_absolute_url(self):
         return reverse('wordengine:view_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
 
     def save(self, *args, **kwargs):
         # Determine if the object is new or not
-        wordforms = self.all_forms
-        for form in wordforms:
-            gramm_cat_set = GrammCategorySet.get_gr_cat_set_by_abbr(form)
-            for wordform in wordforms[form]:
-                dialects = None
-                for spelling in wordform['spellings']:
-                    wf_spell = WordformSpelling(spelling=spelling, writing_system=None, dialects=dialects,
-                                                gramm_category_set=gramm_cat_set, lexeme_entry=self)
         if self.pk:
             # Get an original object
             old_entry = LexemeEntry.objects.get(pk=self.id)
@@ -217,57 +214,79 @@ class LexemeEntry(LanguageEntity):
     def __str__(self):
         return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
 
-    @property
-    def lexeme_short(self):
-        return '[No wordform attached]'
 
-    @property
-    def forms(self):
-        return parser.split_forms(self.forms_text.strip())
-
-    @property
+    @lazy
     def all_forms(self):
         all_forms = {SyntCatsInLanguage.main_gr_cat_set(self.syntactic_category, self.language): self.mainform_full}
         all_forms.update(self.oblique_forms)
         return all_forms
 
-    @property
+    @lazy
     def mainform_full(self):
         return self.forms['main']
 
-    @property
+    @lazy
     def mainform_short(self):
         return self.mainform_full[0]
 
-    @property
+    @lazy
     def mainform_caption(self):
         return self.mainform_short['spellings'][0]
 
-    @property
+    @lazy
     def comment(self):
         return self.forms['comment']
 
-    @property
+    @lazy
     def oblique_forms(self):
         return self.forms['oblique']
 
-    @property
+    @lazy
+    def forms(self):
+        return self.parser.split_forms()
+
+    @lazy
     def relations(self):
-        return parser.split_relations(self.relations_text.strip())
+        return self.parser.split_relations()
 
-    @property
+    @lazy
     def translations(self):
-        return parser.split_translations(self.translations_text.strip())
+        return self.parser.split_translations()
 
-    @property
+    @lazy
     def sources(self):
-        return parser.split_sources(self.sources_text.strip())
+        return self.parser.split_sources()
 
-    @property
+    @lazy
+    def wordform_spellings(self):
+        wordform_objects = []
+        wordforms = self.all_forms
+        for form in wordforms:
+            try:
+                gramm_cat_set = GrammCategorySet.get_gr_cat_set_by_abbr(form)
+            except ObjectDoesNotExist:
+                # TODO Add an error to an errorlist
+                pass
+            for wordform in wordforms[form]:
+                dialects = []
+                for dialect in wordform:
+                    try:
+                        dialects.append(Dialect.objects.get(term_abbr=dialect, language=self.language))
+                    except ObjectDoesNotExist:
+                        # TODO Add an error to an errorlist
+                        pass
+                for spelling in wordform['spellings']:
+                    wf_spell = WordformSpelling(spelling=spelling, writing_system=None,
+                                                gramm_category_set=gramm_cat_set, lexeme_entry=self)
+                    wf_spell.dialects.add(*dialects)
+        # TODO Return a list of wordforms or an errorlist
+        return wordform_objects
+
+    @lazy
     def view_url(self):
         return self.get_absolute_url()
 
-    @property
+    @lazy
     def edit_url(self):
         return reverse('wordengine:edit_lexeme_entry', kwargs={'language_slug': self.language.id, 'slug': self.slug})
 
@@ -276,7 +295,7 @@ class WordformSpelling(models.Model):
     lexeme_entry = models.ForeignKey(LexemeEntry, editable=False)
     spelling = models.CharField(max_length=512, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True, editable=False)
-    dialects = models.ManyToManyField(Dialect, null=True, blank=True, editable=False)
+    dialects = models.ManyToManyField(Dialect, blank=True, editable=False)
     comment = models.TextField(blank=True, editable=False)
     writing_system = models.ForeignKey(WritingSystem, editable=False)
 
@@ -399,7 +418,7 @@ class Lexeme(LanguageEntity):
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
-    lexeme_parameter_m = models.ManyToManyField(LexemeParameter, null=True, blank=True)
+    lexeme_parameter_m = models.ManyToManyField(LexemeParameter, blank=True)
     translation_m = models.ManyToManyField('self', symmetrical=False, through='Translation', blank=True,
                                            related_name='translation_set')
     lexeme_relation_m = models.ManyToManyField('self', symmetrical=False, through='Relation', blank=True,
@@ -486,7 +505,7 @@ class Wordform(models.Model):
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
     # source_m = models.ManyToManyField(Source, through='DictWordform')
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, blank=True)
     spelling = models.CharField(max_length=512)
     dictionary = models.ForeignKey(Dictionary, null=True)
     # comment = models.TextField(blank=True)
@@ -548,9 +567,9 @@ class WordformOrder:
 class SemanticGroup(models.Model):
     """ Class representing semantic groups
     """
-    theme_m = models.ManyToManyField(Theme, null=True, blank=True)
-    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    theme_m = models.ManyToManyField(Theme, blank=True)
+    usage_constraint_m = models.ManyToManyField(UsageConstraint, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, blank=True)
     source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
     comment = models.TextField(blank=True)
 
