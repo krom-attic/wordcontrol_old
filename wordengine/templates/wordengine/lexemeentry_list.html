@@ -4,7 +4,7 @@
     <h1>Word entries</h1>
         <ul>
         {% for entry in lexemeentry_list %}
-        <li><a href = "{% url 'wordengine:view_lexeme_entry' entry.language entry.slug %}">{{ entry }}</a></li>
+        <li><a href = "{{ entry.get_absolute_url }}">{{ entry }}</a></li>
         {% empty %}
         No entries
         {% endfor %}

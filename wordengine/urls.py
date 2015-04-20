@@ -32,9 +32,14 @@ urlpatterns = \
              url(r'^add/?$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
              url(r'^word/(?P<pk>\d+)/?$', views.LexemeEntryDetailView.as_view(), name='view_lexeme_entry'),
              url(r'^word/(?P<pk>\d+)/edit/?$', views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
-             url(r'^word/(?P<language_slug>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/?$', views.LexemeEntryDetailView.as_view(),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/?$', views.LexemeEntryDetailView.as_view(),
                  name='view_lexeme_entry'),
-             url(r'^word/(?P<language_slug>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/edit/?$',
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/(?P<disambig>\d+)/?$',
+                 views.LexemeEntryDetailView.as_view(),
+                 name='view_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/edit/?$',
                  views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
-             url(r'^word/?$', views.LexemeEntryListView.as_view(), name='list_lexeme_entry')
+             url(r'^word/?$', views.LexemeEntryListView.as_view(), name='list_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\-\(\) ]+)/\*/?$', views.LexemeEntryListView.as_view(),
+                 name='disambig_lexeme_entry'),
              )

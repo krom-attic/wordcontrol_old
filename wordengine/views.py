@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import TemplateView
 from django.views.generic import UpdateView, CreateView, DetailView, ListView
-from django.contrib import admin
+from django.core.exceptions import MultipleObjectsReturned
 
 from wordengine import forms
 from wordengine import models_ext_project
@@ -453,12 +453,20 @@ class ProjectSetupView(UpdateView):
             return super(ProjectSetupView, self).post(request, *args, **kwargs)
 
 
-class LanguageSlugFilterMixIn():
+class LexemeEntryFilterMixIn():
 
     def get_queryset(self):
-        queryset = super(type(self), self).get_queryset()
-        language = models.Language.objects.get(pk=self.kwargs['language_slug'])
-        return queryset.filter(language=language)
+        queryset = super().get_queryset()
+        if 'lang_code' in self.kwargs:
+            language = models.Language.objects.get(iso_code=self.kwargs['lang_code'])
+            queryset = queryset.filter(language=language)
+        if 'slug' in self.kwargs:
+            slug = self.kwargs['slug']
+            queryset = queryset.filter(slug=slug)
+        if 'disambig' in self.kwargs:
+            queryset = queryset.filter(disambig=self.kwargs['disambig'])
+
+        return queryset
 
 
 class LexemeEntryCreateView(CreateView):
@@ -467,14 +475,20 @@ class LexemeEntryCreateView(CreateView):
               'sources_text']
 
 
-class LexemeEntryDetailView(DetailView, LanguageSlugFilterMixIn):
+class LexemeEntryDetailView(LexemeEntryFilterMixIn, DetailView):
     model = models.LexemeEntry
 
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except MultipleObjectsReturned:
+            return redirect('wordengine:disambig_lexeme_entry', *args, **kwargs)
 
-class LexemeEntryUpdateView(UpdateView, LanguageSlugFilterMixIn):
+
+class LexemeEntryUpdateView(LexemeEntryFilterMixIn, UpdateView):
     model = models.LexemeEntry
     fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
 
 
-class LexemeEntryListView(ListView):
+class LexemeEntryListView(LexemeEntryFilterMixIn, ListView):
     model = models.LexemeEntry
