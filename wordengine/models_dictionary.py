@@ -1,150 +1,10 @@
-# V2 Classes
+from wordengine.models_language import *
+
+from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
+
 import slugify
 from lazy import lazy
-
-from django.db import models
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
-
-from wordengine.global_const import *
-
-# Global lists. Abstract
-
-
-class Term(models.Model):
-    """Abstract base class for all terms in dictionary."""
-
-    term_full = models.CharField(max_length=256)
-    term_abbr = models.CharField(max_length=64, blank=True)
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.term_full
-
-    class Meta:
-        abstract = True
-
-
-# Global lists. Concrete
-
-
-class SyntacticCategory(Term):
-    """Class represents syntactic category (used in lexemes) list"""
-
-    pass
-
-
-class Language(Term):
-    """Class represents languages present in the system"""
-
-    syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
-                                                  through_fields=('language', 'syntactic_category'),
-                                                  blank=True, related_name='synt_cat_set')
-    iso_code = models.CharField(max_length=8, db_index=True)  # ISO 639-3
-
-    def get_main_gr_cat(self, synt_cat):
-        return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
-
-
-class GrammCategoryType(Term):
-    """Class represents types of grammatical categories"""
-
-    pass
-
-
-class GrammCategory(Term):
-    """Class represents values list for grammatical categories"""
-
-    gramm_category_type = models.ForeignKey(GrammCategoryType)
-    position = models.SmallIntegerField(null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.gramm_category_type)])
-
-
-# Language-dependant classes. Abstract
-
-
-class LanguageEntity(models.Model):
-    """Abstract base class used to tie an entity to a language"""
-
-    language = models.ForeignKey(Language)
-
-    class Meta:
-        abstract = True
-
-
-# Language-dependant classes. Concrete
-
-
-class Dialect(Term, LanguageEntity):
-    """Class represents dialect present in the system"""
-
-    parent_dialect = models.ForeignKey('self', null=True, blank=True)
-
-    class Meta:
-        unique_together = ('term_abbr', 'language')
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.language)])
-
-
-class WritingRelated(models.Model):
-    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
-
-    class Meta:
-        abstract = True
-
-
-class WritingSystem(Term, WritingRelated):
-    """Class represents a writing systems used to spell a word form"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
-
-
-class GrammCategorySet(LanguageEntity):
-    """Class represents possible composite sets of grammar categories and its order in a given language
-    """
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_m = models.ManyToManyField(GrammCategory)
-    position = models.SmallIntegerField(null=True, blank=True)
-    abbr_name = models.CharField(max_length=32, db_index=True)
-
-    class Meta:
-        unique_together = ('language', 'position')
-
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_m.all())
-
-    @classmethod
-    def get_gr_cat_set_by_abbr(cls, abbr):
-        return cls.objects.get(abbr_name=abbr)
-
-
-class SyntCatsInLanguage(models.Model):
-    language = models.ForeignKey(Language)
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
-
-    @classmethod
-    def is_in(cls, synt_cat, language):
-        try:
-            return cls.objects.get(language=language, syntactic_category=synt_cat)
-        except ObjectDoesNotExist:
-            return None
-
-    @classmethod
-    def main_gr_cat_set(cls, synt_cat, language):
-        try:
-            return cls.objects.get(language=language, syntactic_category=synt_cat).main_gramm_category_set
-        except ObjectDoesNotExist:
-            return None
-
 
 # Concrete dictionary classes
 
@@ -176,7 +36,7 @@ class LexemeEnrtyParser():
     @staticmethod
     def get_dialect(dialect_abbr, language):
         try:
-            dialect = Dialect.objects.get(term_abbr=dialect_abbr, language=language)
+            dialect = Dialect.objects.get(term_abbr__iexact=dialect_abbr, language=language)
         except ObjectDoesNotExist:
             # TODO Raise an error
             dialect = dialect_abbr
@@ -244,8 +104,8 @@ class LexemeEnrtyParser():
         for semanitc_group in semanitc_groups[1:]:
             sem_gr_spl = RE_DIALECT.split(semanitc_group.strip())
             comm_transl = RE_GROUP_COMMENT.split(sem_gr_spl.pop().strip(), 1)
-            translations = (self._split_transl_entry(translation)
-                            for translation in comm_transl.pop().strip().split(';'))
+            translations = tuple(self._split_transl_entry(translation)
+                                 for translation in comm_transl.pop().strip().split(';'))
             if len(comm_transl) > 1:
                 comment = comm_transl.pop()
             else:
@@ -293,7 +153,7 @@ class LexemeEnrtyParser():
         if not relations_text:
             return {}
         relations = relations_text.split(':', 1)
-        rel_dests = (rel.strip() for rel in relations.pop().split('+'))
+        rel_dests = tuple(rel.strip() for rel in relations.pop().split('+'))
         rel_type = RELATION_TYPES[relations.pop().lower()]
         return {rel_type: rel_dests}
 
@@ -313,7 +173,7 @@ class LexemeEnrtyParser():
         sources_text = self.lexeme_entry.sources_text.strip()
         if not sources_text:
             return ()
-        sources = (source.strip().split(':') for source in sources_text.split(';'))
+        sources = tuple(source.strip().split(':') for source in sources_text.split(';'))
         return ({'source': source[0].strip(), 'entry': source[1].strip()} for source in sources)
 
 
@@ -333,6 +193,7 @@ class LexemeEntry(LanguageEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.Parser = LexemeEnrtyParser(self)
+        self.old_version = None
 
     def get_absolute_url(self):
         if self.disambig:
@@ -342,34 +203,44 @@ class LexemeEntry(LanguageEntity):
             return reverse('wordengine:view_lexeme_entry', kwargs={'lang_code': self.language.iso_code,
                                                                    'slug': self.slug})
 
+    def new_or_changed(self, field):
+        return (self.pk is None) or (self.pk is not None and getattr(self, field) != getattr(self.old_version, field))
+
     def save(self, *args, **kwargs):
-        if 'only_slug_update' in kwargs:
-            kwargs.pop('only_slug_update')
-            return super().save(*args, **kwargs)
+
         # Determine if the object is new or not
         if self.pk:
             # Get an original object
-            old_entry = LexemeEntry.objects.get(pk=self.id)
-            # print(old_entry)
-            # Compare
-            if not self == old_entry:
-                pass
-                # Update lookup field if needed
-                # Check other links
+            self.old_version = LexemeEntry.objects.get(pk=self.id)
         else:
             # Create wordform spellings for the entry
             pass
-        self.slug = slugify.slugify(self.mainform_caption)
 
-        # Check if disambiguation is needed and if it is, use plain numbering
-        existant_entries = LexemeEntry.objects.filter(slug=self.slug)
-        if existant_entries.count() == 1:
-            existant_entry = existant_entries[0]
-            existant_entry.disambig = '1'
-            existant_entry.save(only_slug_update=True)
-            self.disambig = '2'
-        elif existant_entries.count() > 1:
-            self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
+        # Compare field by field
+        # Update lookup field if needed
+        # Check other links
+
+        if self.new_or_changed('forms_text'):
+            self.slug = slugify.slugify(self.mainform_caption)
+            if self.new_or_changed('slug'):
+                # Check if disambiguation is needed and if it is, use plain numbering
+                existant_entries = LexemeEntry.objects.filter(slug=self.slug, language=self.language)
+                if existant_entries.count() == 1:
+                    existant_entry = existant_entries[0]
+                    existant_entry.disambig = '1'
+                    existant_entry.save()
+                    self.disambig = '2'
+                elif existant_entries.count() > 1:
+                    self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
+
+        if self.new_or_changed('relations_text'):
+            pass
+
+        if self.new_or_changed('translations_text'):
+            pass
+
+        if self.new_or_changed('sources_text'):
+            pass
 
         return super().save(*args, **kwargs)
 

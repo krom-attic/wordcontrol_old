@@ -41,7 +41,7 @@
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
         {{ rel_type }}:
         {% for rel_dest in rel_dests %}
-            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language rel_dest %}">{{ rel_dest }}</a>
+            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest %}">{{ rel_dest }}</a>
             {% if not forloop.last %}+{% endif %}
         {% endfor %}
     {% endfor %}
@@ -54,7 +54,7 @@
             <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect.term_full }})</em>{% endfor %}
             <ul>{% for translation in semantic_group.translations %}
                 <li>
-                    <a href="{% url 'wordengine:view_lexeme_entry' language translation.word %}">
+                    <a href="{% url 'wordengine:view_lexeme_entry' language.iso_code translation.word %}">
                     {{ translation.word }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
                     {% if translation.is_reverse %}<sup>[reverse]</sup>{% endif %}
                     {% if translation.examples %}{% for example in translation.examples %}<br /><em>{{ example }}</em>{% endfor %}{% endif %}

@@ -1,15 +1,18 @@
+# V2 models classes (actual, USE IT)
+
+from wordengine.models_dictionary import *
+
+# Legacy Classes. DO NOT USE
+
 import string
 
+from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
-# Actual models, V2
-from wordengine.models_new import *
-
-
-# V1-only Classes
 
 # System globals. Abstract
+
 class Change(models.Model):
     """Abstract base class representing submitted change."""
 
@@ -26,7 +29,6 @@ class Change(models.Model):
 
 
 # System globals. Concrete
-
 
 class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
