@@ -1,1 +1,1 @@
-__author__ = 'Krom'
+default_app_config = 'wordengine.apps.WordengineConfig'

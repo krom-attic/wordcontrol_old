@@ -3,6 +3,7 @@ from wordengine import models
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.views.generic import UpdateView, CreateView, DetailView, ListView
 
+
 def index(requst):
     return redirect('wordengine:list_lexeme_entry')
 
@@ -12,7 +13,7 @@ class LexemeEntryFilterMixIn():
         queryset = super().get_queryset()
         if 'lang_code' in self.kwargs:
             try:
-                language = models.Language.objects.get(iso_code=self.kwargs['lang_code'])
+                language = models.Language.objects.get(iso_code=self.kwargs['lang_code'].lower())
             except ObjectDoesNotExist:
                 language = models.Language.objects.get(pk=self.kwargs['lang_code'])
             queryset = queryset.filter(language=language)
@@ -36,6 +37,10 @@ class LexemeEntryDetailView(LexemeEntryFilterMixIn, DetailView):
 
     def get(self, request, *args, **kwargs):
         try:
+            if 'slug' in self.kwargs:
+                self.kwargs['slug'] = self.kwargs['slug'].lower()
+            if 'slug' in kwargs:
+                kwargs['slug'] = kwargs['slug'].lower()
             return super().get(request, *args, **kwargs)
         except MultipleObjectsReturned:
             return redirect('wordengine:disambig_lexeme_entry', *args, **kwargs)

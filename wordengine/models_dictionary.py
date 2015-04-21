@@ -224,19 +224,22 @@ class LexemeEntry(LanguageEntity):
     """
     New style lexeme class
     """
+    dictionary = models.ForeignKey(Dictionary)
+    reverse_generated = models.BooleanField(editable=False, default=False)
     syntactic_category = models.ForeignKey(SyntacticCategory)
     forms_text = models.TextField()
     relations_text = models.TextField(blank=True)
     translations_text = models.TextField(blank=True)
     sources_text = models.TextField(blank=True)
     slug = models.SlugField(max_length=128)
-    dictionary = models.ForeignKey(Dictionary)
-    disambig = models.CharField(max_length=64, null=True)
+    disambig = models.CharField(max_length=64, default='')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.Parser = LexemeEnrtyParser(self)
         self.old_version = None
+        self.need_spelling_update = False
+        self.need_translations_update = False
 
     def get_absolute_url(self):
         if self.disambig:
@@ -250,6 +253,7 @@ class LexemeEntry(LanguageEntity):
         return (self.pk is None) or (self.pk is not None and getattr(self, field) != getattr(self.old_version, field))
 
     def save(self, *args, **kwargs):
+        saving_reverse = kwargs.pop('reverse', False)
 
         # Determine if the object is new or not
         if self.pk:
@@ -259,7 +263,7 @@ class LexemeEntry(LanguageEntity):
         # Compare field by field
         if self.new_or_changed('forms_text'):
             # Update slug and disambig
-            self.slug = slugify.slugify(self.mainform_caption)
+            self.slug = slugify.slugify(self.mainform_caption, spaces=True, lower=False)
             if self.new_or_changed('slug'):
                 # Check if disambiguation is needed and if it is, use plain numbering
                 existant_entries = LexemeEntry.objects.filter(slug=self.slug, language=self.language)
@@ -272,32 +276,18 @@ class LexemeEntry(LanguageEntity):
                     self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
 
             # Update corresponding wordform spelling objects
-            self.generate_wordform_spellings()
+            self.need_spelling_update = True
+
+        if self.disambig:
+            self.disambig_part = '({})'.format(self.disambig)
+        else:
+            self.disambig_part = ''
 
         if self.new_or_changed('relations_text'):
             pass
 
-        if self.new_or_changed('translations_text'):
-            # for each translation
-            translations = self.translations
-            for language in translations:
-                for semantic_group in translations[language]:
-                    for translation in semantic_group['translations']:
-                        filter_params = {
-                            'slug': translation['word'],
-                            'language': language,
-                        }
-                        if translation['disambig']:
-                            filter_params['disambig'] = translation['disambig']
-                        try:
-                            print(translation)
-                            target = LexemeEntry.objects.get(**filter_params)
-                        except MultipleObjectsReturned:
-                            print('need disambig')
-                        except ObjectDoesNotExist:
-                            print('need create')
-            # if translations exists, check if the other end has a reference
-            # else add a reference
+        if self.new_or_changed('translations_text') and not saving_reverse:
+            self.need_translations_update = True
 
         if self.new_or_changed('sources_text'):
             pass
@@ -317,6 +307,49 @@ class LexemeEntry(LanguageEntity):
                     wf_spell.dialects.add(*wordform['dialects'])
                     wordform_objects.append(wf_spell)
         return None
+
+    def generate_translations(self):
+        # for each translation
+        translations = self.translations
+        for language in translations:
+            for semantic_group in translations[language]:
+                for translation in semantic_group['translations']:
+                    filter_params = {
+                        'slug': translation['word'],
+                        'language': language,
+                    }
+                    if translation['disambig']:
+                        filter_params['disambig'] = translation['disambig']
+                    try:
+                        target = LexemeEntry.objects.get(**filter_params)
+                    except MultipleObjectsReturned as e:
+                        # TODO: Need custom logic if disambiguation required
+                        raise e
+                    except ObjectDoesNotExist:
+                        target = LexemeEntry()
+                        target.language = language
+                        target.dictionary = self.dictionary
+                        target.reverse_generated = True
+                        target.syntactic_category = self.syntactic_category
+                        target.forms_text = translation['word']
+                        target.translations_text = '{{{0}}}\r\n1. $:{1}{2}'.format(self.language.iso_code, self.slug,
+                                                                                   self.disambig_part)
+                    else:
+                        reverse_found = False
+                        language_group = target.translations.get(self.language)
+                        if language_group:
+                            for target_sg in language_group:
+                                for target_transl in target_sg['translations']:
+                                    if target_transl['word'] == self.slug and \
+                                       target_transl['disambig'] == self.disambig:
+                                        reverse_found = True
+                        else:
+                            target.translations_text += '\r\n{{{}}}'.format(self.language.iso_code)
+                        if not reverse_found:
+                            target.translations_text += '\r\n*. $:{0}{1}'.format(self.slug, self.disambig_part)
+                    target.save(reverse=True)
+        # if translations exists, check if the other end has a reference
+        # else add a reference
 
     def __str__(self):
         return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
