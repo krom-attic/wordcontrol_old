@@ -200,12 +200,6 @@ class LexemeRelation(models.Model):
 # Dictionary classes. Concrete
 
 
-class WSInDict(models.Model):
-    writing_system = models.ForeignKey(WritingSystem)
-    dictionary = models.ForeignKey(Dictionary)
-    order = models.SmallIntegerField()
-
-
 class Wordform(models.Model):
     """Class representing current wordforms"""
 

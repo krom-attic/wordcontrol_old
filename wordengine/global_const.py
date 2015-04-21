@@ -1,7 +1,6 @@
 import re
 
-APP_NAME = ('wordengine')
-
+APP_NAME = 'wordengine'
 
 TRANSCRIPT_BRACKETS = {
     'PS': ('[{}]'),
@@ -70,6 +69,7 @@ RE_GROUP_COMMENT = re.compile(r'^"""(.*?)"""')
 RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
 RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
 RE_EXAMPLE = re.compile(r'>>(.*?)', re.M)
+RE_DISAMBIG = re.compile(r'\((.*?)\)')
 
 # Errors
 class WordcontrolException(Exception):

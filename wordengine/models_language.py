@@ -53,14 +53,10 @@ class GrammCategorySet(LanguageEntity):
     abbr_name = models.CharField(max_length=32, db_index=True)
 
     class Meta:
-        unique_together = ('language', 'position')
+        unique_together = (('language', 'position'), ('language', 'abbr_name'))
 
     def __str__(self):
             return ' '.join(str(s) for s in self.gramm_category_m.all())
-
-    @classmethod
-    def get_gr_cat_set_by_abbr(cls, abbr):
-        return cls.objects.get(abbr_name=abbr)
 
 
 class SyntCatsInLanguage(models.Model):

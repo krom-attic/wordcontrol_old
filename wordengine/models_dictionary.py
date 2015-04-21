@@ -1,6 +1,7 @@
 from wordengine.models_language import *
 
 from django.core.urlresolvers import reverse
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 import slugify
@@ -22,6 +23,18 @@ class Dictionary(models.Model):
             self.caption or 'Unnamed dictionary',
             str(self.maintainer),
         )
+
+    def get_ws(self, pos):
+        return WSInDict.objects.get(dictionary=self, order=pos).writing_system
+
+
+class WSInDict(models.Model):
+    writing_system = models.ForeignKey(WritingSystem)
+    dictionary = models.ForeignKey(Dictionary)
+    order = models.SmallIntegerField()
+
+    class Meta:
+        unique_together = ('dictionary', 'order')
 
 
 class LexemeEnrtyParser():
@@ -51,6 +64,14 @@ class LexemeEnrtyParser():
             language = Language.objects.get(pk=1)
         return language
 
+    @staticmethod
+    def get_form(form_abbr, language):
+        try:
+            form = GrammCategorySet.objects.get(abbr_name__iexact=form_abbr, language=language)
+        except ObjectDoesNotExist:
+            form = form_abbr
+        return form
+
     def _split_wf(self, wf_literal):
         """
         Splits a string of wordforms, separated by comma.
@@ -77,6 +98,11 @@ class LexemeEnrtyParser():
 
     @staticmethod
     def _split_transl_entry(transl_entry):
+        """
+
+        :param transl_entry:
+        :return: {'word': word, 'comment': comment, 'examples': examples, 'is_reverse': is_reverse}
+        """
         examples = []
         pre_split = RE_EXAMPLE.split(transl_entry.strip())
         while len(pre_split) > 1:
@@ -89,15 +115,27 @@ class LexemeEnrtyParser():
             comment = comm_split[1].strip()
         else:
             comment = ''
-        word = comm_split[0].strip()
-        if word[:2] == '$:':
+        word_split = RE_DISAMBIG.split(comm_split[0].strip(), 1)
+        if len(word_split) > 1:
+            # TODO Check that the last element is not empty
+            disambig = word_split[1].strip()
+        else:
+            disambig = ''
+        if word_split[0][:2] == '$:':
             is_reverse = True
-            word = word[2:].strip()
+            word = word_split[0][2:].strip()
         else:
             is_reverse = False
-        return {'word': word, 'comment': comment, 'examples': examples, 'is_reverse': is_reverse}
+            word = word_split[0].strip()
+        return {'word': word, 'disambig': disambig, 'comment': comment, 'examples': examples, 'is_reverse': is_reverse}
 
     def _split_semantic_groups(self, language_group, language):
+        """
+
+        :param language_group:
+        :param language:
+        :return: [{'comment': comment, 'dialects': dialects, 'translations': translations}, ...]
+        """
         semanitc_groups = RE_SEM_GR.split(language_group)
         translation_entries = []
         # TODO Check that the first element is empty
@@ -129,14 +167,15 @@ class LexemeEnrtyParser():
         """
         Splits a "forms" string into main form, oblique forms and word comment
         :return: {'main': split_wf(forms), 'comment': comment,
-                  'oblique': {'formN': split_wf(forms), 'formM': split_wf(forms), ...}}
+                  'oblique': {formN: split_wf(forms), formM: split_wf(forms), ...}}
         """
         oblique_forms = {}
         comment = ''
         forms_text = self.lexeme_entry.forms_text.strip()
         forms_split = RE_FORM.split(forms_text)
         for i in range(1, len(forms_split), 2):
-            oblique_forms[forms_split[i].strip()] = self._split_wf(forms_split[i+1].strip())
+            form_object = self.get_form(forms_split[i].strip(), self.lexeme_entry.language)
+            oblique_forms[form_object] = self._split_wf(forms_split[i+1].strip())
         # TODO Check that the first element is not empty
         main_comment = RE_COMMENT_NEW.split(forms_split[0].strip(), 1)
 
@@ -158,6 +197,10 @@ class LexemeEnrtyParser():
         return {rel_type: rel_dests}
 
     def split_translations(self):
+        """
+
+        :return: {language: [semantic_groups, ...]}
+        """
         # TODO Check that the first element is empty
         translations_text = self.lexeme_entry.translations_text.strip()
         transl_spl = RE_TRANSL.split(translations_text)
@@ -212,15 +255,10 @@ class LexemeEntry(LanguageEntity):
         if self.pk:
             # Get an original object
             self.old_version = LexemeEntry.objects.get(pk=self.id)
-        else:
-            # Create wordform spellings for the entry
-            pass
 
         # Compare field by field
-        # Update lookup field if needed
-        # Check other links
-
         if self.new_or_changed('forms_text'):
+            # Update slug and disambig
             self.slug = slugify.slugify(self.mainform_caption)
             if self.new_or_changed('slug'):
                 # Check if disambiguation is needed and if it is, use plain numbering
@@ -233,22 +271,62 @@ class LexemeEntry(LanguageEntity):
                 elif existant_entries.count() > 1:
                     self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
 
+            # Update corresponding wordform spelling objects
+            self.generate_wordform_spellings()
+
         if self.new_or_changed('relations_text'):
             pass
 
         if self.new_or_changed('translations_text'):
-            pass
+            # for each translation
+            translations = self.translations
+            for language in translations:
+                for semantic_group in translations[language]:
+                    for translation in semantic_group['translations']:
+                        filter_params = {
+                            'slug': translation['word'],
+                            'language': language,
+                        }
+                        if translation['disambig']:
+                            filter_params['disambig'] = translation['disambig']
+                        try:
+                            print(translation)
+                            target = LexemeEntry.objects.get(**filter_params)
+                        except MultipleObjectsReturned:
+                            print('need disambig')
+                        except ObjectDoesNotExist:
+                            print('need create')
+            # if translations exists, check if the other end has a reference
+            # else add a reference
 
         if self.new_or_changed('sources_text'):
             pass
 
         return super().save(*args, **kwargs)
 
+    def generate_wordform_spellings(self):
+        WordformSpelling.objects.filter(lexeme_entry=self).delete()
+        wordform_objects = []
+        wordforms = self.all_forms
+        for form in wordforms:
+            for wordform in wordforms[form]:
+                for num, spelling in enumerate(wordform['spellings']):
+                    wf_spell = WordformSpelling(lexeme_entry=self, spelling=spelling, gramm_category_set=form,
+                                                writing_system=self.dictionary.get_ws(num))
+                    wf_spell.save()
+                    wf_spell.dialects.add(*wordform['dialects'])
+                    wordform_objects.append(wf_spell)
+        return None
+
     def __str__(self):
         return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
 
     @lazy
     def all_forms(self):
+        """
+        Returns a plain dictionary of wordforms, grouped by form
+        :return: {form: (wordforms, ...), ...}
+        """
         all_forms = {SyntCatsInLanguage.main_gr_cat_set(self.syntactic_category, self.language): self.mainform_full}
         all_forms.update(self.oblique_forms)
         return all_forms
@@ -290,31 +368,6 @@ class LexemeEntry(LanguageEntity):
         return self.Parser.split_sources()
 
     @lazy
-    def wordform_spellings(self):
-        wordform_objects = []
-        wordforms = self.all_forms
-        for form in wordforms:
-            try:
-                gramm_cat_set = GrammCategorySet.get_gr_cat_set_by_abbr(form)
-            except ObjectDoesNotExist:
-                # TODO Add an error to an errorlist
-                pass
-            for wordform in wordforms[form]:
-                dialects = []
-                for dialect in wordform:
-                    try:
-                        dialects.append(Dialect.objects.get(term_abbr=dialect, language=self.language))
-                    except ObjectDoesNotExist:
-                        # TODO Add an error to an errorlist
-                        pass
-                for spelling in wordform['spellings']:
-                    wf_spell = WordformSpelling(spelling=spelling, writing_system=None,
-                                                gramm_category_set=gramm_cat_set, lexeme_entry=self)
-                    wf_spell.dialects.add(*dialects)
-        # TODO Return a list of wordforms or an errorlist
-        return wordform_objects
-
-    @lazy
     def view_url(self):
         return self.get_absolute_url()
 
@@ -328,5 +381,8 @@ class WordformSpelling(models.Model):
     spelling = models.CharField(max_length=512, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True, editable=False)
     dialects = models.ManyToManyField(Dialect, blank=True, editable=False)
-    comment = models.TextField(blank=True, editable=False)
     writing_system = models.ForeignKey(WritingSystem, editable=False)
+
+    def __str__(self):
+        return 'Entry {0}. {1} : {2}, {3} ({4})'.format(self.lexeme_entry, self.spelling, self.gramm_category_set,
+                                                        self.dialects, self.writing_system)
