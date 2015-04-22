@@ -7,6 +7,15 @@ from django.contrib.auth.models import User
 import slugify
 from lazy import lazy
 
+RE_DIALECT = re.compile(r'<(.*?)>')
+RE_FORM = re.compile(r'\{(.*?)\}')
+RE_COMMENT = re.compile(r'"""(.*?)"""')
+RE_GROUP_COMMENT = re.compile(r'^"""(.*?)"""')
+RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
+RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
+RE_EXAMPLE = re.compile(r'>>(.*?)', re.M)
+RE_DISAMBIG = re.compile(r'\((.*?)\)')
+
 # Concrete dictionary classes
 
 
@@ -109,7 +118,7 @@ class LexemeEnrtyParser():
             examples.append(pre_split.pop().strip())
             pre_split.pop()
         # TODO Check that the first element is not empty
-        comm_split = RE_COMMENT_NEW.split(pre_split.pop().strip(), 1)
+        comm_split = RE_COMMENT.split(pre_split.pop().strip(), 1)
         if len(comm_split) > 1:
             # TODO Check that the last element is not empty
             comment = comm_split[1].strip()
@@ -137,9 +146,14 @@ class LexemeEnrtyParser():
         :return: [{'comment': comment, 'dialects': dialects, 'translations': translations}, ...]
         """
         semanitc_groups = RE_SEM_GR.split(language_group)
+        print(semanitc_groups)
         translation_entries = []
-        # TODO Check that the first element is empty
-        for semanitc_group in semanitc_groups[1:]:
+        if len(semanitc_groups) == 1:
+            start = 0
+        else:
+            start = 1
+            # First element must be empty
+        for semanitc_group in semanitc_groups[start:]:
             sem_gr_spl = RE_DIALECT.split(semanitc_group.strip())
             comm_transl = RE_GROUP_COMMENT.split(sem_gr_spl.pop().strip(), 1)
             translations = tuple(self._split_transl_entry(translation)
@@ -153,12 +167,12 @@ class LexemeEnrtyParser():
             while len(sem_gr_spl) > 1:
                 # TODO Check if there are only empty elements between dialect marks
                 # TODO Add support to place comment in front of dialects list
-                dialects.append(self.get_dialect(sem_gr_spl.pop().strip(), language))
+                dialects.append(self.get_dialect(sem_gr_spl.pop().strip(), self.lexeme_entry.language))
                 sem_gr_spl.pop()
 
-            # TODO Add semantic group order
             translation_entries.append({'comment': comment, 'dialects': dialects,
                                         'translations': translations})
+            # TODO Add semantic group order
         return translation_entries
 
     # Main splitters
@@ -177,7 +191,7 @@ class LexemeEnrtyParser():
             form_object = self.get_form(forms_split[i].strip(), self.lexeme_entry.language)
             oblique_forms[form_object] = self._split_wf(forms_split[i+1].strip())
         # TODO Check that the first element is not empty
-        main_comment = RE_COMMENT_NEW.split(forms_split[0].strip(), 1)
+        main_comment = RE_COMMENT.split(forms_split[0].strip(), 1)
 
         if len(main_comment) == 3:
             # TODO Check that the last element is empty

@@ -1,19 +1,19 @@
 ﻿--FORMS
-/WF_MAIN_WS/=/WF_ALT_WS/, /WF_MAIN_WS/=/WF_ALT_WS/ <DIALECT>
-"""COMMENT"""
-{FORM1}/WF_MAIN_WS/=/WF_ALT_WS/
-{FORM2}/WF_MAIN_WS/
+/wf_Main_WS/=/wf_Alt_WS/, /wf_Main_WS/=/wf_Alt_WS/ <dialect>
+"""Comment"""
+{FORM1}/wf_Main_WS/=/wf_Alt_WS/
+{FORM2}/wf_Main_WS/
 
 --RELATIONS
-REL_TYPE:REL_DEST+REL_DEST2
+REL_TYPE:Rel_dest+Rel_dest2
 
 --TRANSLATIONS
-1. """COMMENT"""
-{LANG1} TRANSLATION; TRANSLATION
-{LANG2} $:TRANSLATION (DISAMBIG)
-2. <DIALECT>
-{LANGX} TRANSLATION """COMMENT"""
->> EXAMPLE
+1. """Comment"""
+{lang1} translaton; translation
+{lang2} $:translation (1)
+2. <dialect>
+{langX} translation """Comment"""
+>> Example
 
 --SOURCES
-SOURCE:ENTRY ; SOURCE2:ENTRY2
+Source:Entry ; Source2:Entry2

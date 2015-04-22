@@ -7,6 +7,7 @@ from django.views.generic import UpdateView, CreateView, DetailView, ListView
 def index(requst):
     return redirect('wordengine:list_lexeme_entry')
 
+
 class LexemeEntryFilterMixIn():
 
     def get_queryset(self):

@@ -57,19 +57,8 @@ RELATION_TYPES = {
 
 # Common regexps
 
-RE_EXT_COMM = re.compile(r'(\*\d+)')
-RE_PARAM = re.compile(r'(\[.*?\])')
-RE_COMMENT = re.compile(r'(\".*?\")')
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
-RE_DIALECT = re.compile(r'<(.*?)>')
-RE_FORM = re.compile(r'\{(.*?)\}')
-RE_COMMENT_NEW = re.compile(r'"""(.*?)"""')
-RE_GROUP_COMMENT = re.compile(r'^"""(.*?)"""')
-RE_SEM_GR = re.compile(r'^[\d\*]\.', re.M)
-RE_TRANSL = re.compile(r'^{(.*?)}', re.M)
-RE_EXAMPLE = re.compile(r'>>(.*?)', re.M)
-RE_DISAMBIG = re.compile(r'\((.*?)\)')
 
 # Errors
 class WordcontrolException(Exception):

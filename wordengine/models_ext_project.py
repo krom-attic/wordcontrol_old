@@ -7,6 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import datetime
 
+RE_EXT_COMM = re.compile(r'(\*\d+)')
+RE_PARAM = re.compile(r'(\[.*?\])')
+RE_COMMENT = re.compile(r'(\".*?\")')
 
 class ProjectError(Exception):
     """
