@@ -7,7 +7,9 @@ from wordengine import models
 @receiver(post_save, sender=models.LexemeEntry)
 def lexeme_entry_pre_save(sender, **kwargs):
     lexeme_entry = kwargs['instance']
-    if lexeme_entry.need_spelling_update:
-        lexeme_entry.generate_wordform_spellings()
+    if lexeme_entry.unsaved_wordform_spellings:
+        for spelling in lexeme_entry.unsaved_wordform_spellings:
+            spelling.save()
+            spelling.dialects.add(*spelling.dialects_list)
     if lexeme_entry.need_translations_update:
         lexeme_entry.generate_translations()

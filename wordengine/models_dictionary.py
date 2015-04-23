@@ -109,8 +109,9 @@ class LexemeEnrtyParser():
     def _split_transl_entry(transl_entry):
         """
 
-        :param transl_entry:
-        :return: {'word': word, 'comment': comment, 'examples': examples, 'is_reverse': is_reverse}
+        :param transl_entry: $:translation (1) "" "Comment" "" \r\n >> Example
+        :return: {'word': word, 'disambig': disambig, 'comment': comment, 'examples': examples,
+                  'is_reverse': is_reverse}
         """
         examples = []
         pre_split = RE_EXAMPLE.split(transl_entry.strip())
@@ -146,7 +147,6 @@ class LexemeEnrtyParser():
         :return: [{'comment': comment, 'dialects': dialects, 'translations': translations}, ...]
         """
         semanitc_groups = RE_SEM_GR.split(language_group)
-        print(semanitc_groups)
         translation_entries = []
         if len(semanitc_groups) == 1:
             start = 0
@@ -252,8 +252,7 @@ class LexemeEntry(LanguageEntity):
         super().__init__(*args, **kwargs)
         self.Parser = LexemeEnrtyParser(self)
         self.old_version = None
-        self.need_spelling_update = False
-        self.need_translations_update = False
+        self.unsaved_wordform_spellings = []
 
     def get_absolute_url(self):
         if self.disambig:
@@ -290,7 +289,7 @@ class LexemeEntry(LanguageEntity):
                     self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
 
             # Update corresponding wordform spelling objects
-            self.need_spelling_update = True
+            self.unsaved_wordform_spellings = self.generate_wordform_spellings()
 
         if self.disambig:
             self.disambig_part = '({})'.format(self.disambig)
@@ -301,69 +300,112 @@ class LexemeEntry(LanguageEntity):
             pass
 
         if self.new_or_changed('translations_text') and not saving_reverse:
-            self.need_translations_update = True
+            # Get to lists: added translations and deleted translations
+            import itertools
+            deleted_translations = list(itertools.filterfalse(lambda x: x in self.flat_translations,
+                                                              self.old_version.flat_translations))
+            added_translations = list(itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
+                                                            self.flat_translations))
+            print(added_translations)
+            self.remove_translations(deleted_translations)
 
         if self.new_or_changed('sources_text'):
             pass
 
         return super().save(*args, **kwargs)
 
+    def remove_translations(self, deleted_translations):
+        for translation in deleted_translations:
+            try:
+                target = LexemeEntry.objects.get(**translation)
+            except MultipleObjectsReturned as e:
+                # TODO: Need custom logic if disambiguation required
+                raise e
+            except ObjectDoesNotExist:
+                # TODO: Do something (it should not happen normally)
+                pass
+            else:
+                pass
+
+    def generate_translations(self):
+        # for each translation
+        for translation in self.flat_translations:
+            try:
+                target = LexemeEntry.objects.get(**translation)
+            except MultipleObjectsReturned as e:
+                # TODO: Need custom logic if disambiguation required
+                raise e
+            except ObjectDoesNotExist:
+                target = LexemeEntry()
+                target.language = translation['language']
+                target.dictionary = self.dictionary
+                target.reverse_generated = True
+                target.syntactic_category = self.syntactic_category
+                target.forms_text = translation['word']
+                target.translations_text = '{{{0}}}\r\n1. $:{1}{2}'.format(self.language.iso_code, self.slug,
+                                                                           self.disambig_part)
+            else:
+                reverse_found = False
+                language_group = target.translations.get(self.language)
+                if language_group:
+                    for target_sg in language_group:
+                        for target_transl in target_sg['translations']:
+                            if target_transl['word'] == self.slug and \
+                               target_transl['disambig'] == self.disambig:
+                                reverse_found = True
+                else:
+                    target.translations_text += '\r\n{{{}}}'.format(self.language.iso_code)
+                if not reverse_found:
+                    target.translations_text += '\r\n*. $:{0}{1}'.format(self.slug, self.disambig_part)
+            target.save(reverse=True)
+        # if translations exists, check if the other end has a reference
+        # else add a reference
+
+    @lazy
+    def flat_translations(self):
+        translations = self.translations
+        flat_translations = []
+        for language in translations:
+            for semantic_group in translations[language]:
+                for translation in semantic_group['translations']:
+                    flat_translation = {
+                        'slug': translation['word'],
+                        'language': language,
+                    }
+                    if translation['disambig']:
+                        flat_translation['disambig'] = translation['disambig']
+                    flat_translations.append(flat_translation)
+        return flat_translations
+
+    def serialize_translations(self):
+        translations = self.translations
+        for language in translations:
+            for semantic_group in translations[language]:
+                for translation in semantic_group['translations']:
+                    if translation['is_reverse']:
+                        tr_start = '$:'
+                    else:
+                        tr_start = ''
+                    if translation['examples']:
+                        tr_next_line = '\r\n'
+                    else:
+                        tr_next_line = ''
+                    translation_str = '{0}{1} {2} {3}{4}>> {5}'.format(tr_start, translation['word'],
+                                                                       translation['disambig'], translation['comment'],
+                                                                       tr_next_line, translation['examples'])
+
+
     def generate_wordform_spellings(self):
         WordformSpelling.objects.filter(lexeme_entry=self).delete()
-        wordform_objects = []
+        wordform_spellings = []
         wordforms = self.all_forms
         for form in wordforms:
             for wordform in wordforms[form]:
                 for num, spelling in enumerate(wordform['spellings']):
                     wf_spell = WordformSpelling(lexeme_entry=self, spelling=spelling, gramm_category_set=form,
                                                 writing_system=self.dictionary.get_ws(num))
-                    wf_spell.save()
-                    wf_spell.dialects.add(*wordform['dialects'])
-                    wordform_objects.append(wf_spell)
-        return None
-
-    def generate_translations(self):
-        # for each translation
-        translations = self.translations
-        for language in translations:
-            for semantic_group in translations[language]:
-                for translation in semantic_group['translations']:
-                    filter_params = {
-                        'slug': translation['word'],
-                        'language': language,
-                    }
-                    if translation['disambig']:
-                        filter_params['disambig'] = translation['disambig']
-                    try:
-                        target = LexemeEntry.objects.get(**filter_params)
-                    except MultipleObjectsReturned as e:
-                        # TODO: Need custom logic if disambiguation required
-                        raise e
-                    except ObjectDoesNotExist:
-                        target = LexemeEntry()
-                        target.language = language
-                        target.dictionary = self.dictionary
-                        target.reverse_generated = True
-                        target.syntactic_category = self.syntactic_category
-                        target.forms_text = translation['word']
-                        target.translations_text = '{{{0}}}\r\n1. $:{1}{2}'.format(self.language.iso_code, self.slug,
-                                                                                   self.disambig_part)
-                    else:
-                        reverse_found = False
-                        language_group = target.translations.get(self.language)
-                        if language_group:
-                            for target_sg in language_group:
-                                for target_transl in target_sg['translations']:
-                                    if target_transl['word'] == self.slug and \
-                                       target_transl['disambig'] == self.disambig:
-                                        reverse_found = True
-                        else:
-                            target.translations_text += '\r\n{{{}}}'.format(self.language.iso_code)
-                        if not reverse_found:
-                            target.translations_text += '\r\n*. $:{0}{1}'.format(self.slug, self.disambig_part)
-                    target.save(reverse=True)
-        # if translations exists, check if the other end has a reference
-        # else add a reference
+                    wf_spell.dialects_list = wordform['dialects']
+        return wordform_spellings
 
     def __str__(self):
         return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
