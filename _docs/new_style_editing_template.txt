@@ -8,11 +8,14 @@
 REL_TYPE:Rel_dest+Rel_dest2
 
 --TRANSLATIONS
-1. """Comment"""
-{lang1} translaton; translation
-{lang2} $:translation (1)
+{lang1}
+1. <dialect> """Comment"""
+translaton; translation
+2.
+$:translation (1)
+{lang2}
 2. <dialect>
-{langX} translation """Comment"""
+translation """Comment"""
 >> Example
 
 --SOURCES

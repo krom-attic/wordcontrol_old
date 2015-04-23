@@ -167,7 +167,7 @@ class LexemeEnrtyParser():
             while len(sem_gr_spl) > 1:
                 # TODO Check if there are only empty elements between dialect marks
                 # TODO Add support to place comment in front of dialects list
-                dialects.append(self.get_dialect(sem_gr_spl.pop().strip(), self.lexeme_entry.language))
+                dialects.append(self.get_dialect(sem_gr_spl.pop().strip(), language))
                 sem_gr_spl.pop()
 
             translation_entries.append({'comment': comment, 'dialects': dialects,
@@ -302,17 +302,24 @@ class LexemeEntry(LanguageEntity):
         if self.new_or_changed('translations_text') and not saving_reverse:
             # Get to lists: added translations and deleted translations
             import itertools
-            deleted_translations = list(itertools.filterfalse(lambda x: x in self.flat_translations,
-                                                              self.old_version.flat_translations))
-            added_translations = list(itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
-                                                            self.flat_translations))
-            print(added_translations)
-            self.remove_translations(deleted_translations)
+            # deleted_translations = list(itertools.filterfalse(lambda x: x in self.flat_translations,
+            #                                                   self.old_version.flat_translations))
+            # added_translations = list(itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
+            #                                                 self.flat_translations))
+            # print(added_translations)
+            # self.remove_translations(deleted_translations)
+            new_translations = self.modify_translations()
+            self.serialize_translations(new_translations)
+            return None
 
         if self.new_or_changed('sources_text'):
             pass
 
         return super().save(*args, **kwargs)
+
+    def modify_translations(self):
+        new_translations = self.translations
+        return new_translations
 
     def remove_translations(self, deleted_translations):
         for translation in deleted_translations:
@@ -377,22 +384,38 @@ class LexemeEntry(LanguageEntity):
                     flat_translations.append(flat_translation)
         return flat_translations
 
-    def serialize_translations(self):
-        translations = self.translations
-        for language in translations:
-            for semantic_group in translations[language]:
+    def serialize_translations(self, translations):
+        translation_parts = []
+        for language in sorted(translations, key=lambda lang: lang.iso_code):
+            translation_parts.append('{{{}}}'.format(language.iso_code))
+            for sg_num, semantic_group in enumerate(translations[language]):
+                dialects = ' '.join(['<{}>'.format(dialect.term_abbr) for dialect in semantic_group['dialects']])
+                if semantic_group['comment']:
+                    group_comment = ' """{}"""'.format(semantic_group['comment'])
+                else:
+                    group_comment = ''
+                translation_parts.append('{0}. {1}{2}'.format(sg_num+1, dialects, group_comment))
+                translation_targets = []
                 for translation in semantic_group['translations']:
                     if translation['is_reverse']:
-                        tr_start = '$:'
+                        tr_main = '$:{}'.format(translation['word'])
                     else:
-                        tr_start = ''
+                        tr_main = translation['word']
+                    if translation['disambig']:
+                        disambig = ' ({})'.format(translation['disambig'])
+                    else:
+                        disambig = ''
+                    if translation['comment']:
+                        comment = ' """{}"""'.format(translation['comment'])
+                    else:
+                        comment = ''
                     if translation['examples']:
-                        tr_next_line = '\r\n'
+                        examples = '\r\n>>' + '\r\n>> '.join(translation['examples'])
                     else:
-                        tr_next_line = ''
-                    translation_str = '{0}{1} {2} {3}{4}>> {5}'.format(tr_start, translation['word'],
-                                                                       translation['disambig'], translation['comment'],
-                                                                       tr_next_line, translation['examples'])
+                        examples = ''
+                    translation_targets.append('{0}{1}{2}{3}'.format(tr_main, disambig, comment, examples))
+                translation_parts.append('; '.join(translation_targets))
+        print('\r\n'.join(translation_parts))
 
 
     def generate_wordform_spellings(self):
