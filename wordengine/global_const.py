@@ -55,6 +55,8 @@ RELATION_TYPES = {
     'phr': 'Phrase'
 }
 
+TRANSLATION_MARKS = {'$:': 'reverse', '!:': 'deleted'}
+
 # Common regexps
 
 RE_REST_LIST = re.compile(r'\[.*\]')

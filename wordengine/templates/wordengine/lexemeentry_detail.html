@@ -53,13 +53,13 @@
         <ol>{% for semantic_group in semantic_groups %}
             <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect.term_full }})</em>:{% endfor %}
             {% for translation in semantic_group.translations %}
-                {% if translation.disambig %}
-                <a href="{% url 'wordengine:view_lexeme_entry' language.iso_code translation.word translation.disambig %}">
+                <a href="{% if translation.disambig %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.word translation.disambig %}
                 {% else %}
-                <a href="{% url 'wordengine:view_lexeme_entry' language.iso_code translation.word %}">
-                {% endif %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.word %}
+                {% endif %}">
                 {{ translation.word }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
-                {% if translation.is_reverse %}<sup>[reverse]</sup>{% endif %},
+                {% if translation.state == 'reverse' %}<sup>[reverse]</sup>{% endif %},
                 {% if translation.examples %}{% for example in translation.examples %}<br /><em>{{ example }}</em>{% endfor %}{% endif %}
             {% endfor %}
             </li>

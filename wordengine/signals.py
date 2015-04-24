@@ -9,7 +9,6 @@ def lexeme_entry_post_save(sender, **kwargs):
     lexeme_entry = kwargs['instance']
     if lexeme_entry.unsaved_wordform_spellings:
         for spelling in lexeme_entry.unsaved_wordform_spellings:
+            spelling.lexeme_entry = lexeme_entry
             spelling.save()
             spelling.dialects.add(*spelling.dialects_list)
-    # if lexeme_entry.need_translations_update:
-    #     lexeme_entry.generate_translations()
