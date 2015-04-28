@@ -38,10 +38,6 @@ class LexemeEntryDetailView(LexemeEntryFilterMixIn, DetailView):
 
     def get(self, request, *args, **kwargs):
         try:
-            if 'slug' in self.kwargs:
-                self.kwargs['slug'] = self.kwargs['slug'].lower()
-            if 'slug' in kwargs:
-                kwargs['slug'] = kwargs['slug'].lower()
             return super().get(request, *args, **kwargs)
         except MultipleObjectsReturned:
             return redirect('wordengine:disambig_lexeme_entry', *args, **kwargs)

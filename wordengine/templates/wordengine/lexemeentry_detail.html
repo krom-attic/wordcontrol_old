@@ -41,7 +41,7 @@
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
         {{ rel_type }}:
         {% for rel_dest in rel_dests %}
-            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest %}">{{ rel_dest }}</a>
+            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest.slug %}">{{ rel_dest.mainform }}</a>
             {% if not forloop.last %}+{% endif %}
         {% endfor %}
     {% endfor %}
@@ -54,12 +54,14 @@
             <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect.term_full }})</em>:{% endfor %}
             {% for translation in semantic_group.translations %}
                 <a href="{% if translation.disambig %}
-                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.word translation.disambig %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.slug translation.disambig %}
                 {% else %}
-                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.word %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.slug %}
                 {% endif %}">
-                {{ translation.word }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
-                {% if translation.state == 'reverse' %}<sup>[reverse]</sup>{% endif %},
+                {{ translation.mainform }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
+                {% if translation.state == 'reverse' %}<sup>[reverse]</sup>{% endif %}
+                {% if translation.state == 'deleted' %}<sup>[deleted]</sup>{% endif %}
+                ;
                 {% if translation.examples %}{% for example in translation.examples %}<br /><em>{{ example }}</em>{% endfor %}{% endif %}
             {% endfor %}
             </li>

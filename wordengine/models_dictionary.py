@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.contrib.auth.models import User
 
+import itertools
 import slugify
 from lazy import lazy
 
@@ -17,6 +18,9 @@ RE_EXAMPLE = re.compile(r'>>(.*?)', re.M)
 RE_DISAMBIG = re.compile(r'\((.*?)\)')
 
 # Concrete dictionary classes
+
+from collections import namedtuple
+Relation = namedtuple('Relation', ['mainform', 'slug'])
 
 
 class Dictionary(models.Model):
@@ -92,7 +96,7 @@ class LexemeEnrtyParser():
 
         wordforms = []
 
-        for wordform in wf_literal.split(','):
+        for wordform in wf_literal.split(';'):
             dialects = []
             wf_dialect = RE_DIALECT.split(wordform.strip())
             # TODO Check that the first element is not empty
@@ -110,8 +114,8 @@ class LexemeEnrtyParser():
         """
 
         :param transl_entry: $:translation (1) "" "Comment" "" \r\n >> Example
-        :return: {'word': word, 'disambig': disambig, 'comment': comment, 'examples': examples,
-                  'state': state}
+        :return: {'mainform': mainform, 'disambig': disambig, 'comment': comment, 'examples': examples, 'state': state,
+                  'slug': slug}
         """
         examples = []
         pre_split = RE_EXAMPLE.split(transl_entry.strip())
@@ -133,10 +137,12 @@ class LexemeEnrtyParser():
             disambig = ''
         state = TRANSLATION_MARKS.get(word_split[0][:2], '')
         if state:
-            word = word_split[0][2:].strip()
+            mainform = word_split[0][2:].strip()
         else:
-            word = word_split[0].strip()
-        return {'word': word, 'disambig': disambig, 'comment': comment, 'examples': examples, 'state': state}
+            mainform = word_split[0].strip()
+        slug = slugify.slugify(mainform, spaces=True, lower=False)
+        return {'mainform': mainform, 'disambig': disambig, 'comment': comment, 'examples': examples, 'state': state,
+                'slug': slug}
 
     def _split_semantic_groups(self, language_group, language):
         """
@@ -201,11 +207,17 @@ class LexemeEnrtyParser():
         return {'main': main_form, 'comment': comment, 'oblique': oblique_forms}
 
     def split_relations(self):
+        """
+
+        :return: {rel_type: [(mainform=rel_dest, slug=rel_dest_slug), ...]
+        """
+
         relations_text = self.lexeme_entry.relations_text.strip()
         if not relations_text:
             return {}
         relations = relations_text.split(':', 1)
-        rel_dests = tuple(rel.strip() for rel in relations.pop().split('+'))
+        rel_dests = [Relation(rel.strip(), slugify.slugify(rel.strip(), spaces=True, lower=False))
+                     for rel in relations.pop().split('+')]
         rel_type = RELATION_TYPES[relations.pop().lower()]
         return {rel_type: rel_dests}
 
@@ -233,7 +245,7 @@ class LexemeEnrtyParser():
         return ({'source': source[0].strip(), 'entry': source[1].strip()} for source in sources)
 
 
-class LexemeEntry(LanguageEntity):
+class LexemeEntry(LanguageEntity, Timestampable):
     """
     New style lexeme class
     """
@@ -246,6 +258,7 @@ class LexemeEntry(LanguageEntity):
     sources_text = models.TextField(blank=True)
     slug = models.SlugField(max_length=128)
     disambig = models.CharField(max_length=64, default='')
+    mainform = models.CharField(max_length=128)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -274,8 +287,9 @@ class LexemeEntry(LanguageEntity):
 
         # Compare field by field
         if self.new_or_changed('forms_text'):
-            # Update slug and disambig
-            self.slug = slugify.slugify(self.mainform_caption, spaces=True, lower=False)
+            # Update mainform, slug and disambig
+            self.mainform = self.mainform_caption
+            self.slug = slugify.slugify(self.mainform, spaces=True, lower=False)
             if self.new_or_changed('slug'):
                 # Check if disambiguation is needed and if it is, use plain numbering
                 existant_entries = LexemeEntry.objects.filter(slug=self.slug, language=self.language)
@@ -286,6 +300,9 @@ class LexemeEntry(LanguageEntity):
                     self.disambig = '2'
                 elif existant_entries.count() > 1:
                     self.disambig = int(existant_entries.aggregate(models.Max('disambig'))['disambig__max']) + 1
+
+            if self.pk:
+                self.update_translations()
 
             # Update corresponding wordform spelling objects
             self.unsaved_wordform_spellings = self.generate_wordform_spellings()
@@ -299,35 +316,61 @@ class LexemeEntry(LanguageEntity):
             pass
 
         if self.new_or_changed('translations_text') and not saving_reverse:
-            # Get to lists: added translations and deleted translations
-            import itertools
-            deleted_translations = itertools.filterfalse(lambda x: x in self.flat_translations,
-                                                         self.old_version.flat_translations)
-            added_translations = list(itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
-                                                            self.flat_translations))
+            # Get lists of added translations and deleted translations
+            if self.pk:
+                deleted_translations = itertools.filterfalse(lambda x: x in self.flat_translations,
+                                                             self.old_version.flat_translations)
+                added_translations = itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
+                                                           self.flat_translations)
+            else:
+                deleted_translations = []
+                added_translations = self.flat_translations
 
             self.remove_translations(deleted_translations)
             self.add_translations(added_translations)
-
-            # new_translations = self.modify_translations()
-            # self.serialize_translations(new_translations)
-            # return None
 
         if self.new_or_changed('sources_text'):
             pass
 
         return super().save(*args, **kwargs)
 
-    def modify_translations(self):
-        new_translations = self.translations
-        return new_translations
+    def update_translations(self):
+        """
+        Updates references to self
+        Works with the OLD properties of the lexeme entry (will search for a old slug and disambig)
+        :return:
+        """
+        for translation in self.flat_translations:
+            try:
+                target = LexemeEntry.objects.get(**translation)
+            except MultipleObjectsReturned as e:
+                # TODO: Need custom logic if disambiguation required? Is it possible?
+                raise e
+            except ObjectDoesNotExist as e:
+                # TODO: Do something (it should not happen normally)
+                raise e
+            else:
+                new_target_translations = target.translations
+                for semantic_group in new_target_translations[self.old_version.language]:
+                    for target_translation in semantic_group['translations']:
+                        if target_translation['mainform'] == self.old_version.mainform \
+                                and target_translation['disambig'] == self.old_version.disambig:
+                            target_translation['mainform'] = self.mainform
+                            target_translation['disambig'] = self.disambig
+            target.translations_text = target.serialize_translations(new_target_translations)
+            target.save(reverse=True)
 
     def add_translations(self, added_translations):
-        print(added_translations)
+        """
+        Adds self as a translation to a every word in added_translations list
+        Works with the NEW properties of the lexeme entry (will search for a new slug and disambig)
+        :param added_translations:
+        :return:
+        """
         for translation in added_translations:
             translation_to_add = {'comment': '',
                                   'dialects': [],
-                                  'translations': [{'word': self.slug,
+                                  'translations': [{'mainform': self.mainform,
                                                     'disambig': self.disambig_part,
                                                     'comment': '',
                                                     'examples': [],
@@ -336,7 +379,7 @@ class LexemeEntry(LanguageEntity):
             try:
                 target = LexemeEntry.objects.get(**translation)
             except MultipleObjectsReturned as e:
-                # TODO: Need custom logic if disambiguation required
+                # TODO: Need custom logic if disambiguation required? Is it possible?
                 raise e
             except ObjectDoesNotExist:
                 target = LexemeEntry()
@@ -344,7 +387,7 @@ class LexemeEntry(LanguageEntity):
                 target.dictionary = self.dictionary
                 target.reverse_generated = True
                 target.syntactic_category = self.syntactic_category
-                target.forms_text = translation['slug']
+                target.forms_text = translation['mainform']
                 new_target_translations = {self.language: [translation_to_add]}
             else:
                 new_target_translations = target.translations
@@ -353,6 +396,12 @@ class LexemeEntry(LanguageEntity):
             target.save(reverse=True)
 
     def remove_translations(self, deleted_translations):
+        """
+        Removes self as a translation from every word in deleted_translations list
+        Works with the NEW properties of the lexeme entry (will search for a new slug and disambig)
+        :param deleted_translations:
+        :return:
+        """
         for translation in deleted_translations:
             try:
                 target = LexemeEntry.objects.get(**translation)
@@ -364,14 +413,20 @@ class LexemeEntry(LanguageEntity):
                 raise e
             else:
                 new_target_translations = target.translations
-                for semantic_group in new_target_translations[self.language]:
+                for semantic_group in new_target_translations[self.language][:]:
                     for target_translation in semantic_group['translations'][:]:
-                        if target_translation['word'] == self.slug and target_translation['disambig'] == self.disambig:
+                        if target_translation['mainform'] == self.mainform\
+                                and target_translation['disambig'] == self.disambig:
                             if target_translation['state'] == 'reverse':
                                 semantic_group['translations'].remove(target_translation)
+                                if not semantic_group['translations']:
+                                    new_target_translations[self.language].remove(semantic_group)
                             else:
                                 target_translation['state'] = 'deleted'
-            target.serialize_translations(new_target_translations)
+                if not new_target_translations[self.language]:
+                    del new_target_translations[self.language]
+            target.translations_text = target.serialize_translations(new_target_translations)
+            target.save(reverse=True)
 
     @lazy
     def flat_translations(self):
@@ -380,7 +435,7 @@ class LexemeEntry(LanguageEntity):
             for semantic_group in self.translations[language]:
                 translations.extend([{
                     'language': language,
-                    'slug': translation['word'],
+                    'mainform': translation['mainform'],
                     'disambig': translation['disambig'],
                 } for translation in semantic_group['translations']])
         return translations
@@ -416,11 +471,10 @@ class LexemeEntry(LanguageEntity):
                         examples = '\r\n>>' + '\r\n>> '.join(translation['examples'])
                     else:
                         examples = ''
-                    translation_targets.append('{0}{1}{2}{3}{4}'.format(tr_mark, translation['word'], disambig, comment,
-                                                                        examples))
+                    translation_targets.append('{0}{1}{2}{3}{4}'.format(tr_mark, translation['mainform'], disambig,
+                                                                        comment, examples))
                 translation_parts.append('; '.join(translation_targets))
         return '\r\n'.join(translation_parts)
-
 
     def generate_wordform_spellings(self):
         WordformSpelling.objects.filter(lexeme_entry=self).delete()
@@ -435,7 +489,7 @@ class LexemeEntry(LanguageEntity):
         return wordform_spellings
 
     def __str__(self):
-        return ' | '.join(str(s) for s in [self.mainform_caption,  self.language, self.syntactic_category])
+        return ' | '.join(str(s) for s in [self.mainform,  self.language, self.syntactic_category])
 
     @lazy
     def all_forms(self):

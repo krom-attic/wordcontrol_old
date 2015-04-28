@@ -1,5 +1,5 @@
 ﻿--FORMS
-/wf_Main_WS/=/wf_Alt_WS/, /wf_Main_WS/=/wf_Alt_WS/ <dialect>
+/wf_Main_WS/=/wf_Alt_WS/; /wf_Main_WS/=/wf_Alt_WS/ <dialect>
 """Comment"""
 {FORM1}/wf_Main_WS/=/wf_Alt_WS/
 {FORM2}/wf_Main_WS/
