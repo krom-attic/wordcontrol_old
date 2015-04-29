@@ -1,7 +1,9 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}Add a word{% endblock %}
 {% block pagebody %}
-    <h1>Word entries</h1>
+<div class="page-header">
+  <h1>Word entries</h1>
+</div>
         <ul>
         {% for entry in lexemeentry_list %}
         <li><a href = "{{ entry.get_absolute_url }}">{{ entry }}</a></li>

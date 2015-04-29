@@ -1,11 +1,29 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} a word{% endblock %}
 {% block pagebody %}
-    <h1>{% if form.instance.pk %}Edit a{% else %}Add a new{% endif %} word entry</h1>
-        <form action="" method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <input type="submit" value="{% if form.instance.pk %}Save{% else %}Add{% endif %}" />
-        </form>
+<div class="page-header">
+  <h1>{% if form.instance.pk %}Edit a{% else %}Add a new{% endif %} word entry</h1>
+</div>
+
+<div class="col-sm-6">
+  <form class="form-horizontal" action="" method="post">
+    <div class="form-group">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" class="btn btn-primary" value="{% if form.instance.pk %}Save{% else %}Add{% endif %}" />
+    </div>
+  </form>
+</div>
+<div class="col-sm-6">
+  <h2>Entry format</h2>
+  <h3>Forms</h3>
+  <p>[Forms help]</p>
+  <pre>/wf_Main_WS/=/wf_Alt_WS/; /wf_Main_WS/=/wf_Alt_WS/ &lt;dialect&gt;
+"""Comment"""
+{FORM1}/wf_Main_WS/=/wf_Alt_WS/
+{FORM2}/wf_Main_WS/</pre>
+  <h4>Available form abbreviations</h4>
+  <p>[Forms abbreviations]</p>
+</div>
 
 {% endblock %}
