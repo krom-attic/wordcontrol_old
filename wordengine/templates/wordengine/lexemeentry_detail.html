@@ -1,7 +1,9 @@
 {% extends "wordengine/base.html" %}
 {% block pagetitle %}{{ lexemeentry }}{% endblock %}
 {% block pagebody %}
-    <h1>{{ lexemeentry.mainform_caption }}</h1>
+<div class="page-header">
+  <h1>{{ lexemeentry.mainform_caption }}</h1>
+</div>
     <p><a href="{{ lexemeentry.edit_url }}">edit</a></p>
     <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
     <p>
