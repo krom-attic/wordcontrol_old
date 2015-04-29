@@ -1,0 +1,85 @@
+{% extends "wordengine/base.html" %}
+{% block pagetitle %}{{ lexemeentry }}{% endblock %}
+{% block pagebody %}
+    <h1>{{ lexemeentry.mainform_caption }}</h1>
+    <p><a href="{{ lexemeentry.edit_url }}">edit</a></p>
+    <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
+    <p>
+    {% for wordform in lexemeentry.mainform_full %}
+        {% for wf_ws in wordform.spellings %}
+            {% if forloop.counter == 2 %}({% endif %}
+            {{ wf_ws }}
+            {% if forloop.counter > 1 and forloop.last %}){% endif %}
+        {% endfor %}
+        {% for dialect in wordform.dialects %}
+            <em>({{ dialect.term_full }})</em>
+        {% endfor %}
+        {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    </p>
+    <p><em>{{ lexemeentry.comment|linebreaks }}</em></p>
+    <ul>
+    {% for form, wf_list in lexemeentry.oblique_forms.items %}
+        <li>
+        {{ form }}:
+        {% for wordform in wf_list %}
+            {% for wf_ws in wordform.spellings %}
+                {% if forloop.counter == 2 %}({% endif %}
+                {{ wf_ws }}
+                {% if forloop.counter > 1 and forloop.last %}){% endif %}
+            {% endfor %}
+            {% for dialect in wordform.dialects %}
+                <em>({{ dialect.term_full }})</em>
+            {% endfor %}
+            {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        </li>
+    {% endfor %}
+    </ul>
+
+    <p>
+    {% for rel_type, rel_dests in lexemeentry.relations.items %}
+        {{ rel_type }}:
+        {% for rel_dest in rel_dests %}
+            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest.slug %}">{{ rel_dest.mainform }}</a>
+            {% if not forloop.last %}+{% endif %}
+        {% endfor %}
+    {% endfor %}
+    </p>
+
+    <p>Translations:</p>
+    <ul>{% for language, semantic_groups in lexemeentry.translations.items %}
+        <li>{{ language }}:
+        <ol>{% for semantic_group in semantic_groups %}
+            <li>{{ semantic_group.comment }} {% for dialect in semantic_group.dialects %}<em>({{ dialect.term_full }})</em>:{% endfor %}
+            {% for translation in semantic_group.translations %}
+                <a href="{% if translation.disambig %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.slug translation.disambig %}
+                {% else %}
+                {% url 'wordengine:view_lexeme_entry' language.iso_code translation.slug %}
+                {% endif %}">
+                {{ translation.mainform }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
+                {% if translation.state == 'reverse' %}<sup>[reverse]</sup>{% endif %}
+                {% if translation.state == 'deleted' %}<sup>[deleted]</sup>{% endif %}
+                ;
+                {% if translation.examples %}{% for example in translation.examples %}<br /><em>{{ example }}</em>{% endfor %}{% endif %}
+            {% endfor %}
+            </li>
+            {% endfor %}
+        </ol>
+        </li>
+    {% endfor %}
+    </ul>
+
+    {% if lexemeentry.sources %}
+    <p>Sources:</p>
+    <ul>
+    {% for source in lexemeentry.sources %}
+        <li>
+            <a href="TODO SOURCES / {{ source.source }} / {{ source.entry }}">{{ source.entry }}</a>
+            <a href="TODO SOURCES / {{ source.source }}"><sup>[{{ source.source }}]</sup></a>
+        </li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+{% endblock %}

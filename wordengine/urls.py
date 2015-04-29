@@ -6,6 +6,20 @@ from wordengine import views
 urlpatterns = \
     patterns('',
              url(r'^$', views.index, name='index'),
+             url(r'^word/(?P<pk>\d+)/?$', views.LexemeEntryDetailView.as_view(), name='view_lexeme_entry'),
+             url(r'^word/(?P<pk>\d+)/edit/?$', views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/?$', views.LexemeEntryDetailView.as_view(),
+                 name='view_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/(?P<disambig>\d+)/?$',
+                 views.LexemeEntryDetailView.as_view(),
+                 name='view_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/edit/?$',
+                 views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
+             url(r'^words/?$', views.LexemeEntryListView.as_view(), name='list_lexeme_entry'),
+             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/\*/?$', views.LexemeEntryListView.as_view(),
+                 name='disambig_lexeme_entry'),
+
+            # LEGACY PATTERNS BELOW
              url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),  # Depricated?
              url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<spelling>\w*)$',
                  views.AddWordformView.as_view(), name='add_wordform_lexeme'),
@@ -28,5 +42,6 @@ urlpatterns = \
                  name='project_setup'),
              url(r'^view/projects/?$', views.ProjectListView.as_view(), name='view_projects'),
              # url(r'^update/project/(?P<pk>\d+)$', views.ProjectDictionaryUpdateView.as_view(),
-             #     name='project_dict_update')
+             #     name='project_dict_update'),
+             url(r'^add/?$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
              )

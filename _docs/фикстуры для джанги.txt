@@ -1,0 +1,15 @@
+в основные fixtures
+лучше через first_run.py?
+1. универсальный словарь
+
+в project fixtures
+dialect
+
+в test fixtures
+dictionary
+
+под вопросом
+auth_user
+
+
+остановился на dict_change

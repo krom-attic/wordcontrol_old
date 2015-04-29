@@ -1,17 +1,17 @@
+# V2 models classes (actual, USE IT)
+
+from wordengine.models_dictionary import *
+
+# Legacy Classes. DO NOT USE
+
 import string
 
-from django.db import models, transaction
-from django.contrib.auth.models import User
+from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
-
-from wordengine.commonworks import *
 
 
 # System globals. Abstract
-
 
 class Change(models.Model):
     """Abstract base class representing submitted change."""
@@ -30,13 +30,13 @@ class Change(models.Model):
 
 # System globals. Concrete
 
-
 class DictChange(Change):
     """This class extends Change class with fields representing change review and information source for
      Wordforms and Translations"""
 
     user_reviewer = models.ForeignKey(User, editable=False, null=True, blank=True)
     timestamp_review = models.DateTimeField(editable=False, null=True, blank=True)
+    # TODO Add source reference
 
 
 class FieldChange(Change):
@@ -82,34 +82,11 @@ class Settings(models.Model):
     pass
 
 
-# Global lists. Abstract
-
-
-class Term(models.Model):
-    """Abstract base class for all terms in dictionary."""
-
-    term_full = models.CharField(max_length=256)
-    term_abbr = models.CharField(max_length=64, blank=True)  # TODO May be it should be unique???
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.term_full
-
-    class Meta:
-        abstract = True
-
-
 # Global lists. Concrete
 
 
 class LexemeParameter(Term):
     """Temporary class for lexeme parameters"""
-
-    pass
-
-
-class SyntacticCategory(Term):
-    """Class represents syntactic category (used in lexemes) list"""
 
     pass
 
@@ -127,106 +104,13 @@ class Theme(Term):
     pass
 
 
-class GrammCategoryType(Term):
-    """Class represents types of grammatical categories"""
-
-    pass
-
-
-class GrammCategory(Term):
-    """Class represents values list for grammatical categories"""
-
-    gramm_category_type = models.ForeignKey(GrammCategoryType)
-    position = models.SmallIntegerField(null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.gramm_category_type)])
-
-
-class Language(Term):
-    """Class represents languages present in the system"""
-
-    syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
-                                                  through_fields=('language', 'syntactic_category'),
-                                                  null=True, blank=True, related_name='synt_cat_set')
-    iso_code = models.CharField(max_length=8)  # ISO 639-3
-
-    def get_main_gr_cat(self, synt_cat):
-        return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
-
-
-# Language-dependant classes. Abstract
-
-
-class LanguageEntity(models.Model):
-    """Abstract base class used to tie an entity to a language"""
-
-    language = models.ForeignKey(Language)
-
-    class Meta:
-        abstract = True
-
-
 # Language-dependant classes. Concrete
-
-
-class Dialect(Term, LanguageEntity):
-    """Class represents dialect present in the system"""
-
-    parent_dialect = models.ForeignKey('self', null=True, blank=True)
-
-    def __str__(self):
-        return ' '.join([self.term_full, str(self.language)])
-
-
-class WritingRelated(models.Model):
-    writing_type = models.CharField(choices=WS_TYPE, max_length=2)
-
-    class Meta:
-        abstract = True
-
-
-class WritingSystem(Term, WritingRelated):
-    """Class represents a writing systems used to spell a word form"""
-
-    language = models.ForeignKey(Language, null=True, blank=True)  # Null means "language independent"
 
 
 class Source(Term, LanguageEntity):
     """Class representing sources of language information"""
 
     source_type = models.CharField(choices=SRC_TYPE, max_length=2)
-
-
-class GrammCategorySet(LanguageEntity):
-    """Class represents possible composite sets of grammar categories and its order in a given language
-    """
-
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    gramm_category_m = models.ManyToManyField(GrammCategory)
-    position = models.SmallIntegerField(null=True, blank=True)
-
-    def __str__(self):
-            return ' '.join(str(s) for s in self.gramm_category_m.all())
-
-    class Meta:
-        unique_together = ('language', 'position')
-
-
-class SyntCatsInLanguage(models.Model):
-    language = models.ForeignKey(Language)
-    syntactic_category = models.ForeignKey(SyntacticCategory)
-    main_gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-
-    @staticmethod
-    def is_in(synt_cat, language):
-        try:
-            return SyntCatsInLanguage.objects.get(language=language, syntactic_category=synt_cat)
-        except ObjectDoesNotExist:
-            return None
-
-    def __str__(self):
-        return ' '.join((str(self.language), str(self.syntactic_category) + ':', str(self.main_gramm_category_set)))
 
 
 class Inflection(LanguageEntity):
@@ -241,10 +125,10 @@ class Lexeme(LanguageEntity):
 
     syntactic_category = models.ForeignKey(SyntacticCategory)
     inflection = models.ForeignKey(Inflection, null=True, blank=True)
-    lexeme_parameter_m = models.ManyToManyField(LexemeParameter, null=True, blank=True)
-    translation_m = models.ManyToManyField('self', symmetrical=False, through='Translation', null=True, blank=True,
+    lexeme_parameter_m = models.ManyToManyField(LexemeParameter, blank=True)
+    translation_m = models.ManyToManyField('self', symmetrical=False, through='Translation', blank=True,
                                            related_name='translation_set')
-    lexeme_relation_m = models.ManyToManyField('self', symmetrical=False, through='Relation', null=True, blank=True,
+    lexeme_relation_m = models.ManyToManyField('self', symmetrical=False, through='Relation', blank=True,
                                                related_name='relation_set')
     # TODO Add field for a dictionary wordform
     # Absence of a dialectical dependency is intentional
@@ -316,13 +200,17 @@ class LexemeRelation(models.Model):
 # Dictionary classes. Concrete
 
 
-class Wordform(WritingRelated):
+class Wordform(models.Model):
     """Class representing current wordforms"""
 
     lexeme = models.ForeignKey(Lexeme, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True)
-    source_m = models.ManyToManyField(Source, through='DictWordform')
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    # source_m = models.ManyToManyField(Source, through='DictWordform')
+    dialect_m = models.ManyToManyField(Dialect, blank=True)
+    spelling = models.CharField(max_length=512)
+    dictionary = models.ForeignKey(Dictionary, null=True)
+    # comment = models.TextField(blank=True)
+    # is_processed = models.BooleanField()
     # informant = models.CharField(max_length=256, blank=True)
 
     @property
@@ -364,25 +252,12 @@ class Wordform(WritingRelated):
     # TODO Include dialects into description
 
 
-class WordformSpell(models.Model):
-    wordform = models.ForeignKey(Wordform)
-    spelling = models.CharField(max_length=512)
-    writing_system = models.ForeignKey(WritingSystem)
-    is_processed = models.BooleanField()
-
     @property
     def formatted(self):
         if self.writing_system.writing_type == 'O':
             return self.spelling
         else:
             return TRANSCRIPT_BRACKETS[self.writing_system.writing_type].format(self.spelling)
-
-    def __str__(self):
-        return self.formatted
-
-class DictWordform(DictEntity):
-    wordform = models.ForeignKey(Wordform)
-    comment = models.TextField(blank=True)
 
 
 class WordformOrder:
@@ -393,9 +268,9 @@ class WordformOrder:
 class SemanticGroup(models.Model):
     """ Class representing semantic groups
     """
-    theme_m = models.ManyToManyField(Theme, null=True, blank=True)
-    usage_constraint_m = models.ManyToManyField(UsageConstraint, null=True, blank=True)
-    dialect_m = models.ManyToManyField(Dialect, null=True, blank=True)
+    theme_m = models.ManyToManyField(Theme, blank=True)
+    usage_constraint_m = models.ManyToManyField(UsageConstraint, blank=True)
+    dialect_m = models.ManyToManyField(Dialect, blank=True)
     source_m = models.ManyToManyField(Source, through='DictSemanticGroup')
     comment = models.TextField(blank=True)
 
@@ -572,6 +447,11 @@ class ProjectWordform(ProjectedEntity):
 
     # def __str__(self):
     #     return ' | '.join([str(self.lexeme), self.spelling, self.comment, str(self.params)])
+
+
+
+class WordformSpell(models.Model):
+    pass
 
 
 class ProjectWordformSpell(ProjectedEntity):
