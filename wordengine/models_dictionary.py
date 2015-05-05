@@ -307,6 +307,7 @@ class LexemeEntry(LanguageEntity, Timestampable):
             # Update corresponding wordform spelling objects
             self.unsaved_wordform_spellings = self.generate_wordform_spellings()
 
+
         if self.disambig:
             self.disambig_part = '({})'.format(self.disambig)
         else:
@@ -430,6 +431,10 @@ class LexemeEntry(LanguageEntity, Timestampable):
 
     @lazy
     def flat_translations(self):
+        """
+        Returns flattened list of translations, excluding those marked 'deleted'
+        :return:
+        """
         translations = []
         for language in self.translations:
             for semantic_group in self.translations[language]:
@@ -437,7 +442,7 @@ class LexemeEntry(LanguageEntity, Timestampable):
                     'language': language,
                     'mainform': translation['mainform'],
                     'disambig': translation['disambig'],
-                } for translation in semantic_group['translations']])
+                } for translation in semantic_group['translations'] if translation['state'] != 'deleted'])
         return translations
 
     def serialize_translations(self, translations):
@@ -486,6 +491,7 @@ class LexemeEntry(LanguageEntity, Timestampable):
                     wf_spell = WordformSpelling(spelling=spelling, gramm_category_set=form,
                                                 writing_system=self.dictionary.get_ws(num))
                     wf_spell.dialects_list = wordform['dialects']
+                    wordform_spellings.append(wf_spell)
         return wordform_spellings
 
     def __str__(self):

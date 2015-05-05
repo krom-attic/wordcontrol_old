@@ -1,7 +1,9 @@
 from wordengine import models
+from wordengine import filters
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.views.generic import UpdateView, CreateView, DetailView, ListView
+from django_filters.views import FilterView
 
 
 def index(requst):
@@ -50,6 +52,11 @@ class LexemeEntryUpdateView(LexemeEntryFilterMixIn, UpdateView):
 
 class LexemeEntryListView(LexemeEntryFilterMixIn, ListView):
     model = models.LexemeEntry
+
+
+class LexemeEntryFilterView(LexemeEntryFilterMixIn, FilterView):
+    filterset_class = filters.LexemeEntryFilter
+
 
 # LEGACY VIEWS BELOW. DO NOT USE!
 
