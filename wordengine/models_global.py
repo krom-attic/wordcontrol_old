@@ -60,5 +60,8 @@ class GrammCategory(Term):
     gramm_category_type = models.ForeignKey(GrammCategoryType)
     position = models.SmallIntegerField(null=True, blank=True)
 
+    class Meta:
+        unique_together = ['gramm_category_type', 'position']
+
     def __str__(self):
         return ' '.join([self.term_full, str(self.gramm_category_type)])
