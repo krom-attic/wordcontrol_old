@@ -25,10 +25,6 @@ PRJ_STATE = (('N', 'New'),
              ('P', 'Processed'))
 
 
-#  TODO Obsolete???
-WORD_SOURCE_CHOICES = (('NN', 'Not needed'),
-                       ('AT', 'As for translation'))
-
 # Projected objects to real objects correspondence
 PRJ_TO_REAL = {'ProjectLexeme': 'Lexeme',
                'ProjectWordform': 'Wordform',
@@ -52,7 +48,12 @@ SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 RELATION_TYPES = {
     'pl': 'Plurale tantum',
-    'phr': 'Phrase'
+    'phm': 'Phraseme',
+    'phr': 'Phrase',
+    'com': 'Composite',
+    'syn': 'Synonym',
+    'ant': 'Antonym',
+    'hyp': 'Hyponym',
 }
 
 TRANSLATION_MARKS = {'$:': 'reverse', '!:': 'deleted'}
@@ -62,7 +63,9 @@ TRANSLATION_MARKS = {'$:': 'reverse', '!:': 'deleted'}
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
 
+
 # Errors
+
 class WordcontrolException(Exception):
     ERRORS = {
         'UNK': 'Unknown error'

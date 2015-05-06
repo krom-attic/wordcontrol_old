@@ -26,7 +26,9 @@ DJANGO_APPS = [
     # 'django.contrib.admindocs',
 ]
 
-THIRDPARTY_APPS = []
+THIRDPARTY_APPS = [
+    'django_filters',
+]
 
 HOMEBREW_APPS = [
     'wordengine',
