@@ -2,12 +2,11 @@ WordControl
 ===========
 
 Word Control is an application for a collaboration on documenting endangered languages, especially its lexicon and phonology.
-Some earlier documentation is in Russian, since there is no participants in the project who doesn't speak Russian so far. But as this project is intended for international use, documentation is being translated into English.  
+Some earlier documentation is in Russian. But as this project is intended for international use, all newer documentation is in English.  
 
 Basic information
 -----------------
-WordControl is a Django app. Current Django branch is 1.8.
-Top-level import path is 'wordcontol'.
+WordControl is a Django app. Current Django branch is 1.8.x.
 
 Development process (v. 3)
 --------------------------

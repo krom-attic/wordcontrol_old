@@ -63,6 +63,7 @@ TRANSLATION_MARKS = {'$:': 'reverse', '!:': 'deleted'}
 RE_REST_LIST = re.compile(r'\[.*\]')
 RE_REST_TUPLE = re.compile(r'\(.*\)')
 
+
 # Errors
 
 class WordcontrolException(Exception):
