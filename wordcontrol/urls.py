@@ -14,7 +14,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^', include('django.contrib.auth.urls')),
     url(r'^', include('wordengine.urls', namespace='wordengine')),
     url(r'^wordcontrol/', include('wordengine.urls', namespace='wordengine')),
-    # TODO Add specific login URL
 )

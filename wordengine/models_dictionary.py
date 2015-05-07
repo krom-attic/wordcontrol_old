@@ -1,12 +1,11 @@
-from wordengine.models_language import *
-
 from django.core.urlresolvers import reverse
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 
-import itertools
 import slugify
 from lazy import lazy
+
+from wordengine.models_language import *
 
 RE_DIALECT = re.compile(r'<(.*?)>')
 RE_FORM = re.compile(r'\{(.*?)\}')
@@ -24,6 +23,7 @@ Relation = namedtuple('Relation', ['mainform', 'slug'])
 
 
 class Dictionary(models.Model):
+
     DICT_TYPES = (('U', 'User'), ('D', 'Digitized'), ('P', 'Public'))
     writing_systems = models.ManyToManyField(WritingSystem, through='WSInDict')
     type = models.CharField(choices=DICT_TYPES, max_length=1)
@@ -42,6 +42,7 @@ class Dictionary(models.Model):
 
 
 class WSInDict(models.Model):
+
     writing_system = models.ForeignKey(WritingSystem)
     dictionary = models.ForeignKey(Dictionary)
     order = models.SmallIntegerField()
@@ -249,6 +250,7 @@ class LexemeEntry(LanguageEntity, Timestampable):
     """
     New style lexeme class
     """
+
     dictionary = models.ForeignKey(Dictionary)
     reverse_generated = models.BooleanField(editable=False, default=False)
     syntactic_category = models.ForeignKey(SyntacticCategory)
@@ -307,7 +309,6 @@ class LexemeEntry(LanguageEntity, Timestampable):
             # Update corresponding wordform spelling objects
             self.unsaved_wordform_spellings = self.generate_wordform_spellings()
 
-
         if self.disambig:
             self.disambig_part = '({})'.format(self.disambig)
         else:
@@ -319,10 +320,8 @@ class LexemeEntry(LanguageEntity, Timestampable):
         if self.new_or_changed('translations_text') and not saving_reverse:
             # Get lists of added translations and deleted translations
             if self.pk:
-                deleted_translations = itertools.filterfalse(lambda x: x in self.flat_translations,
-                                                             self.old_version.flat_translations)
-                added_translations = itertools.filterfalse(lambda x: x in self.old_version.flat_translations,
-                                                           self.flat_translations)
+                deleted_translations = [x for x in self.old_version.flat_translations if x not in self.flat_translations]
+                added_translations = [x for x in self.flat_translations if x not in self.old_version.flat_translations]
             else:
                 deleted_translations = []
                 added_translations = self.flat_translations
@@ -354,8 +353,8 @@ class LexemeEntry(LanguageEntity, Timestampable):
                 new_target_translations = target.translations
                 for semantic_group in new_target_translations[self.old_version.language]:
                     for target_translation in semantic_group['translations']:
-                        if target_translation['mainform'] == self.old_version.mainform \
-                                and target_translation['disambig'] == self.old_version.disambig:
+                        if (target_translation['mainform'] == self.old_version.mainform
+                           and target_translation['disambig'] == self.old_version.disambig):
                             target_translation['mainform'] = self.mainform
                             target_translation['disambig'] = self.disambig
             target.translations_text = target.serialize_translations(new_target_translations)
@@ -416,8 +415,8 @@ class LexemeEntry(LanguageEntity, Timestampable):
                 new_target_translations = target.translations
                 for semantic_group in new_target_translations[self.language][:]:
                     for target_translation in semantic_group['translations'][:]:
-                        if target_translation['mainform'] == self.mainform\
-                                and target_translation['disambig'] == self.disambig:
+                        if (target_translation['mainform'] == self.mainform
+                           and target_translation['disambig'] == self.disambig):
                             if target_translation['state'] == 'reverse':
                                 semantic_group['translations'].remove(target_translation)
                                 if not semantic_group['translations']:
@@ -553,6 +552,7 @@ class LexemeEntry(LanguageEntity, Timestampable):
 
 
 class WordformSpelling(models.Model):
+
     lexeme_entry = models.ForeignKey(LexemeEntry, editable=False)
     spelling = models.CharField(max_length=512, editable=False)
     gramm_category_set = models.ForeignKey(GrammCategorySet, null=True, blank=True, editable=False)

@@ -1,19 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "base.html" %}
 
-  <title>WordControl — {% block pagetitle %}Page-specific part of title here{% endblock %}</title>
-  {% load staticfiles %}
-  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="{% static 'wordengine/css/wordengine.css' %}" />
-</head>
+{% block apptitle %}
+  {% block title %}Page-specific part of title here{% endblock %}
+{% endblock %}
 
-<!-- IE8 and earlier are not supported -->
-<body>
-<div class="container">
+{% block appbody %}
   <nav class="navbar navbar-default">
     <div class="container-fluid">
       <div class="navbar-header">
@@ -34,23 +25,12 @@
           <!--    <a href="">Quickly add translations</a> | -->
           <!--    <a href="{% url 'wordengine:add_wordform_lexeme' %}">Add word (directly)</a> | -->
           <li><a href="{% url 'wordengine:admin' %}">Administer</a></li>
-          <li><a href="{% url 'wordengine:admin' %}/login/">Admin login</a></li>
+          <li><a href="{% url 'admin:login' %}">Admin login</a></li>
+          <li><a href="{% url 'login' %}">User login</a></li>
           <!--<a href="{% url 'admin:index' %}">Django admin</a></div>-->
         </ul>
       </div>
     </div>
   </nav>
-
-  {% for message in messages %}
-    <div {% if message.tags %}class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
-  {% endfor %}
-
-  <div class="row">{% block pagebody %}Page body here{% endblock %}</div>
-
-  <hr />
-
-</div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-</body>
-</html>
+  {% block content %}Page body here{% endblock %}
+{% endblock %}
