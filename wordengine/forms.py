@@ -1,10 +1,27 @@
 from django import forms
 from django.db.models.loading import get_model
-from django.forms.models import modelformset_factory, inlineformset_factory
+from django.forms import ValidationError
+from django.forms.models import modelformset_factory, inlineformset_factory, BaseInlineFormSet, ModelForm
 
 from wordengine import models
 from wordengine.global_const import *
 
+
+class RequiredInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        """Check that at least one service has been entered."""
+        super().clean()
+        if any(self.errors):
+            return
+        if not any(cleaned_data and not cleaned_data.get('DELETE', False)
+                   for cleaned_data in self.cleaned_data):
+            raise ValidationError('At least one item required.')
+
+
+WSInDictFormset = inlineformset_factory(models.Dictionary, models.WSInDict, exclude=[], formset=RequiredInlineFormSet)
+
+
+# LEGACY FORMS BELOW, DO NOT USE
 
 class DoSmthWithIdForm(forms.Form):
     given_id = forms.IntegerField()

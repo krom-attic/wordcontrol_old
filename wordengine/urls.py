@@ -18,9 +18,12 @@ urlpatterns = \
              url(r'^words/?$', views.LexemeEntryFilterView.as_view(), name='list_lexeme_entry'),
              url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/\*/?$', views.LexemeEntryListView.as_view(),
                  name='disambig_lexeme_entry'),
+             url(r'^add/?$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
+             url(r'^dictionaries/?$', views.DictListView.as_view(), name='list_dictionary'),
+             url(r'^dictionary/new/?$', views.DictCreateView.as_view(), name='add_dictionary'),
 
             # LEGACY PATTERNS BELOW
-             url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),  # Depricated?
+             url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),
              url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<spelling>\w*)$',
                  views.AddWordformView.as_view(), name='add_wordform_lexeme'),
              url(r'^add/word/use=(?P<language>\d*)&(?P<syntactic_category>\d*)&(?P<first_lexeme_id>\d*)&(?P<spelling>\w*)$',
@@ -43,5 +46,4 @@ urlpatterns = \
              url(r'^view/projects/?$', views.ProjectListView.as_view(), name='view_projects'),
              # url(r'^update/project/(?P<pk>\d+)$', views.ProjectDictionaryUpdateView.as_view(),
              #     name='project_dict_update'),
-             url(r'^add/?$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
              )

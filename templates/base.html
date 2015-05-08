@@ -14,12 +14,53 @@
 <!-- IE8 and earlier are not supported -->
 <body>
 <div class="container">
+  <div class="row">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'wordengine:index' %}">Start screen</a>
+        </div>
 
-  {% for message in messages %}
-    <div {% if message.tags %}class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
-  {% endfor %}
+        <div class="collapse navbar-collapse" id="main-navbar">
+          <ul class="nav navbar-nav">
+            <li><a href="{% url 'wordengine:add_lexeme_entry' %}">Add lexeme entry</a></li>
+            <li><a href="{% url 'wordengine:list_lexeme_entry' %}">Lexeme entries</a></li>
+            <li><a href="{% url 'wordengine:add_dictionary' %}">Add dictionary</a></li>
+            <li><a href="{% url 'wordengine:list_dictionary' %}">Dictionaries</a></li>
+            <li><a href="{% url 'wordengine:view_projects' %}">Data import</a></li>
+            <!--    <a href="">Quickly add translations</a> | -->
+            <li><a href="{% url 'wordengine:admin' %}">Administer</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+            {% if user.is_authenticated %}
+              <a href="#">{{ user.username }}</a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}">[logout]</a>
+              {% else %}
+                <a href="{% url 'login' %}">[login]</a>
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </div>
 
-  <div class="row">{% block appbody %}App body here{% endblock %}</div>
+  <div class="row">
+    {% for message in messages %}
+      <div {% if message.tags %}class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
+    {% endfor %}
+
+    {% block appcontent %}App body here{% endblock %}
+  </div>
 
   <hr />
 

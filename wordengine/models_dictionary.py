@@ -26,9 +26,9 @@ class Dictionary(models.Model):
 
     DICT_TYPES = (('U', 'User'), ('D', 'Digitized'), ('P', 'Public'))
     writing_systems = models.ManyToManyField(WritingSystem, through='WSInDict')
-    type = models.CharField(choices=DICT_TYPES, max_length=1)
+    type = models.CharField(choices=DICT_TYPES, max_length=1, default='U')
     maintainer = models.ForeignKey(User)
-    caption = models.CharField(max_length=128, blank=True, null=True)
+    caption = models.CharField(max_length=128, blank=True)
 
     def __str__(self):
         return '{} dictionary "{}" by {}'.format(

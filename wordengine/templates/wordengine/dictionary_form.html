@@ -1,0 +1,20 @@
+{% extends "wordengine/base.html" %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} a word{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{% if form.instance.pk %}Edit a{% else %}Add a new{% endif %} word entry</h1>
+</div>
+
+<div class="col-sm-12">
+  <form class="form-horizontal" action="" method="post">
+    <div class="form-group">
+      {% csrf_token %}
+      {{ form.as_p }}
+      {{ ws_in_dict_formset.non_form_errors }}
+      {{ ws_in_dict_formset.as_p }}
+      <input type="submit" class="btn btn-primary" value="{% if form.instance.pk %}Save{% else %}Add{% endif %}" />
+    </div>
+  </form>
+</div>
+
+{% endblock %}
