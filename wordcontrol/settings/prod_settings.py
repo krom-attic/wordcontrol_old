@@ -5,7 +5,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['1.kotimaa.cz8.ru']
+ALLOWED_HOSTS = ['1.kotimaa.cz8.ru', 'kotimaa.ru']
 
 # INSTALLED_APPS are listed in the base settings
 

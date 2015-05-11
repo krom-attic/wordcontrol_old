@@ -130,6 +130,13 @@ class LexemeEntryUpdateView(LexemeEntryFilterMixIn, UpdateView):
     model = models.LexemeEntry
     fields = ['syntactic_category', 'forms_text', 'relations_text', 'translations_text', 'sources_text']
 
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.user == self.object.dictionary.maintainer:
+            return super().get(request, *args, **kwargs)
+        else:
+            return redirect('wordengine:view_lexeme_entry', pk=self.object.pk)
+
 
 # class LexemeEntryListView(LexemeEntryFilterMixIn, ListView):
 #     model = models.LexemeEntry
