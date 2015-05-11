@@ -8,7 +8,7 @@ Some earlier documentation is in Russian. But as this project is intended for in
 
 Basic information
 -----------------
-WordControl is a Django app. Current Django branch is 1.8.x.
+WordControl is a Django app. Current Django branch is 1.8.x.  
 Test server: http://kotimaa.ru/wordcontrol/
 
 Development process (v. 3)
