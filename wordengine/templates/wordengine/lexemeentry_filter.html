@@ -1,8 +1,8 @@
 {% extends "wordengine/base.html" %}
-{% block pagetitle %}Add a word{% endblock %}
-{% block pagebody %}
+{% block title %}Dictionary entries{% endblock %}
+{% block content %}
 <div class="page-header">
-  <h1>Word entries</h1>
+  <h1>Dictionary entries</h1>
 </div>
 <div>
   <form action="" method="get">
@@ -10,11 +10,27 @@
   <input type="submit" />
   </form>
 </div>
-        <ul>
-        {% for entry in lexemeentry_list %}
-        <li><a href = "{{ entry.get_absolute_url }}">{{ entry }}</a></li>
-        {% empty %}
-        No entries
-        {% endfor %}
-        </ul>
+<h2>Search results</h2>
+<ul>
+{% for entry in lexemeentry_list %}
+<li><a href = "{{ entry.get_absolute_url }}">{{ entry }}</a></li>
+{% empty %}
+No entries
+{% endfor %}
+</ul>
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">&lt;&lt;</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">&gt;&gt;</a>
+        {% endif %}
+    </span>
+</div>
 {% endblock %}

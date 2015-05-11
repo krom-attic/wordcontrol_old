@@ -205,3 +205,8 @@ STATIC_URL = '/static/'
 
 # TODO Do we need sites framework?
 SITE_ID = 1
+
+# Since we don't use any accounts app, login urls are simplified
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+LOGOUT_URL = '/logout/'

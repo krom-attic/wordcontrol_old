@@ -13,3 +13,26 @@ auth_user
 
 
 остановился на dict_change
+
+
+
+старая версия dbdump.txt:
+Строка дампа
+
+manage.py dumpdata --indent 4 >> D:\projects\sw_dev\wordcontrol\testdata\initial\latest.json
+
+
+
+Стандартные данные
+
+Точно:
+grammcategorytype
+sourcetype
+syntacticcategory
+translatedterm
+writingsystemtype
+
+Возможно:
+grammcategory
+usageconstraint
+writingsystem

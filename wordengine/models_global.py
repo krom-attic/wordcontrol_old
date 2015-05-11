@@ -42,7 +42,7 @@ class Language(Term):
     syntactic_category_m = models.ManyToManyField(SyntacticCategory, through='SyntCatsInLanguage',
                                                   through_fields=('language', 'syntactic_category'),
                                                   blank=True, related_name='synt_cat_set')
-    iso_code = models.CharField(max_length=8, db_index=True)  # ISO 639-3
+    iso_code = models.CharField(max_length=8, db_index=True)
 
     def get_main_gr_cat(self, synt_cat):
         return self.syntcatsinlanguage_set.get(syntactic_category=synt_cat).main_gramm_category_set
@@ -59,6 +59,9 @@ class GrammCategory(Term):
 
     gramm_category_type = models.ForeignKey(GrammCategoryType)
     position = models.SmallIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['gramm_category_type', 'position']
 
     def __str__(self):
         return ' '.join([self.term_full, str(self.gramm_category_type)])

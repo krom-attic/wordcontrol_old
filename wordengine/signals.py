@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from wordengine import models
 
-# TODO Using signals in this case breaks atomacity
+# TODO Using signals in this case breaks atomicity
 @receiver(post_save, sender=models.LexemeEntry)
 def lexeme_entry_post_save(sender, **kwargs):
     lexeme_entry = kwargs['instance']

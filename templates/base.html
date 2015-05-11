@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>WordControl — {% block apptitle %}App-specific part of title here{% endblock %}</title>
+  {% load staticfiles %}
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="{% static 'wordengine/css/wordengine.css' %}" />
+</head>
+
+<!-- IE8 and earlier are not supported -->
+<body>
+<div class="container">
+  <div class="row">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'wordengine:index' %}">Start screen</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="main-navbar">
+          <ul class="nav navbar-nav">
+            <li><a href="{% url 'wordengine:add_lexeme_entry' %}">Add lexeme entry</a></li>
+            <li><a href="{% url 'wordengine:list_lexeme_entry' %}">Lexeme entries</a></li>
+            <li><a href="{% url 'wordengine:add_dictionary' %}">Add dictionary</a></li>
+            <li><a href="{% url 'wordengine:list_dictionary' %}">Dictionaries</a></li>
+            <li><a href="{% url 'wordengine:view_projects' %}">Data import</a></li>
+            <!--    <a href="">Quickly add translations</a> | -->
+            <li><a href="{% url 'wordengine:admin' %}">Administer</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+            {% if user.is_authenticated %}
+              <a href="#">{{ user.username }}</a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}">[logout]</a>
+              {% else %}
+                <a href="{% url 'login' %}">[login]</a>
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <div class="row">
+    {% for message in messages %}
+      <div {% if message.tags %}class="{{ message.tags }}"{% endif %}>Action result: {{ message }}</div>
+    {% endfor %}
+
+    {% block appcontent %}App body here{% endblock %}
+  </div>
+
+  <hr />
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</body>
+</html>

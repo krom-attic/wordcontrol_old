@@ -1,0 +1,14 @@
+{% extends "wordengine/base.html" %}
+{% block title %}Dictionaries{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Dictionaries</h1>
+</div>
+        <ul>
+        {% for dictionary in dictionary_list %}
+        <li><a href = "{{ dictionary.get_absolute_url }}">{{ dictionary }}</a></li>
+        {% empty %}
+        No entries
+        {% endfor %}
+        </ul>
+{% endblock %}
