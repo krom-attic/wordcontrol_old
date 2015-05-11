@@ -80,11 +80,7 @@ WSGI_APPLICATION = 'wordcontrol.wsgi.application'
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-gb'
 
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'UTC'
+#TIME_ZONE - see environment specific settings
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
