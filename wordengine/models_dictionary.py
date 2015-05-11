@@ -40,6 +40,9 @@ class Dictionary(models.Model):
     def get_ws(self, pos):
         return WSInDict.objects.get(dictionary=self, order=pos).writing_system
 
+    def get_absolute_url(self):
+        return reverse('wordengine:view_dictionary', kwargs={'pk': self.pk})
+
 
 class WSInDict(models.Model):
 
@@ -48,7 +51,7 @@ class WSInDict(models.Model):
     order = models.SmallIntegerField()
 
     class Meta:
-        unique_together = ('dictionary', 'order')
+        unique_together = (('dictionary', 'order'), ('dictionary', 'writing_system'))
 
 
 class LexemeEnrtyParser():

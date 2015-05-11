@@ -16,11 +16,12 @@ urlpatterns = \
              url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/edit/?$',
                  views.LexemeEntryUpdateView.as_view(), name='edit_lexeme_entry'),
              url(r'^words/?$', views.LexemeEntryFilterView.as_view(), name='list_lexeme_entry'),
-             url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/\*/?$', views.LexemeEntryListView.as_view(),
-                 name='disambig_lexeme_entry'),
+             # url(r'^word/(?P<lang_code>[\w-]+)/(?P<slug>[\w\- ]+)/\*/?$', views.LexemeEntryListView.as_view(),
+             #     name='disambig_lexeme_entry'),
              url(r'^add/?$', views.LexemeEntryCreateView.as_view(), name='add_lexeme_entry'),
              url(r'^dictionaries/?$', views.DictListView.as_view(), name='list_dictionary'),
              url(r'^dictionary/new/?$', views.DictCreateView.as_view(), name='add_dictionary'),
+             url(r'^dictionary/(?P<pk>\d+)/?$', views.DictDetailView.as_view(), name='view_dictionary'),
 
             # LEGACY PATTERNS BELOW
              url(r'^add/word$', views.AddWordformView.as_view(), name='add_wordform_lexeme'),

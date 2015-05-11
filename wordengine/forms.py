@@ -1,7 +1,11 @@
 from django import forms
 from django.db.models.loading import get_model
 from django.forms import ValidationError
-from django.forms.models import modelformset_factory, inlineformset_factory, BaseInlineFormSet, ModelForm
+from django.forms.models import (inlineformset_factory, modelformset_factory,
+                                 BaseInlineFormSet, ModelForm,
+                                 ModelChoiceField)
+
+from braces.forms import UserKwargModelFormMixin
 
 from wordengine import models
 from wordengine.global_const import *
@@ -20,6 +24,17 @@ class RequiredInlineFormSet(BaseInlineFormSet):
 
 WSInDictFormset = inlineformset_factory(models.Dictionary, models.WSInDict, exclude=[], formset=RequiredInlineFormSet)
 
+
+class DictEntryForm(UserKwargModelFormMixin, ModelForm):
+
+    class Meta:
+        model = models.LexemeEntry
+        fields = ['dictionary', 'language', 'syntactic_category', 'forms_text', 'relations_text', 'translations_text',
+                  'sources_text']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['dictionary'] = ModelChoiceField(queryset=models.Dictionary.objects.filter(maintainer=self.user))
 
 # LEGACY FORMS BELOW, DO NOT USE
 

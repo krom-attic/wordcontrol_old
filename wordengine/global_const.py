@@ -48,8 +48,7 @@ SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 RELATION_TYPES = {
     'pl': 'Plurale tantum',
-    'phm': 'Phraseme',
-    'phr': 'Phrase',
+    'idi': 'Idiom',
     'com': 'Composite',
     'syn': 'Synonym',
     'ant': 'Antonym',
