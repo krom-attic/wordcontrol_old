@@ -5,7 +5,7 @@ SECRET_KEY = '=&izv7jn!ylg9p$w1_*62+*s_j@1u19g*_4=4^*cq8eqe*q7on'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS.append('debug_toolbar')
 
@@ -22,3 +22,5 @@ DATABASES = {
 
 # Additional locations of static files
 # STATICFILES_DIRS isn't used
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

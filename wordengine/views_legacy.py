@@ -391,6 +391,7 @@ class ProjectSetupView(UpdateView):
     fields = []
 
     pr_col_setup_formset_class = forms.PrColSetupFormSet
+    pr_col_setup_formset_class = forms.PrColSetupFormSet
     untyped_param_formset_class = forms.UntypedParamFormSet
     param_setup_formset_class = forms.ParamSetupFormSet
 

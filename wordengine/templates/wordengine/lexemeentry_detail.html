@@ -1,22 +1,18 @@
 {% extends "wordengine/base.html" %}
 {% block title %}{{ lexemeentry }}{% endblock %}
 {% block content %}
+{% load wc_tags %}
 <div class="page-header">
   <h1>{{ lexemeentry.mainform_caption }}</h1>
 </div>
     <p><a href="{{ lexemeentry.edit_url }}">edit</a></p>
     <p><strong>{{ lexemeentry.language }} {{ lexemeentry.syntactic_category }}</strong></p>
+<h2>{% for wordform in lexemeentry.formatted.wordforms %}{{ wordform }}{% endfor %}</h2>
     <p>
     {% for wordform in lexemeentry.mainform_full %}
-        {% for wf_ws in wordform.spellings %}
-            {% if forloop.counter == 2 %}({% endif %}
-            {{ wf_ws }}
-            {% if forloop.counter > 1 and forloop.last %}){% endif %}
-        {% endfor %}
-        {% for dialect in wordform.dialects %}
-            <em>({{ dialect.term_full }})</em>
-        {% endfor %}
-        {% if not forloop.last %}, {% endif %}
+        <span>{{ wordform.spellings|first }}</span> <!--
+        --><span>{{ wordform.spellings|slice:"1:"|join:","|surround:"(:)" }}</span><!--
+        --><span>{% for dialect in wordform.dialects %}<em>({{ dialect.term_full }})</em>{% endfor %}</span>{% if not forloop.last %}, {% endif %}
     {% endfor %}
     </p>
     <p><em>{{ lexemeentry.comment|linebreaks }}</em></p>
@@ -43,7 +39,7 @@
     {% for rel_type, rel_dests in lexemeentry.relations.items %}
         {{ rel_type }}:
         {% for rel_dest in rel_dests %}
-            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest.slug %}">{{ rel_dest.mainform }}</a>
+            <a href="{% url 'wordengine:view_lexeme_entry' lexemeentry.language.iso_code rel_dest.slug %}">{{ rel_dest.caption_form }}</a>
             {% if not forloop.last %}+{% endif %}
         {% endfor %}
     {% endfor %}
@@ -60,7 +56,7 @@
                 {% else %}
                 {% url 'wordengine:view_lexeme_entry' language.iso_code translation.slug %}
                 {% endif %}">
-                {{ translation.mainform }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
+                {{ translation.caption_form }}</a>{% if translation.comment %} <em>({{ translation.comment }})</em>{% endif %}
                 {% if translation.state == 'reverse' %}<sup>[reverse]</sup>{% endif %}
                 {% if translation.state == 'deleted' %}<sup>[deleted]</sup>{% endif %}
                 ;

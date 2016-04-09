@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from wordengine import models
-from wordengine import views
 
 # Inline admin views
 
@@ -13,6 +12,16 @@ class SyntCatsInLanguageInline(admin.TabularInline):
 
 class LanguageAdmin(admin.ModelAdmin):
     inlines = (SyntCatsInLanguageInline, )
+
+
+class WSInDictInline(admin.TabularInline):
+    model = models.WSInDict
+    extra = 1
+    ordering = ("language", "order", )
+
+
+class DictionaryAdmin(admin.ModelAdmin):
+    inlines = (WSInDictInline, )
 
 
 admin.site.register(models.SyntacticCategory)
@@ -31,5 +40,5 @@ admin.site.register(models.GrammCategoryType)
 admin.site.register(models.LexemeParameter)
 admin.site.register(models.SyntCatsInLanguage)
 admin.site.register(models.Theme)
-admin.site.register(models.Dictionary)
+admin.site.register(models.Dictionary, DictionaryAdmin)
 admin.site.register(models.WSInDict)

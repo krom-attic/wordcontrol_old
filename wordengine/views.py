@@ -5,9 +5,10 @@ from django.views.generic import UpdateView, CreateView, DetailView, ListView, T
 from braces.views import LoginRequiredMixin, UserFormKwargsMixin
 from django_filters.views import FilterView
 
-from wordengine import models
 from wordengine import filters
 from wordengine import forms
+from wordengine.lexeme_utils.updater import update_lexeme_entry
+from wordengine import models
 
 
 def index(requst):
@@ -60,7 +61,7 @@ class InlineFormsetCreateView(CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class SaveUserMixIn():
+class SaveUserMixIn:
 
     def form_valid(self, form):
         setattr(form.instance, self.user_field, self.request.user)
@@ -75,7 +76,7 @@ class DictCreateView(LoginRequiredMixin, SaveUserMixIn, InlineFormsetCreateView)
     user_field = 'maintainer'
 
 
-class DictListView(ListView):
+class DictListView(LoginRequiredMixin, ListView):
 
     model = models.Dictionary
 
@@ -92,7 +93,7 @@ class AddPermsDict(TemplateView):
     pass
 
 
-class LexemeEntryFilterMixIn():
+class LexemeEntryFilterMixIn:
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -111,19 +112,40 @@ class LexemeEntryFilterMixIn():
         return queryset
 
 
+def save_lexeme_entry(form):
+    changed_entry, wordforms, affected_entries = update_lexeme_entry(form.save(commit=False))
+    # TODO Do all save in one transaction
+    for lexeme_entry in [changed_entry] + affected_entries:
+        lexeme_entry.save(explicit=True)
+    for wordform in wordforms:
+        # TODO Why doesn't it happen automatically?
+        wordform.lexeme_entry_id = wordform.lexeme_entry.id
+        wordform.save()
+    return changed_entry
+
+
 class LexemeEntryCreateView(UserFormKwargsMixin, LoginRequiredMixin, CreateView):
     model = models.LexemeEntry
     form_class = forms.DictEntryForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'dictionary': models.Dictionary.objects.get(id=13)})
+        return context
+
+    def form_valid(self, form):
+        self.object = save_lexeme_entry(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class LexemeEntryDetailView(LexemeEntryFilterMixIn, DetailView):
     model = models.LexemeEntry
 
-    def get(self, request, *args, **kwargs):
-        try:
-            return super().get(request, *args, **kwargs)
-        except MultipleObjectsReturned:
-            return redirect('wordengine:disambig_lexeme_entry', *args, **kwargs)
+    # def get(self, request, *args, **kwargs):
+    #     try:
+    #         return super().get(request, *args, **kwargs)
+    #     except MultipleObjectsReturned:
+    #         return redirect('wordengine:disambig_lexeme_entry', *args, **kwargs)
 
 
 class LexemeEntryUpdateView(LexemeEntryFilterMixIn, UpdateView):
@@ -137,6 +159,9 @@ class LexemeEntryUpdateView(LexemeEntryFilterMixIn, UpdateView):
         else:
             return redirect('wordengine:view_lexeme_entry', pk=self.object.pk)
 
+    def form_valid(self, form):
+        self.object = save_lexeme_entry(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 # class LexemeEntryListView(LexemeEntryFilterMixIn, ListView):
 #     model = models.LexemeEntry

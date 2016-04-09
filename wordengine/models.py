@@ -1,6 +1,33 @@
 # V2 models classes (actual, USE IT)
 
-from wordengine.models_dictionary import *
+from wordengine.model.mixins import *
+
+# Global lists. Abstract
+from wordengine.model.term import *
+
+# Global lists. Concrete
+from wordengine.model.syntactic_category import *
+from wordengine.model.language import *
+from wordengine.model.gramm_category_type import *
+from wordengine.model.gramm_category import *
+
+# Language-dependant classes. Abstract
+
+from wordengine.model.language_entity import *
+
+# Language-dependant classes. Concrete
+
+from wordengine.model.dialect import *
+from wordengine.model.writing_related import *
+from wordengine.model.writing_system import *
+from wordengine.model.gramm_category_set import *
+from wordengine.model.synt_cats_in_language import *
+
+# Concrete dictionary classes
+from wordengine.model.dictionary import *
+from wordengine.model.ws_in_dict import *
+from wordengine.model.lexeme_entry import *
+from wordengine.model.wordform_spelling import *
 
 # Legacy Classes. DO NOT USE
 
@@ -10,6 +37,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+from wordengine.global_const import SRC_TYPE, REL_DIRECTION, PRJ_STATE, TRANSCRIPT_BRACKETS
 
 # System globals. Abstract
 

@@ -50,6 +50,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
+X_FRAME_OPTIONS = 'DENY'
+
 ROOT_URLCONF = 'wordcontrol.urls'
 
 TEMPLATES = [
@@ -108,11 +110,7 @@ STATICFILES_FINDERS = (
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
 
-ADMINS = (
-    ('Kirill Grušetskij', 'kirill@grushetsky.ru')
-)
-
-MANAGERS = ADMINS
+# ADMINS and MANAGERS are set only for production
 
 # TODO Move logging to environment specific settings
 

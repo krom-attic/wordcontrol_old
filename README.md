@@ -30,3 +30,5 @@ Any new CR's effect is evaluated, then:
 After work item is done, solution is documented to corresponding UC or other model/requirement.
 Hence documentation reflect current release.
 Models and requirement are kept in wiki.
+
+Django code style guide is applicable: https://docs.djangoproject.com/en/1.8/internals/contributing/writing-code/coding-style/

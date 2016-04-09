@@ -24,6 +24,10 @@
 {FORM2}/wf_Main_WS/</pre>
   <h4>Available form abbreviations</h4>
   <p>[Forms abbreviations]</p>
+  <h4>Available writing systems for default dictionary</h4>
+  <ul>{% for ws in dictionary.get_ws_list %}
+    <li>{{ ws }}</li>
+  {% endfor %}</ul>
 </div>
 
 {% endblock %}

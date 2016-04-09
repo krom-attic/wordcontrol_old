@@ -2,9 +2,8 @@ from django.conf.urls import patterns, include, url
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
-admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     # Examples:
     # url(r'^$', 'wordcontrol.views.home', name='home'),
     # url(r'^wordcontrol/', include('wordcontrol.foo.urls')),
@@ -17,4 +16,4 @@ urlpatterns = patterns('',
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^', include('wordengine.urls', namespace='wordengine')),
     url(r'^wordcontrol/', include('wordengine.urls', namespace='wordengine')),
-)
+]

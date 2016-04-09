@@ -13,7 +13,6 @@ from wordengine.global_const import *
 
 class RequiredInlineFormSet(BaseInlineFormSet):
     def clean(self):
-        """Check that at least one service has been entered."""
         super().clean()
         if any(self.errors):
             return

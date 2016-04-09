@@ -1,8 +1,11 @@
 import re
 
+from bidict import bidict
+
 APP_NAME = 'wordengine'
 
 TRANSCRIPT_BRACKETS = {
+    'O': ('{}'),
     'PS': ('[{}]'),
     'PL': ('/{}/')
 }
@@ -47,15 +50,14 @@ REL_DIRECTION = (('F', 'Forward'),
 SPECIAL_CHARS = ('[', ']', '"', '|', '@')
 
 RELATION_TYPES = {
+    'com': 'Composition',
     'pl': 'Plurale tantum',
-    'idi': 'Idiom',
-    'com': 'Composite',
     'syn': 'Synonym',
     'ant': 'Antonym',
     'hyp': 'Hyponym',
 }
 
-TRANSLATION_MARKS = {'$:': 'reverse', '!:': 'deleted'}
+TRANSLATION_MARKS = bidict({'$:': 'reverse', '!:': 'deleted'})
 
 # Common regexps
 
